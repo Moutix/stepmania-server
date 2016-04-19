@@ -5,7 +5,7 @@ class ParentCommand(Enum):
     def get(cls, value, default=None):
         for klass in cls.__subclasses__():
             try:
-                return SMClientCommand(value)
+                return klass(value)
             except ValueError:
                 pass
 
@@ -78,7 +78,7 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data):
         if not data:
-            return b''
+            return b'\x00'
         return data.replace('\x00', '').encode('utf-8') + b'\x00'
 
     @staticmethod
@@ -92,7 +92,7 @@ class SMPayloadTypeNTList(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data):
         if not data:
-            return b''
+            return b'\x00'
         return b'\x00'.join([d.replace('\x00', '').encode('utf-8') for d in data]) + b'\x00'
 
     @staticmethod
@@ -101,7 +101,7 @@ class SMPayloadTypeNTList(SMPayloadTypeAbstract):
         if not tmp:
             return payload, None
 
-        return '', tmp
+        return '\x00', tmp[:-1]
 
 
 class SMPayloadTypeSMOClient(SMPayloadTypeAbstract):
@@ -151,6 +151,16 @@ class SMPacket(object):
 
     def __len__(self):
         return 1 + len(self.payload)
+
+    def __str__(self):
+        return "<%s %s>" % (
+            self.__class__.__name__,
+            " ".join(['%s="%s"' % (k, v) for k, v in self.opts.items()]))
+
+    def __repr__(self):
+        return "<%s %s>" % (
+            self.__class__.__name__,
+            " ".join(['%s="%s"' % (k, v) for k, v in self.opts.items()]))
 
     @classmethod
     def new(cls, command, **kwargs):
@@ -330,7 +340,7 @@ class SMPacketClientNSCUOpts(SMPacket):
 class SMPacketClientNSSMONL(SMPacket):
     _command = SMClientCommand.NSSMONL
     _payload = [
-        (SMPayloadType.SMOClient, "smopacket")
+        (SMPayloadType.SMOClient, "packet")
     ]
 
 class SMPacketClientNSCFormatted(SMPacket):
@@ -385,6 +395,9 @@ class SMPacketServerNSCUOpts(SMPacket):
 
 class SMPacketServerNSSMONL(SMPacket):
     _command = SMServerCommand.NSSMONL
+    _payload = [
+        (SMPayloadType.SMOServer, "packet")
+    ]
 
 class SMPacketServerNSCFormatted(SMPacket):
     _command = SMServerCommand.NSCFormatted
@@ -467,14 +480,14 @@ class SMOPacketServerGeneralInfo(SMOPacketServer):
     ]
 
 class SMOPacketServerRoomInfo(SMOPacketServer):
-    _command = SMOServerCommand.GENERALINFO
+    _command = SMOServerCommand.ROOMINFO
     _payload = [
         (SMPayloadType.NT, "song_title"),
         (SMPayloadType.NT, "song_subtitle"),
         (SMPayloadType.NT, "song_artist"),
         (1, "num_players"),
         (1, "max_players"),
-        (SMPayloadType.NTList, "list_player"),
+        (SMPayloadType.NTList, "players"),
     ]
 
 def main():
@@ -483,26 +496,23 @@ def main():
         second_player_feet=8,
         first_player_feet=12,
         song_title="Wouhou whouhouhou",
-        song_subtitle="super sous titer")
+        song_subtitle="super sous titer"
+    )
 
-    print(packet.opts)
-    print(packet.data)
+    print(packet)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
-    print(SMPacket.parse_binary(packet.binary).payload)
-
-    smopacket = SMPacket.new(
-        SMClientCommand.NSSMONL,
-        smopacket=SMOPacketClient.new(
-            SMOClientCommand.LOGIN,
-            username="prout",
-            password="pass"
+    packet = SMPacket.new(
+        SMServerCommand.NSSMONL,
+        packet=SMOPacketServer.new(
+            SMOServerCommand.ROOMINFO,
+            song_title="song_title",
+            players=["bidule", "machin", "trux"]
         )
     )
 
-    print(smopacket.opts)
-    print(smopacket.binary)
-
-    print(SMPacket.parse_binary(smopacket.binary).binary)
+    print(packet)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
 if __name__ == "__main__":
     main()

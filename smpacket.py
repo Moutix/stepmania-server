@@ -3,6 +3,11 @@ from enum import Enum
 class ParentCommand(Enum):
     @classmethod
     def get(cls, value, default=None):
+        try:
+            return cls(value)
+        except ValueError:
+            pass
+
         for klass in cls.__subclasses__():
             try:
                 return klass(value)
@@ -53,13 +58,13 @@ class SMServerCommand(SMCommand):
 class SMOCommand(ParentCommand):
     pass
 
-class SMOClientCommand(Enum):
+class SMOClientCommand(SMOCommand):
     LOGIN = 0
     ENTERROOM = 1
     CREATEROOM = 2
     ROOMINFO = 3
 
-class SMOServerCommand(Enum):
+class SMOServerCommand(SMOCommand):
     LOGIN = 0
     ROOMUPDATE = 1
     GENERALINFO = 3
@@ -113,7 +118,8 @@ class SMPayloadTypeSMOClient(SMPayloadTypeAbstract):
 
     @staticmethod
     def decode(payload):
-        tmp = SMOPacketClient.parse_binary(payload)
+        print(payload)
+        tmp = SMOPacketClient.parse_data(payload)
         if not tmp:
             return payload, None
         return payload[len(tmp.payload):], tmp
@@ -127,7 +133,8 @@ class SMPayloadTypeSMOServer(SMPayloadTypeAbstract):
 
     @staticmethod
     def decode(payload):
-        tmp = SMOPacketServer.parse_binary(payload)
+        print(payload)
+        tmp = SMOPacketServer.parse_data(payload)
         if not tmp:
             return payload, None
         return payload[len(tmp.payload):], tmp
@@ -142,6 +149,7 @@ class SMPayloadType(Enum):
     SMOServer = SMPayloadTypeSMOServer
 
 class SMPacket(object):
+    _command_type = SMCommand
     _command = None
     _payload = []
 
@@ -172,6 +180,7 @@ class SMPacket(object):
 
     @classmethod
     def get_class(cls, command):
+        print(command)
         klasses = [klass for klass in cls.__subclasses__() if klass._command == command]
         if not klasses:
             return None
@@ -244,17 +253,22 @@ class SMPacket(object):
         return cls(**opts)
 
     @classmethod
+    def parse_data(cls, data):
+        if not data:
+            return None
+
+        command = cls._command_type.get(data[0])
+        if not command:
+            return None
+
+        return cls.get_class(command).from_payload(data[1:])
+
+    @classmethod
     def parse_binary(cls, binary):
         if len(binary) < 4:
             return None
 
-        binary = binary[4:]
-
-        command = SMCommand.get(binary[0])
-        if not command:
-            return None
-
-        return cls.get_class(command).from_payload(binary[1:])
+        return cls.parse_data(binary[4:])
 
     @staticmethod
     def _to_bin_str(number, size=4):
@@ -268,16 +282,22 @@ class SMPacket(object):
         return "0"*(size-len(number)) + number
 
 class SMPacketClientNSCPing(SMPacket):
+    """ This command will cause server to respond with a PingR Command """
+
     _command = SMClientCommand.NSCPing
     _payload = []
 
 
 class SMPacketClientNSCPingR(SMPacket):
+    """ This command is used to respond to Ping Command. """
+
     _command = SMClientCommand.NSCPingR
     _payload = []
 
 
 class SMPacketClientNSCHello(SMPacket):
+    """ This is the first packet from a client to server """
+
     _command = SMClientCommand.NSCHello
     _payload = [
         (1, "version"),
@@ -285,6 +305,10 @@ class SMPacketClientNSCHello(SMPacket):
     ]
 
 class SMPacketClientNSCGSR(SMPacket):
+    """ Game Start Request:
+        This command is called once after most loading is done, and again
+        immediately before the sound starts. """
+
     _command = SMClientCommand.NSCGSR
     _payload = [
         (SMPayloadType.MSN, "first_player_feet"),
@@ -304,9 +328,15 @@ class SMPacketClientNSCGSR(SMPacket):
 
 
 class SMPacketClientNSCGON(SMPacket):
+    """ Game Over Notice:
+        This command is sent when end of game is encounterd """
+
     _command = SMClientCommand.NSCGON
 
 class SMPacketClientNSCGSU(SMPacket):
+    """ Game Status update:
+        Updates game info for each step """
+
     _command = SMClientCommand.NSCGSU
     _payload = [
         (SMPayloadType.MSN, "player_id"),
@@ -320,37 +350,88 @@ class SMPacketClientNSCGSU(SMPacket):
     ]
 
 class SMPacketClientNSCSU(SMPacket):
+    """ Style Update:
+    This is sent when a style is chosen. """
+
     _command = SMClientCommand.NSCSU
+    _payload = [
+        (1, "nb_players"),
+        (1, "player_id"),
+        (SMPayloadType.NT, "player_name"),
+    ]
 
 class SMPacketClientNSCCM(SMPacket):
+    """ Chat Message
+    The user typed a message for general chat. """
+
     _command = SMClientCommand.NSCCM
+    _payload = [
+        (SMPayloadType.NT, "message"),
+    ]
 
 class SMPacketClientNSCRSG(SMPacket):
+    """ Request Start Game and Tell server existance/non existance of song:
+        The user selected a song on a Net-enabled selection """
+
     _command = SMClientCommand.NSCRSG
+    _payload = [
+        (1, "usage"),
+        (SMPayloadType.NT, "song_title"),
+        (SMPayloadType.NT, "song_subtitle"),
+        (SMPayloadType.NT, "song_artist"),
+    ]
+
+
 
 class SMPacketClientNSCCUUL(SMPacket):
+    """ Reserved """
     _command = SMClientCommand.NSCCUUL
 
 class SMPacketClientNSSCSMS(SMPacket):
+    """ User entered/exited Network Music Selection Screen """
+
     _command = SMClientCommand.NSSCSMS
+    _payload = [
+        (1, "action"),
+    ]
 
 class SMPacketClientNSCUOpts(SMPacket):
+    """ User has changed player options """
+
     _command = SMClientCommand.NSCUOpts
+    _payload = [
+        (SMPayloadType.NT, "player_0"),
+        (SMPayloadType.NT, "player_1"),
+    ]
+
 
 class SMPacketClientNSSMONL(SMPacket):
+    """ SMOnline Packet.
+    The SMLan packet 12 is a wrapper for the SMOnline packet. """
+
     _command = SMClientCommand.NSSMONL
     _payload = [
         (SMPayloadType.SMOClient, "packet")
     ]
 
 class SMPacketClientNSCFormatted(SMPacket):
+    """ Reserved """
+
     _command = SMClientCommand.NSCFormatted
 
 class SMPacketClientNSCAttack(SMPacket):
+    """ Reserved """
+
     _command = SMClientCommand.NSCAttack
 
 class SMPacketClientXMLPacket(SMPacket):
+    """ XMLPacket
+    This packet contains data in XML format. """
+
     _command = SMClientCommand.XMLPacket
+    _payload = [
+        (SMPayloadType.NT, "xml"),
+    ]
 
 class SMPacketServerNSCPing(SMPacket):
     _command = SMServerCommand.NSCPing
@@ -409,14 +490,10 @@ class SMPacketServerXMLPacket(SMPacket):
     _command = SMServerCommand.XMLPacket
 
 class SMOPacketClient(SMPacket):
-    @classmethod
-    def parse_binary(cls, binary):
-        try:
-            command = SMOClientCommand(binary[0])
-        except KeyError:
-            return None
+    _command_type = SMOClientCommand
 
-        return cls.get_class(command).from_payload(binary[1:])
+class SMOPacketServer(SMPacket):
+    _command_type = SMOServerCommand
 
 class SMOPacketClientLogin(SMOPacketClient):
     _command = SMOClientCommand.LOGIN
@@ -450,16 +527,6 @@ class SMOPacketClientRoomInfo(SMOPacketClient):
         (SMPayloadType.NT, "room")
     ]
 
-class SMOPacketServer(SMPacket):
-    @classmethod
-    def parse_binary(cls, binary):
-        try:
-            command = SMOServerCommand(binary[0])
-        except KeyError:
-            return None
-
-        return cls.get_class(command).from_payload(binary[1:])
-
 class SMOPacketServerLogin(SMOPacketServer):
     _command = SMOServerCommand.LOGIN
     _payload = [
@@ -472,6 +539,7 @@ class SMOPacketServerRoomUpdate(SMOPacketServer):
     _payload = [
         (1, "type"),
     ]
+
 
 class SMOPacketServerGeneralInfo(SMOPacketServer):
     _command = SMOServerCommand.GENERALINFO
@@ -499,7 +567,6 @@ def main():
         song_subtitle="super sous titer"
     )
 
-    print(packet)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
     packet = SMPacket.new(
@@ -511,7 +578,6 @@ def main():
         )
     )
 
-    print(packet)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
 if __name__ == "__main__":

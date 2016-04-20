@@ -5,18 +5,6 @@ import socket
 import smpacket
 from threading import Thread, Lock
 
-class on_smcommand(object):
-    mapping = {}
-    
-    def __init__(self, command):
-        self.command = command
-
-    def __call__(self, f):
-        self.mapping[self.command] = f
-        def wrapped_f(*args):
-            f(*args)
-
-        return wrapped_f
 
 class StepmaniaThread(Thread):
     def __init__(self, serv, conn, ip, port):
@@ -31,7 +19,7 @@ class StepmaniaThread(Thread):
             try:
                 self._on_data(self._conn.recv(1024))
             except socket.error:
-                self._on_disconnect()
+                self._serv.on_disconnect(self)
                 break
 
         with self._serv.mutex:
@@ -44,7 +32,7 @@ class StepmaniaThread(Thread):
             print("packet %s drop" % data)
             return None
 
-        func = on_smcommand.mapping.get(packet.command)
+        func = getattr(self._serv, "on_%s" % packet.command.name.lower(), None)
         if not func:
             print("No action for packet %s" % packet.command.name)
             return None
@@ -53,9 +41,6 @@ class StepmaniaThread(Thread):
 
     def send(self, packet):
         self._conn.sendall(packet.binary)
-
-    def _on_disconnect(self):
-        print("Addr: %s disconnected" % self.ip)
 
 class StepmaniaServer(object):
     def __init__(self, ip, port):
@@ -75,7 +60,70 @@ class StepmaniaServer(object):
                 self.connections.append(thread)
             thread.start()
 
-    @on_smcommand(smpacket.SMClientCommand.NSCHello)
-    def on_hello(self, serv, packet):
+    def on_disconnect(self, serv):
+        pass
+
+    def on_nscping(self, serv, packet):
+        serv.send(smpacket.SMPacketServerNSCPingR())
+
+    def on_nscpingr(self, serv, packet):
+        pass
+
+    def on_nschello(self, serv, packet):
         serv.send(smpacket.SMPacketServerNSCHello(version=128, name="Ah que coucou"))
+
+    def on_nscgsr(self, serv, packet):
+        pass
+
+    def on_nscgon(self, serv, packet):
+        pass
+
+    def on_nscgsu(self, serv, packet):
+        pass
+
+    def on_nscsu(self, serv, packet):
+        pass
+
+    def on_nsccm(self, serv, packet):
+        pass
+
+    def on_nscrsg(self, serv, packet):
+        pass
+
+    def on_nsccuul(self, serv, packet):
+        pass
+
+    def on_nsscsms(self, serv, packet):
+        pass
+
+    def on_nscuopts(self, serv, packet):
+        pass
+
+    def on_nssmonl(self, serv, packet):
+        func = getattr(self, "on_%s" % packet.opts["packet"].command.name.lower(), None)
+        if not func:
+            return None
+
+        return func(serv, packet.opts["packet"])
+
+    def on_nscformatted(self, serv, packet):
+        pass
+
+    def on_nscattack(self, serv, packet):
+        pass
+
+    def on_xmlpacket (self, serv, packet):
+        pass
+
+    def on_login(self, serv, packet):
+        pass
+
+    def on_enterroom(self, serv, packet):
+        pass
+
+    def on_createroom(self, serv, packet):
+        pass
+
+    def on_roominfo(self, serv, packet):
+        pass
 

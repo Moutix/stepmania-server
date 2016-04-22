@@ -70,24 +70,43 @@ class SMOServerCommand(SMOCommand):
     GENERALINFO = 3
     ROOMINFO = 4
 
+
 class SMPayloadTypeAbstract(object):
     @staticmethod
-    def encode(data):
+    def encode(data, opt=None):
         return b''
 
     @staticmethod
-    def decode(payload):
+    def decode(payload, opt=None):
         return payload, None
+
+class SMPayloadTypeINT(SMPayloadTypeAbstract):
+    @staticmethod
+    def encode(data, opt=None):
+        if not data:
+            data = 0
+
+        if not opt:
+            opt = 1
+
+        return data.to_bytes(opt, byteorder='big')
+
+    @staticmethod
+    def decode(payload, opt=None):
+        if not opt:
+            opt = 1
+
+        return payload[opt:], int.from_bytes(payload[:opt], byteorder='big')
 
 class SMPayloadTypeNT(SMPayloadTypeAbstract):
     @staticmethod
-    def encode(data):
+    def encode(data, opt=None):
         if not data:
             return b'\x00'
         return data.replace('\x00', '').encode('utf-8') + b'\x00'
 
     @staticmethod
-    def decode(payload):
+    def decode(payload, opt=None):
         tmp = payload.split(b'\x00', 1)
         if len(tmp) < 2:
             return payload, None
@@ -95,13 +114,13 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
 
 class SMPayloadTypeNTList(SMPayloadTypeAbstract):
     @staticmethod
-    def encode(data):
+    def encode(data, opt=None):
         if not data:
             return b'\x00'
         return b'\x00'.join([d.replace('\x00', '').encode('utf-8') for d in data]) + b'\x00'
 
     @staticmethod
-    def decode(payload):
+    def decode(payload, opt=None):
         tmp = [p.decode('utf-8') for p in payload.split(b'\x00')]
         if not tmp:
             return payload, None
@@ -109,32 +128,19 @@ class SMPayloadTypeNTList(SMPayloadTypeAbstract):
         return '\x00', tmp[:-1]
 
 
-class SMPayloadTypeSMOClient(SMPayloadTypeAbstract):
+class SMPayloadTypePacket(SMPayloadTypeAbstract):
     @staticmethod
-    def encode(data):
+    def encode(data, opt=None):
         if not data:
             return b''
         return data.data
 
     @staticmethod
-    def decode(payload):
-        print(payload)
-        tmp = SMOPacketClient.parse_data(payload)
-        if not tmp:
-            return payload, None
-        return payload[len(tmp.payload):], tmp
+    def decode(payload, opt=None):
+        if not opt:
+            opt = SMPacket
 
-class SMPayloadTypeSMOServer(SMPayloadTypeAbstract):
-    @staticmethod
-    def encode(data):
-        if not data:
-            return b''
-        return data.data
-
-    @staticmethod
-    def decode(payload):
-        print(payload)
-        tmp = SMOPacketServer.parse_data(payload)
+        tmp = opt.parse_data(payload)
         if not tmp:
             return payload, None
         return payload[len(tmp.payload):], tmp
@@ -145,8 +151,8 @@ class SMPayloadType(Enum):
     LSN = 2
     NT = SMPayloadTypeNT
     NTList = SMPayloadTypeNTList
-    SMOClient = SMPayloadTypeSMOClient
-    SMOServer = SMPayloadTypeSMOServer
+    PACKET = SMPayloadTypePacket
+    INT = SMPayloadTypeINT
 
 class SMPacket(object):
     _command_type = SMCommand
@@ -180,7 +186,6 @@ class SMPacket(object):
 
     @classmethod
     def get_class(cls, command):
-        print(command)
         klasses = [klass for klass in cls.__subclasses__() if klass._command == command]
         if not klasses:
             return None
@@ -208,11 +213,7 @@ class SMPacket(object):
         payload = b""
         byte = ""
 
-        for size, name in self._payload:
-            if isinstance(size, int):
-                payload += self.opts.get(name, 0).to_bytes(size, byteorder='big')
-                continue
-
+        for size, name, opt in self._payload:
             if size == SMPayloadType.MSN:
                 byte += self._to_bin_str(self.opts.get(name, 0))
                 continue
@@ -223,7 +224,7 @@ class SMPacket(object):
                 byte = ""
                 continue
 
-            res = size.value.encode(self.opts.get(name))
+            res = size.value.encode(self.opts.get(name), opt)
             if not res:
                 continue
             payload += res
@@ -233,12 +234,7 @@ class SMPacket(object):
     @classmethod
     def from_payload(cls, payload):
         opts = {}
-        for size, name in cls._payload:
-            if isinstance(size, int):
-                opts[name] = int.from_bytes(payload[:size], byteorder='big')
-                payload = payload[size:]
-                continue
-
+        for size, name, opt in cls._payload:
             if size == SMPayloadType.MSN:
                 opts[name] = int(cls._to_bin_str(payload[0], 8)[:4], 2)
                 continue
@@ -248,7 +244,7 @@ class SMPacket(object):
                 payload = payload[1:]
                 continue
 
-            payload, opts[name] = size.value.decode(payload)
+            payload, opts[name] = size.value.decode(payload, opt)
 
         return cls(**opts)
 
@@ -281,6 +277,75 @@ class SMPacket(object):
 
         return "0"*(size-len(number)) + number
 
+class SMOPacketClient(SMPacket):
+    _command_type = SMOClientCommand
+
+class SMOPacketServer(SMPacket):
+    _command_type = SMOServerCommand
+
+class SMOPacketClientLogin(SMOPacketClient):
+    _command = SMOClientCommand.LOGIN
+    _payload = [
+        (SMPayloadType.INT, "player_number", None),
+        (SMPayloadType.INT, "encryption", None),
+        (SMPayloadType.NT, "username", None),
+        (SMPayloadType.NT, "password", None)
+    ]
+
+class SMOPacketClientEnterRoom(SMOPacketClient):
+    _command = SMOClientCommand.ENTERROOM
+    _payload = [
+        (SMPayloadType.INT, "enter", None),
+        (SMPayloadType.NT, "room", None),
+        (SMPayloadType.NT, "password", None)
+    ]
+
+class SMOPacketClientCreateRoom(SMOPacketClient):
+    _command = SMOClientCommand.CREATEROOM
+    _payload = [
+        (SMPayloadType.INT, "type", None),
+        (SMPayloadType.NT, "title", None),
+        (SMPayloadType.NT, "description", None),
+        (SMPayloadType.NT, "password", None)
+    ]
+
+class SMOPacketClientRoomInfo(SMOPacketClient):
+    _command = SMOClientCommand.ROOMINFO
+    _payload = [
+        (SMPayloadType.NT, "room", None)
+    ]
+
+class SMOPacketServerLogin(SMOPacketServer):
+    _command = SMOServerCommand.LOGIN
+    _payload = [
+        (SMPayloadType.INT, "approval", None),
+        (SMPayloadType.NT, "text", None)
+    ]
+
+class SMOPacketServerRoomUpdate(SMOPacketServer):
+    _command = SMOServerCommand.ROOMUPDATE
+    _payload = [
+        (SMPayloadType.INT, "type", None),
+    ]
+
+
+class SMOPacketServerGeneralInfo(SMOPacketServer):
+    _command = SMOServerCommand.GENERALINFO
+    _payload = [
+        (SMPayloadType.INT, "format", None),
+    ]
+
+class SMOPacketServerRoomInfo(SMOPacketServer):
+    _command = SMOServerCommand.ROOMINFO
+    _payload = [
+        (SMPayloadType.NT, "song_title", None),
+        (SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_artist", None),
+        (SMPayloadType.INT, "num_players", None),
+        (SMPayloadType.INT, "max_players", None),
+        (SMPayloadType.NTList, "players", None),
+    ]
+
 class SMPacketClientNSCPing(SMPacket):
     """ This command will cause server to respond with a PingR Command """
 
@@ -300,8 +365,8 @@ class SMPacketClientNSCHello(SMPacket):
 
     _command = SMClientCommand.NSCHello
     _payload = [
-        (1, "version"),
-        (SMPayloadType.NT, "name")
+        (SMPayloadType.INT, "version", None),
+        (SMPayloadType.NT, "name", None)
     ]
 
 class SMPacketClientNSCGSR(SMPacket):
@@ -311,19 +376,19 @@ class SMPacketClientNSCGSR(SMPacket):
 
     _command = SMClientCommand.NSCGSR
     _payload = [
-        (SMPayloadType.MSN, "first_player_feet"),
-        (SMPayloadType.LSN, "second_player_feet"),
-        (SMPayloadType.MSN, "first_player_difficulty"),
-        (SMPayloadType.LSN, "second_player_difficulty"),
-        (SMPayloadType.MSN, "start_position"),
-        (SMPayloadType.LSN, "reserved"),
-        (SMPayloadType.NT, "song_title"),
-        (SMPayloadType.NT, "song_subtitle"),
-        (SMPayloadType.NT, "song_artist"),
-        (SMPayloadType.NT, "course_title"),
-        (SMPayloadType.NT, "song_options"),
-        (SMPayloadType.NT, "first_player_options"),
-        (SMPayloadType.NT, "second_player_options"),
+        (SMPayloadType.MSN, "first_player_feet", None),
+        (SMPayloadType.LSN, "second_player_feet", None),
+        (SMPayloadType.MSN, "first_player_difficulty", None),
+        (SMPayloadType.LSN, "second_player_difficulty", None),
+        (SMPayloadType.MSN, "start_position", None),
+        (SMPayloadType.LSN, "reserved", None),
+        (SMPayloadType.NT, "song_title", None),
+        (SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_artist", None),
+        (SMPayloadType.NT, "course_title", None),
+        (SMPayloadType.NT, "song_options", None),
+        (SMPayloadType.NT, "first_player_options", None),
+        (SMPayloadType.NT, "second_player_options", None),
     ]
 
 
@@ -339,14 +404,14 @@ class SMPacketClientNSCGSU(SMPacket):
 
     _command = SMClientCommand.NSCGSU
     _payload = [
-        (SMPayloadType.MSN, "player_id"),
-        (SMPayloadType.LSN, "step_id"),
-        (SMPayloadType.MSN, "grade"),
-        (SMPayloadType.LSN, "reserved"),
-        (4, "score"),
-        (2, "combo"),
-        (2, "health"),
-        (2, "offset")
+        (SMPayloadType.MSN, "player_id", None),
+        (SMPayloadType.LSN, "step_id", None),
+        (SMPayloadType.MSN, "grade", None),
+        (SMPayloadType.LSN, "reserved", None),
+        (SMPayloadType.INT, "score", 4),
+        (SMPayloadType.INT, "combo", 2),
+        (SMPayloadType.INT, "health", 2),
+        (SMPayloadType.INT, "offset", 2)
     ]
 
 class SMPacketClientNSCSU(SMPacket):
@@ -355,9 +420,9 @@ class SMPacketClientNSCSU(SMPacket):
 
     _command = SMClientCommand.NSCSU
     _payload = [
-        (1, "nb_players"),
-        (1, "player_id"),
-        (SMPayloadType.NT, "player_name"),
+        (SMPayloadType.INT, "nb_players", None),
+        (SMPayloadType.INT, "player_id", None),
+        (SMPayloadType.NT, "player_name", None),
     ]
 
 class SMPacketClientNSCCM(SMPacket):
@@ -366,7 +431,7 @@ class SMPacketClientNSCCM(SMPacket):
 
     _command = SMClientCommand.NSCCM
     _payload = [
-        (SMPayloadType.NT, "message"),
+        (SMPayloadType.NT, "message", None),
     ]
 
 class SMPacketClientNSCRSG(SMPacket):
@@ -375,10 +440,10 @@ class SMPacketClientNSCRSG(SMPacket):
 
     _command = SMClientCommand.NSCRSG
     _payload = [
-        (1, "usage"),
-        (SMPayloadType.NT, "song_title"),
-        (SMPayloadType.NT, "song_subtitle"),
-        (SMPayloadType.NT, "song_artist"),
+        (SMPayloadType.INT, "usage", None),
+        (SMPayloadType.NT, "song_title", None),
+        (SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_artist", None),
     ]
 
 
@@ -392,7 +457,7 @@ class SMPacketClientNSSCSMS(SMPacket):
 
     _command = SMClientCommand.NSSCSMS
     _payload = [
-        (1, "action"),
+        (SMPayloadType.INT, "action", None),
     ]
 
 class SMPacketClientNSCUOpts(SMPacket):
@@ -400,8 +465,8 @@ class SMPacketClientNSCUOpts(SMPacket):
 
     _command = SMClientCommand.NSCUOpts
     _payload = [
-        (SMPayloadType.NT, "player_0"),
-        (SMPayloadType.NT, "player_1"),
+        (SMPayloadType.NT, "player_0", None),
+        (SMPayloadType.NT, "player_1", None),
     ]
 
 
@@ -411,7 +476,7 @@ class SMPacketClientNSSMONL(SMPacket):
 
     _command = SMClientCommand.NSSMONL
     _payload = [
-        (SMPayloadType.SMOClient, "packet")
+        (SMPayloadType.PACKET, "packet", SMOPacketClient)
     ]
 
 class SMPacketClientNSCFormatted(SMPacket):
@@ -430,30 +495,50 @@ class SMPacketClientXMLPacket(SMPacket):
 
     _command = SMClientCommand.XMLPacket
     _payload = [
-        (SMPayloadType.NT, "xml"),
+        (SMPayloadType.NT, "xml", None),
     ]
 
 class SMPacketServerNSCPing(SMPacket):
+    """ This command will cause server to respond with a PingR Command """
+
     _command = SMServerCommand.NSCPing
 
 class SMPacketServerNSCPingR(SMPacket):
+    """ This command is used to respond to a no operation."""
+
     _command = SMServerCommand.NSCPingR
 
 class SMPacketServerNSCHello(SMPacket):
+    """ This introduces the server. """
+
     _command = SMServerCommand.NSCHello
     _payload = [
-        (1, "version"),
-        (SMPayloadType.NT, "name"),
-        (4, "key")
+        (SMPayloadType.INT, "version", None),
+        (SMPayloadType.NT, "name", None),
+        (SMPayloadType.INT, "key", 4)
     ]
 
 class SMPacketServerNSCGSR(SMPacket):
+    """ Allow start:
+    This will cause the client to start the game."""
+
     _command = SMServerCommand.NSCGSR
 
 class SMPacketServerNSCGON(SMPacket):
+    """ Game over stats
+    This packet is send in response to the game over packet
+    it contains information regarding how well each player did. """
+
+    # Need to handle list
     _command = SMServerCommand.NSCGON
+    _payload = [
+        (SMPayloadType.INT, "nb_players", None),
+        (SMPayloadType.INT, "players_id", None),
+        (SMPayloadType.INT, "score", 4)
+    ]
 
 class SMPacketServerNSCGSU(SMPacket):
+
     _command = SMServerCommand.NSCGSU
 
 class SMPacketServerNSCSU(SMPacket):
@@ -477,7 +562,7 @@ class SMPacketServerNSCUOpts(SMPacket):
 class SMPacketServerNSSMONL(SMPacket):
     _command = SMServerCommand.NSSMONL
     _payload = [
-        (SMPayloadType.SMOServer, "packet")
+        (SMPayloadType.PACKET, "packet", SMOPacketServer)
     ]
 
 class SMPacketServerNSCFormatted(SMPacket):
@@ -488,75 +573,6 @@ class SMPacketServerNSCAttack(SMPacket):
 
 class SMPacketServerXMLPacket(SMPacket):
     _command = SMServerCommand.XMLPacket
-
-class SMOPacketClient(SMPacket):
-    _command_type = SMOClientCommand
-
-class SMOPacketServer(SMPacket):
-    _command_type = SMOServerCommand
-
-class SMOPacketClientLogin(SMOPacketClient):
-    _command = SMOClientCommand.LOGIN
-    _payload = [
-        (1, "player_number"),
-        (1, "encryption"),
-        (SMPayloadType.NT, "username"),
-        (SMPayloadType.NT, "password")
-    ]
-
-class SMOPacketClientEnterRoom(SMOPacketClient):
-    _command = SMOClientCommand.ENTERROOM
-    _payload = [
-        (1, "enter"),
-        (SMPayloadType.NT, "room"),
-        (SMPayloadType.NT, "password")
-    ]
-
-class SMOPacketClientCreateRoom(SMOPacketClient):
-    _command = SMOClientCommand.CREATEROOM
-    _payload = [
-        (1, "type"),
-        (SMPayloadType.NT, "title"),
-        (SMPayloadType.NT, "description"),
-        (SMPayloadType.NT, "password")
-    ]
-
-class SMOPacketClientRoomInfo(SMOPacketClient):
-    _command = SMOClientCommand.ROOMINFO
-    _payload = [
-        (SMPayloadType.NT, "room")
-    ]
-
-class SMOPacketServerLogin(SMOPacketServer):
-    _command = SMOServerCommand.LOGIN
-    _payload = [
-        (1, "approval"),
-        (SMPayloadType.NT, "text")
-    ]
-
-class SMOPacketServerRoomUpdate(SMOPacketServer):
-    _command = SMOServerCommand.ROOMUPDATE
-    _payload = [
-        (1, "type"),
-    ]
-
-
-class SMOPacketServerGeneralInfo(SMOPacketServer):
-    _command = SMOServerCommand.GENERALINFO
-    _payload = [
-        (1, "format"),
-    ]
-
-class SMOPacketServerRoomInfo(SMOPacketServer):
-    _command = SMOServerCommand.ROOMINFO
-    _payload = [
-        (SMPayloadType.NT, "song_title"),
-        (SMPayloadType.NT, "song_subtitle"),
-        (SMPayloadType.NT, "song_artist"),
-        (1, "num_players"),
-        (1, "max_players"),
-        (SMPayloadType.NTList, "players"),
-    ]
 
 def main():
     packet = SMPacket.new(
@@ -569,6 +585,7 @@ def main():
 
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
+    print(packet)
     packet = SMPacket.new(
         SMServerCommand.NSSMONL,
         packet=SMOPacketServer.new(
@@ -578,6 +595,8 @@ def main():
         )
     )
 
+    print(packet)
+    print(packet.payload)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
 if __name__ == "__main__":

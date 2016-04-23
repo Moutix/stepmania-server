@@ -98,7 +98,7 @@ class SMPayloadTypeINT(SMPayloadTypeAbstract):
 
         return payload[opt:], int.from_bytes(payload[:opt], byteorder='big')
 
-class SMPayloadTypeINTList(SMPayloadTypeAbstract):
+class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data, opt=None):
         if not data:
@@ -134,7 +134,7 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
             return payload, None
         return tmp[1], tmp[0].decode('utf-8')
 
-class SMPayloadTypeNTList(SMPayloadTypeAbstract):
+class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data, opt=None):
         if not data:
@@ -156,6 +156,32 @@ class SMPayloadTypeNTList(SMPayloadTypeAbstract):
             return payload, None
 
         return tmp[-1], [t.decode('utf-8') for t in tmp[:-1]]
+
+class SMPayloadTypeLIST(SMPayloadTypeAbstract):
+    @staticmethod
+    def encode(data, opt=None):
+        if not data:
+            data = []
+
+        if not opt:
+            opt = [1, []]
+
+        if len(data) < opt[0]:
+            data.extend([{} for _ in range(opt[0] - len(data))])
+
+        return b''.join(SMPacket.encode(d, opt[1]) for d in data)
+
+    @staticmethod
+    def decode(payload, opt=None):
+        if not opt:
+            opt = [1, []]
+
+        res = []
+        for _ in range(0, opt[0]):
+            payload, tmp = SMPacket.decode(payload, opt[1])
+            res.append(tmp)
+
+        return payload, res
 
 
 class SMPayloadTypePacket(SMPayloadTypeAbstract):
@@ -180,10 +206,11 @@ class SMPayloadType(Enum):
     MSN = 1
     LSN = 2
     NT = SMPayloadTypeNT
-    NTList = SMPayloadTypeNTList
+    NTLIST = SMPayloadTypeNTLIST
     PACKET = SMPayloadTypePacket
     INT = SMPayloadTypeINT
-    INTList = SMPayloadTypeINTList
+    INTLIST = SMPayloadTypeINTLIST
+    LIST = SMPayloadTypeLIST
 
 class SMPacket(object):
     _command_type = SMCommand
@@ -241,53 +268,11 @@ class SMPacket(object):
 
     @property
     def payload(self):
-        payload = b""
-        byte = ""
-
-        for size, name, opt in self._payload:
-            if size == SMPayloadType.MSN:
-                byte += self._to_bin_str(self.opts.get(name, 0))
-                continue
-
-            if size == SMPayloadType.LSN:
-                byte += self._to_bin_str(self.opts.get(name, 0))
-                payload += bytes([int(byte, 2)])
-                byte = ""
-                continue
-
-            if isinstance(opt, (tuple, list)):
-                opt = [self.opts.get(o, o) for o in opt]
-            else:
-                opt = self.opts.get(opt, opt)
-
-            res = size.value.encode(self.opts.get(name), opt)
-            if not res:
-                continue
-            payload += res
-
-        return payload
+        return self.encode(self.opts, self._payload)
 
     @classmethod
     def from_payload(cls, payload):
-        opts = {}
-        for size, name, opt in cls._payload:
-            if size == SMPayloadType.MSN:
-                opts[name] = int(cls._to_bin_str(payload[0], 8)[:4], 2)
-                continue
-
-            if size == SMPayloadType.LSN:
-                opts[name] = int(cls._to_bin_str(payload[0], 8)[4:], 2)
-                payload = payload[1:]
-                continue
-
-            if isinstance(opt, (tuple, list)):
-                opt = [opts.get(o, o) for o in opt]
-            else:
-                opt = opts.get(opt, opt)
-
-            payload, opts[name] = size.value.decode(payload, opt)
-
-        return cls(**opts)
+        return cls(**cls.decode(payload, cls._payload)[1])
 
     @classmethod
     def parse_data(cls, data):
@@ -306,6 +291,56 @@ class SMPacket(object):
             return None
 
         return cls.parse_data(binary[4:])
+
+    @classmethod
+    def encode(cls, values, payload_option):
+        payload = b""
+        byte = ""
+
+        for size, name, opt in payload_option:
+            if size == SMPayloadType.MSN:
+                byte += cls._to_bin_str(values.get(name, 0))
+                continue
+
+            if size == SMPayloadType.LSN:
+                byte += cls._to_bin_str(values.get(name, 0))
+                payload += bytes([int(byte, 2)])
+                byte = ""
+                continue
+
+            if isinstance(opt, (tuple)):
+                opt = [values.get(o, o) if isinstance(o, str) else o for o in opt]
+            elif isinstance(opt, str):
+                opt = values.get(opt, opt)
+
+            res = size.value.encode(values.get(name), opt)
+            if not res:
+                continue
+            payload += res
+
+        return payload
+
+    @classmethod
+    def decode(cls, payload, payload_option):
+        opts = {}
+        for size, name, opt in payload_option:
+            if size == SMPayloadType.MSN:
+                opts[name] = int(cls._to_bin_str(payload[0], 8)[:4], 2)
+                continue
+
+            if size == SMPayloadType.LSN:
+                opts[name] = int(cls._to_bin_str(payload[0], 8)[4:], 2)
+                payload = payload[1:]
+                continue
+
+            if isinstance(opt, (tuple)):
+                opt = [opts.get(o, o) if isinstance(o, str) else o for o in opt]
+            elif isinstance(opt, str):
+                opt = opts.get(opt, opt)
+
+            payload, opts[name] = size.value.decode(payload, opt)
+
+        return payload, opts
 
     @staticmethod
     def _to_bin_str(number, size=4):
@@ -384,7 +419,7 @@ class SMOPacketServerRoomInfo(SMOPacketServer):
         (SMPayloadType.NT, "song_artist", None),
         (SMPayloadType.INT, "num_players", None),
         (SMPayloadType.INT, "max_players", None),
-        (SMPayloadType.NTList, "players", "num_players"),
+        (SMPayloadType.NTLIST, "players", "num_players"),
     ]
 
 class SMPacketClientNSCPing(SMPacket):
@@ -570,22 +605,21 @@ class SMPacketServerNSCGON(SMPacket):
     This packet is send in response to the game over packet
     it contains information regarding how well each player did. """
 
-    # Need to handle list
     _command = SMServerCommand.NSCGON
     _payload = [
         (SMPayloadType.INT, "nb_players", 1),
-        (SMPayloadType.INTList, "ids", (1, "nb_players")),
-        (SMPayloadType.INTList, "scores", (4, "nb_players")),
-        (SMPayloadType.INTList, "grades", (1, "nb_players")),
-        (SMPayloadType.INTList, "miss", (2, "nb_players")),
-        (SMPayloadType.INTList, "boo", (2, "nb_players")),
-        (SMPayloadType.INTList, "good", (2, "nb_players")),
-        (SMPayloadType.INTList, "great", (2, "nb_players")),
-        (SMPayloadType.INTList, "perfect", (2, "nb_players")),
-        (SMPayloadType.INTList, "marvelous", (2, "nb_players")),
-        (SMPayloadType.INTList, "ok", (2, "nb_players")),
-        (SMPayloadType.INTList, "max_combo", (2, "nb_players")),
-        (SMPayloadType.NTList, "options", "nb_players"),
+        (SMPayloadType.INTLIST, "ids", (1, "nb_players")),
+        (SMPayloadType.INTLIST, "scores", (4, "nb_players")),
+        (SMPayloadType.INTLIST, "grades", (1, "nb_players")),
+        (SMPayloadType.INTLIST, "miss", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "boo", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "good", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "great", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "perfect", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "marvelous", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "ok", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "max_combo", (2, "nb_players")),
+        (SMPayloadType.NTLIST, "options", "nb_players"),
     ]
 
 class SMPacketServerNSCGSU(SMPacket):
@@ -633,6 +667,15 @@ class SMPacketServerNSCCUUL(SMPacket):
     This sends all the users currently connected """
 
     _command = SMServerCommand.NSCCUUL
+    _payload = [
+        (SMPayloadType.INT, "max_players", 1),
+        (SMPayloadType.INT, "nb_players", 1),
+        (SMPayloadType.LIST, "players", ("nb_players", [
+            (SMPayloadType.INT, "status", 1),
+            (SMPayloadType.NT, "name", None),
+            ])
+        )
+    ]
 
 class SMPacketServerNSSCSMS(SMPacket):
     """ Force change to Networking select music screen. """
@@ -722,6 +765,16 @@ def main():
     print(packet.payload)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
+    packet = SMPacket.new(
+        SMServerCommand.NSCCUUL,
+        max_players=255,
+        nb_players=5,
+        players=[{"status": 5, "name": "machin"}, {"status": 1, "name": "bidule"}]
+    )
+
+    print(packet)
+    print(packet.payload)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
 if __name__ == "__main__":
     main()

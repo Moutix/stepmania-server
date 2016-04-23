@@ -589,6 +589,14 @@ class SMPacketServerNSCGON(SMPacket):
     ]
 
 class SMPacketServerNSCGSU(SMPacket):
+    """ Scoreboard update
+    his will update the client's scoreboard. """
+
+    _command = SMServerCommand.NSCGSU
+    _payload = [
+    ]
+
+class SMPacketServerNSCSU(SMPacket):
     """ System Message
     Send system message to user """
 
@@ -597,7 +605,7 @@ class SMPacketServerNSCGSU(SMPacket):
         (SMPayloadType.NT, "message", None)
     ]
 
-class SMPacketServerNSCSU(SMPacket):
+class SMPacketServerNSCCM(SMPacket):
     """ Chat Message
     Add a chat message to the chat window on some StepMania screens. """
 
@@ -606,7 +614,8 @@ class SMPacketServerNSCSU(SMPacket):
         (SMPayloadType.NT, "message", None)
     ]
 
-class SMPacketServerNSCCM(SMPacket):
+
+class SMPacketServerNSCRSG(SMPacket):
     """ Tell client to start song/ask if client has song
     The user selected a song on a Net-enabled selection """
 
@@ -618,10 +627,11 @@ class SMPacketServerNSCCM(SMPacket):
         (SMPayloadType.NT, "song_subtitle", None),
     ]
 
-class SMPacketServerNSCRSG(SMPacket):
-    _command = SMServerCommand.NSCRSG
 
 class SMPacketServerNSCCUUL(SMPacket):
+    """ Update user list
+    This sends all the users currently connected """
+
     _command = SMServerCommand.NSCCUUL
 
 class SMPacketServerNSSCSMS(SMPacket):

@@ -183,7 +183,7 @@ class SMPayloadTypeLIST(SMPayloadTypeAbstract):
 
         return payload, res
 
-class SMPayloadTypeSINGLEMAP(SMPayloadTypeAbstract):
+class SMPayloadTypeMAP(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data, opt=None):
         if not opt:
@@ -233,7 +233,7 @@ class SMPayloadType(Enum):
     INT = SMPayloadTypeINT
     INTLIST = SMPayloadTypeINTLIST
     LIST = SMPayloadTypeLIST
-    SINGLEMAP = SMPayloadTypeSINGLEMAP
+    MAP = SMPayloadTypeMAP
 
 class SMPacket(object):
     _command_type = SMCommand
@@ -428,6 +428,33 @@ class SMOPacketServerRoomUpdate(SMOPacketServer):
     _command = SMOServerCommand.ROOMUPDATE
     _payload = [
         (SMPayloadType.INT, "type", None),
+        (SMPayloadType.MAP, "room_title", ("type", {
+            0: (SMPayloadType.NT, None, None),
+        })),
+        (SMPayloadType.MAP, "room_description", ("type", {
+            0: (SMPayloadType.NT, None, None),
+        })),
+        (SMPayloadType.MAP, "room_type", ("type", {
+            0: (SMPayloadType.INT, None, 1),
+        })),
+        (SMPayloadType.MAP, "subroom", ("type", {
+            0: (SMPayloadType.INT, None, 1),
+        })),
+        (SMPayloadType.MAP, "nb_rooms", ("type", {
+            1: (SMPayloadType.INT, None, 1),
+        })),
+        (SMPayloadType.MAP, "rooms", ("type", {
+            1: (SMPayloadType.LIST, None, ("nb_rooms", [
+                (SMPayloadType.NT, "title", None),
+                (SMPayloadType.NT, "description", None),
+            ])),
+        })),
+        (SMPayloadType.MAP, "room_status", ("type", {
+            1: (SMPayloadType.INTLIST, None, (1, "nb_rooms")),
+        })),
+        (SMPayloadType.MAP, "room_flags", ("type", {
+            1: (SMPayloadType.INTLIST, None, (1, "nb_rooms")),
+        })),
     ]
 
 
@@ -655,7 +682,7 @@ class SMPacketServerNSCGSU(SMPacket):
     _payload = [
         (SMPayloadType.INT, "section", 1),
         (SMPayloadType.INT, "nb_players", 1),
-        (SMPayloadType.SINGLEMAP, "options", ("section", {
+        (SMPayloadType.MAP, "options", ("section", {
             0: (SMPayloadType.INTLIST, None, (1, "nb_players")),
             1: (SMPayloadType.INTLIST, None, (2, "nb_players")),
             2: (SMPayloadType.INTLIST, None, (1, "nb_players")),
@@ -769,9 +796,10 @@ def main():
         song_subtitle="super sous titer"
     )
 
+    print(packet)
+    print(packet.payload)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
-    print(packet)
     packet = SMPacket.new(
         SMServerCommand.NSSMONL,
         packet=SMOPacketServer.new(
@@ -819,6 +847,38 @@ def main():
     print(packet.payload)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
+    packet = SMPacket.new(
+        SMServerCommand.NSSMONL,
+        packet=SMOPacketServer.new(
+            SMOServerCommand.ROOMUPDATE,
+            type=0,
+            room_title="Super Room",
+            subroom=1,
+            room_description="description de la salle",
+        )
+    )
+    print(packet)
+    print(packet.payload)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
+
+    packet = SMPacket.new(
+        SMServerCommand.NSSMONL,
+        packet=SMOPacketServer.new(
+            SMOServerCommand.ROOMUPDATE,
+            type=1,
+            nb_rooms=3,
+            rooms=[
+                {"title": "salle1", "description": "description1"},
+                {"title": "salle2", "description": "description2"},
+                {"title": "salle3", "description": "description3"},
+            ],
+            room_description="description de la salle",
+        )
+    )
+
+    print(packet)
+    print(packet.payload)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
 
 if __name__ == "__main__":
     main()

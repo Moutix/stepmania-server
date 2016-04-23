@@ -44,16 +44,16 @@ class SMServerCommand(SMCommand):
     NSCGSR = 131
     NSCGON = 132
     NSCGSU = 133
-    NSCSU = 144
-    NSCCM = 145
-    NSCRSG = 146
-    NSCCUUL = 147
-    NSSCSMS = 148
-    NSCUOpts = 149
-    NSSMONL = 150
-    NSCFormatted = 151
-    NSCAttack = 152
-    XMLPacket = 153
+    NSCSU = 134
+    NSCCM = 135
+    NSCRSG = 136
+    NSCCUUL = 137
+    NSSCSMS = 138
+    NSCUOpts = 139
+    NSSMONL = 140
+    NSCFormatted = 141
+    NSCAttack = 142
+    XMLPacket = 143
 
 class SMOCommand(ParentCommand):
     pass
@@ -183,6 +183,28 @@ class SMPayloadTypeLIST(SMPayloadTypeAbstract):
 
         return payload, res
 
+class SMPayloadTypeSINGLEMAP(SMPayloadTypeAbstract):
+    @staticmethod
+    def encode(data, opt=None):
+        if not opt:
+            opt = [0, {}]
+
+        size, _, sizeopt = opt[1].get(opt[0], (None, None, None))
+        if not size:
+            return b''
+
+        return size.value.encode(data, sizeopt)
+
+    @staticmethod
+    def decode(payload, opt=None):
+        if not opt:
+            opt = [0, {}]
+
+        size, _, sizeopt = opt[1].get(opt[0], (None, None, None))
+        if not size:
+            return payload, None
+
+        return size.value.decode(payload, sizeopt)
 
 class SMPayloadTypePacket(SMPayloadTypeAbstract):
     @staticmethod
@@ -211,6 +233,7 @@ class SMPayloadType(Enum):
     INT = SMPayloadTypeINT
     INTLIST = SMPayloadTypeINTLIST
     LIST = SMPayloadTypeLIST
+    SINGLEMAP = SMPayloadTypeSINGLEMAP
 
 class SMPacket(object):
     _command_type = SMCommand
@@ -308,12 +331,7 @@ class SMPacket(object):
                 byte = ""
                 continue
 
-            if isinstance(opt, (tuple)):
-                opt = [values.get(o, o) if isinstance(o, str) else o for o in opt]
-            elif isinstance(opt, str):
-                opt = values.get(opt, opt)
-
-            res = size.value.encode(values.get(name), opt)
+            res = size.value.encode(values.get(name), cls._replace_from_options(values, opt))
             if not res:
                 continue
             payload += res
@@ -333,14 +351,22 @@ class SMPacket(object):
                 payload = payload[1:]
                 continue
 
-            if isinstance(opt, (tuple)):
-                opt = [opts.get(o, o) if isinstance(o, str) else o for o in opt]
-            elif isinstance(opt, str):
-                opt = opts.get(opt, opt)
-
-            payload, opts[name] = size.value.decode(payload, opt)
+            payload, opts[name] = size.value.decode(payload, cls._replace_from_options(opts, opt))
 
         return payload, opts
+
+    @classmethod
+    def _replace_from_options(cls, options, value):
+        if isinstance(value, str):
+            return options.get(value, value)
+
+        if isinstance(value, (tuple, list)):
+            return [cls._replace_from_options(options, v) for v in value]
+
+        if isinstance(value, dict):
+            return dict((k, cls._replace_from_options(options, v)) for k, v in value.items())
+
+        return value
 
     @staticmethod
     def _to_bin_str(number, size=4):
@@ -523,7 +549,6 @@ class SMPacketClientNSCRSG(SMPacket):
     ]
 
 
-
 class SMPacketClientNSCCUUL(SMPacket):
     """ Reserved """
     _command = SMClientCommand.NSCCUUL
@@ -624,17 +649,24 @@ class SMPacketServerNSCGON(SMPacket):
 
 class SMPacketServerNSCGSU(SMPacket):
     """ Scoreboard update
-    his will update the client's scoreboard. """
+    This will update the client's scoreboard. """
 
     _command = SMServerCommand.NSCGSU
     _payload = [
+        (SMPayloadType.INT, "section", 1),
+        (SMPayloadType.INT, "nb_players", 1),
+        (SMPayloadType.SINGLEMAP, "options", ("section", {
+            0: (SMPayloadType.INTLIST, None, (1, "nb_players")),
+            1: (SMPayloadType.INTLIST, None, (2, "nb_players")),
+            2: (SMPayloadType.INTLIST, None, (1, "nb_players")),
+        }))
     ]
 
 class SMPacketServerNSCSU(SMPacket):
     """ System Message
     Send system message to user """
 
-    _command = SMServerCommand.NSCGSU
+    _command = SMServerCommand.NSCSU
     _payload = [
         (SMPayloadType.NT, "message", None)
     ]
@@ -775,6 +807,18 @@ def main():
     print(packet)
     print(packet.payload)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
+
+    packet = SMPacket.new(
+        SMServerCommand.NSCGSU,
+        section=1,
+        nb_players=3,
+        options=[1, 3, 5]
+    )
+
+    print(packet)
+    print(packet.payload)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
+
 
 if __name__ == "__main__":
     main()

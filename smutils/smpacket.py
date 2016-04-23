@@ -116,16 +116,24 @@ class SMPayloadTypeNTList(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data, opt=None):
         if not data:
-            return b'\x00'
+            return b'\x00'*opt if opt else b'\x00'
+
+        if opt and len(data) < opt:
+            data.extend(['' for _ in range(opt - len(data))])
+
         return b'\x00'.join([d.replace('\x00', '').encode('utf-8') for d in data]) + b'\x00'
 
     @staticmethod
     def decode(payload, opt=None):
-        tmp = [p.decode('utf-8') for p in payload.split(b'\x00')]
+        if opt:
+            tmp = payload.split(b'\x00', opt)
+        else:
+            tmp = payload.split(b'\x00')
+
         if not tmp:
             return payload, None
 
-        return '\x00', tmp[:-1]
+        return tmp[-1], [t.decode('utf-8') for t in tmp[:-1]]
 
 
 class SMPayloadTypePacket(SMPayloadTypeAbstract):
@@ -224,6 +232,7 @@ class SMPacket(object):
                 byte = ""
                 continue
 
+            opt = self.opts.get(opt, opt)
             res = size.value.encode(self.opts.get(name), opt)
             if not res:
                 continue
@@ -244,6 +253,7 @@ class SMPacket(object):
                 payload = payload[1:]
                 continue
 
+            opt = opts.get(opt, opt)
             payload, opts[name] = size.value.decode(payload, opt)
 
         return cls(**opts)
@@ -343,7 +353,7 @@ class SMOPacketServerRoomInfo(SMOPacketServer):
         (SMPayloadType.NT, "song_artist", None),
         (SMPayloadType.INT, "num_players", None),
         (SMPayloadType.INT, "max_players", None),
-        (SMPayloadType.NTList, "players", None),
+        (SMPayloadType.NTList, "players", "num_players"),
     ]
 
 class SMPacketClientNSCPing(SMPacket):
@@ -538,7 +548,6 @@ class SMPacketServerNSCGON(SMPacket):
     ]
 
 class SMPacketServerNSCGSU(SMPacket):
-
     _command = SMServerCommand.NSCGSU
 
 class SMPacketServerNSCSU(SMPacket):
@@ -591,7 +600,8 @@ def main():
         packet=SMOPacketServer.new(
             SMOServerCommand.ROOMINFO,
             song_title="song_title",
-            players=["bidule", "machin", "trux"]
+            num_players=3,
+            players=["bidule", "machin", "truc"]
         )
     )
 

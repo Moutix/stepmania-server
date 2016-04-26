@@ -257,6 +257,15 @@ class SMPacket(object):
             self.__class__.__name__,
             " ".join(['%s="%s"' % (k, v) for k, v in self.opts.items()]))
 
+    def __getitem__(self, value):
+        return self.opts[value]
+
+    def __setitem__(self, key, value):
+        self.opts[key] = value
+
+    def get(self, value, default=None):
+        return self.opts.get(value, default)
+
     @classmethod
     def new(cls, command, **kwargs):
         klasses = [klass for klass in cls.__subclasses__() if klass._command == command]

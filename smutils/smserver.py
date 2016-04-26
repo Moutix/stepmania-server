@@ -100,11 +100,11 @@ class StepmaniaServer(object):
         pass
 
     def on_nssmonl(self, serv, packet):
-        func = getattr(self, "on_%s" % packet.opts["packet"].command.name.lower(), None)
+        func = getattr(self, "on_%s" % packet["packet"].command.name.lower(), None)
         if not func:
             return None
 
-        return func(serv, packet.opts["packet"])
+        return func(serv, packet["packet"])
 
     def on_nscformatted(self, serv, packet):
         pass
@@ -116,7 +116,13 @@ class StepmaniaServer(object):
         pass
 
     def on_login(self, serv, packet):
-        pass
+        response = smpacket.SMPacketServerNSCUOpts(
+            packet=smpacket.SMOPacketServerLogin(
+                approval=1,
+                text="Succesfully Login"
+            )
+        )
+        serv.send(response)
 
     def on_enterroom(self, serv, packet):
         pass

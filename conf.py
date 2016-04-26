@@ -29,6 +29,18 @@ class Conf(dict):
                         help="Port to listen to (default: 8765)",
                         default=8765)
 
+    parser.add_argument('--auth.plugin',
+                        dest='auth.plugin',
+                        type=str,
+                        help="Plugin to use for auth (default: database)",
+                        default='database')
+
+    parser.add_argument('--auth.autocreate',
+                        dest='auth.autocreate',
+                        type=bool,
+                        help="Create user on first connection",
+                        default=True)
+
     parser.add_argument('-c', '--config',
                         dest='config',
                         help="Server's configuration file (default: conf.yml)",
@@ -45,6 +57,8 @@ class Conf(dict):
             self._add_to_conf(key, value)
 
         self.server = self["server"]
+        self.auth = self["auth"]
+        self.plugins = self.get("plugins", [])
 
     def _add_to_conf(self, arg, value, conf=None):
         if not conf:

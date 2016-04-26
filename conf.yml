@@ -11,3 +11,10 @@ database:
     user: user
     password: password
     database: database
+
+auth:
+    plugin: "database"
+    autocreate: True
+
+plugins:
+    chat.plugin: "StepmaniaChat"

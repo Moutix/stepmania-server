@@ -8,10 +8,17 @@ import conf
 from pluginmanager import PluginManager
 from authplugin import AuthPlugin
 from database import DataBase
+import logger
 
 class StepmaniaServer(smserver.StepmaniaServer):
     def __init__(self, config):
         self.config = config
+
+        self.log = logger.Logger(config.logger).logger
+
+        self.log.debug("Configuration loaded")
+
+        self.log.debug("Init database")
         self.db = DataBase(
             config.database.get("type", 'sqlite'),
             config.database.get("database"),
@@ -28,8 +35,11 @@ class StepmaniaServer(smserver.StepmaniaServer):
             "AuthPlugin",
             default=AuthPlugin)(self, config.auth["autocreate"])
 
+        self.log.debug("Load Plugins")
         self.plugins = PluginManager("StepmaniaPlugin", config.plugins, "plugins", "plugin")
+        self.log.debug("Plugins loaded")
 
+        self.log.debug("Start server")
         smserver.StepmaniaServer.__init__(self,
                                           config.server["ip"],
                                           config.server["port"])

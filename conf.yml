@@ -13,6 +13,13 @@ database:
     database:
     port:
 
+logger:
+    stderr:
+        level: "debug"
+    file:
+        level: "warning"
+        file: "log/stepmania.log"
+
 auth:
     plugin: "database"
     autocreate: True

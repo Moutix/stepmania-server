@@ -59,6 +59,7 @@ class Conf(dict):
         self.server = self["server"]
         self.database = self.get("database", {})
         self.auth = self["auth"]
+        self.logger = self.get("logger", {})
         self.plugins = self.get("plugins", [])
 
     def _add_to_conf(self, arg, value, conf=None):

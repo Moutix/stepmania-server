@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import socket
+import logging
 from threading import Thread, Lock
 
 from . import smpacket
@@ -13,6 +14,8 @@ class StepmaniaThread(Thread):
         self.port = port
         self._serv = serv
         self._conn = conn
+
+        self.logger = logging.getLogger('stepmania')
 
     def run(self):
         while True:
@@ -29,15 +32,17 @@ class StepmaniaThread(Thread):
     def _on_data(self, data):
         packet = smpacket.SMPacket.parse_binary(data)
         if not packet:
-            print("packet %s drop" % data)
+            self.logger.info("packet %s drop" % data)
             return None
+
+        self.logger.debug("Packet %s received" % packet.command.name)
 
         func = getattr(self._serv, "on_%s" % packet.command.name.lower(), None)
         if not func:
-            print("No action for packet %s" % packet.command.name)
+            self.logger.warning("No action for packet %s" % packet.command.name)
             return None
 
-        func(self._serv, self, packet)
+        func(self, packet)
 
     def send(self, packet):
         self._conn.sendall(packet.binary)

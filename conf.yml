@@ -7,10 +7,11 @@ server:
     readtimeout: 250
 
 database:
-    type: ...
-    user: user
-    password: password
-    database: database
+    type:
+    user:
+    password:
+    database:
+    port:
 
 auth:
     plugin: "database"

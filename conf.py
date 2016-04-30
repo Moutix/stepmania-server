@@ -57,6 +57,7 @@ class Conf(dict):
             self._add_to_conf(key, value)
 
         self.server = self["server"]
+        self.database = self.get("database", {})
         self.auth = self["auth"]
         self.plugins = self.get("plugins", [])
 

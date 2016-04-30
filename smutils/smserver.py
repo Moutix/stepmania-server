@@ -8,6 +8,8 @@ from threading import Thread, Lock
 from . import smpacket
 
 class StepmaniaThread(Thread):
+    logger = logging.getLogger('stepmania')
+
     def __init__(self, serv, conn, ip, port):
         Thread.__init__(self)
         self.ip = ip
@@ -15,7 +17,8 @@ class StepmaniaThread(Thread):
         self._serv = serv
         self._conn = conn
 
-        self.logger = logging.getLogger('stepmania')
+        self.logger.info("New connection: %s on port %s" % (ip, port))
+
 
     def run(self):
         while True:
@@ -32,19 +35,20 @@ class StepmaniaThread(Thread):
     def _on_data(self, data):
         packet = smpacket.SMPacket.parse_binary(data)
         if not packet:
-            self.logger.info("packet %s drop" % data)
+            self.logger.info("packet %s drop from %s" % (data, self.ip))
             return None
 
-        self.logger.debug("Packet %s received" % packet.command.name)
+        self.logger.debug("Packet received from %s: %s" % (self.ip, packet))
 
         func = getattr(self._serv, "on_%s" % packet.command.name.lower(), None)
         if not func:
-            self.logger.warning("No action for packet %s" % packet.command.name)
+            self.logger.warning("No action for packet: %s" % packet)
             return None
 
         func(self, packet)
 
     def send(self, packet):
+        self.logger.debug("packet send to %s: %s" % (self.ip, packet))
         self._conn.sendall(packet.binary)
 
 class StepmaniaServer(object):

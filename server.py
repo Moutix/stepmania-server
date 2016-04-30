@@ -20,12 +20,13 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
         self.log.debug("Init database")
         self.db = DataBase(
-            config.database.get("type", 'sqlite'),
-            config.database.get("database"),
-            config.database.get("user"),
-            config.database.get("password"),
-            config.database.get("port"),
-            config.database.get("driver"),
+            type=config.database.get("type", 'sqlite'),
+            database=config.database.get("database"),
+            user=config.database.get("user"),
+            password=config.database.get("password"),
+            host=config.database.get("host"),
+            port=config.database.get("port"),
+            driver=config.database.get("driver"),
         )
 
         self.db.create_tables()
@@ -50,16 +51,18 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=self.config.server["name"]))
 
     def on_login(self, serv, packet):
-        connected = self.auth.login(packet["login"], packet["password"])
+        connected = self.auth.login(packet["username"], packet["password"])
 
         if connected:
             approval = 0
             text = "Successfully Login"
+            self.log.info("Player %s successfully login" % packet["username"])
         else:
             approval = 1
             text = "Connection failed"
+            self.log.info("Player %s failed to connect" % packet["username"])
 
-        serv.send(smpacket.SMPacketServerNSCUOpts(
+        serv.send(smpacket.SMPacketServerNSSMONL(
             packet=smpacket.SMOPacketServerLogin(
                 approval=approval,
                 text=text

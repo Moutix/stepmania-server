@@ -7,11 +7,13 @@ server:
     readtimeout: 250
 
 database:
-    type:
-    user:
-    password:
-    database:
+    type: "mysql"
+    user: "stepmania"
+    password: "stepmania"
+    database: "stepmania"
+    host: "localhost"
     port:
+    driver: "pymysql"
 
 logger:
     stderr:

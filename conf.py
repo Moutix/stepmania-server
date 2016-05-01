@@ -35,16 +35,20 @@ class Conf(dict):
                         help="Plugin to use for auth (default: database)",
                         default='database')
 
-    parser.add_argument('--auth.autocreate',
+    parser.add_argument('--disable_user_creation',
                         dest='auth.autocreate',
-                        type=bool,
-                        help="Create user on first connection",
-                        default=True)
+                        action='store_false',
+                        help="Don't allow user creation on login")
 
     parser.add_argument('-c', '--config',
                         dest='config',
                         help="Server's configuration file (default: conf.yml)",
                         default="conf.yml")
+
+    parser.add_argument('--update_schema',
+                        dest='database.update_schema',
+                        action='store_true',
+                        help="Drop all the db tables and recreate them")
 
     def __init__(self, *args):
         dict.__init__(self)

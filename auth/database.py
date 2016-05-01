@@ -6,14 +6,13 @@ import schema
 
 class AuthDatabase(authplugin.AuthPlugin):
     def login(self, user, password):
-        session = self.server.db.session()
-
-        user = (session
-                .query(schema.User)
-                .filter_by(name=user)
-                .filter_by(password=password)
-                .first()
-                )
+        with self.server.db.session_scope() as session:
+            user = (session
+                    .query(schema.User)
+                    .filter_by(name=user)
+                    .filter_by(password=password)
+                    .first()
+                    )
 
         if user:
             return True
@@ -21,7 +20,7 @@ class AuthDatabase(authplugin.AuthPlugin):
         if not self.autocreate:
             return False
 
-        session.add(schema.User(name=user, password=password))
-        session.commit()
+        with self.server.db.session_scope() as session:
+            session.add(schema.User(name=user, password=password))
         return True
 

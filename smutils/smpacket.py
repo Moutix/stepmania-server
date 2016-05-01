@@ -466,6 +466,14 @@ class SMOPacketServerRoomUpdate(SMOPacketServer):
         })),
     ]
 
+    class RoomStatus(Enum):
+        normal = 0
+        unused = 1
+        in_game = 2
+        first_stage = 3
+        second_stage = 4
+
+    roomStatus = RoomStatus
 
 class SMOPacketServerGeneralInfo(SMOPacketServer):
     _command = SMOServerCommand.GENERALINFO

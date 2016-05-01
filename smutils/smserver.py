@@ -14,11 +14,11 @@ class StepmaniaThread(Thread):
         Thread.__init__(self)
         self.ip = ip
         self.port = port
+        self.user = None
         self._serv = serv
         self._conn = conn
 
         self.logger.info("New connection: %s on port %s" % (ip, port))
-
 
     def run(self):
         while True:

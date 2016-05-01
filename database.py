@@ -4,6 +4,8 @@
 import schema
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from contextlib import contextmanager
+
 
 class DataBase(object):
     def __init__(self, type="sqlite", database=None, user=None,
@@ -31,6 +33,19 @@ class DataBase(object):
     def session(self):
         return sessionmaker(bind=self.engine)
 
+    @contextmanager
+    def session_scope(self):
+        """Provide a transactional scope around a series of operations."""
+        session = self.session()
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     @property
     def _database_url(self):
         return '{dialect}{driver}://{username}{password}{host}{port}{database}'.format(
@@ -44,5 +59,9 @@ class DataBase(object):
         )
 
     def create_tables(self):
+        schema.Base.metadata.create_all(self.engine)
+
+    def recreate_tables(self):
+        schema.Base.metadata.drop_all(self.engine)
         schema.Base.metadata.create_all(self.engine)
 

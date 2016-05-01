@@ -2,13 +2,23 @@
 # -*- coding: utf8 -*-
 
 import sys
+import hashlib
 
+from sqlalchemy import or_, and_
 from smutils import smserver, smpacket
 import conf
 from pluginmanager import PluginManager
 from authplugin import AuthPlugin
 from database import DataBase
 import logger
+import schema
+
+
+def with_session(func):
+    def wrapper(self, serv, packet):
+        with self.db.session_scope() as session:
+            func(self, serv, packet, session)
+    return wrapper
 
 class StepmaniaServer(smserver.StepmaniaServer):
     def __init__(self, config):
@@ -29,7 +39,10 @@ class StepmaniaServer(smserver.StepmaniaServer):
             driver=config.database.get("driver"),
         )
 
-        self.db.create_tables()
+        if self.config.database["update_schema"]:
+            self.update_schema()
+        else:
+            self.db.create_tables()
 
         self.auth = PluginManager.import_plugin(
             'auth.%s' % config.auth["plugin"],
@@ -50,24 +63,90 @@ class StepmaniaServer(smserver.StepmaniaServer):
             version=128,
             name=self.config.server["name"]))
 
-    def on_login(self, serv, packet):
+    @with_session
+    def on_login(self, serv, packet, session):
         connected = self.auth.login(packet["username"], packet["password"])
 
-        if connected:
-            approval = 0
-            text = "Successfully Login"
-            self.log.info("Player %s successfully login" % packet["username"])
-        else:
-            approval = 1
-            text = "Connection failed"
+        if not connected:
             self.log.info("Player %s failed to connect" % packet["username"])
+            serv.send(smpacket.SMPacketServerNSSMONL(
+                packet=smpacket.SMOPacketServerLogin(
+                    approval=1,
+                    text="Connection failed"
+                )
+            ))
+            return
+
+        user = session.query(schema.User).filter_by(name=packet["username"]).first()
+        if not user:
+            user = schema.User(name=packet["username"])
+            session.add(user)
+        user.last_ip = serv.ip
+
+        session.commit()
+
+        serv.user = user.id
 
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=smpacket.SMOPacketServerLogin(
-                approval=approval,
-                text=text
+                approval=0,
+                text="Successfully login"
             )
         ))
+        serv.send(schema.Room.smo_list(session))
+
+    @with_session
+    def on_enterroom(self, serv, packet, session):
+        if packet["enter"] == 0:
+            serv.send(schema.Room.smo_list(session))
+            #TODO: Player leaves room
+            return
+
+        room = (
+            session.query(schema.Room)
+            .filter_by(name=packet["room"])
+            .filter(or_(
+                schema.Room.password.is_(None),
+                and_(
+                    schema.Room.password.isnot(None),
+                    schema.Room.password == hashlib.sha256(packet["password"].encode('utf-8')).hexdigest()
+                )))
+            .first()
+            )
+
+        self.log.info("Player %d enter in room %s" % (serv.user, room.name))
+
+        if not room:
+            return
+
+        #TODO: Player enter room (store in database ?)
+        serv.send(smpacket.SMPacketServerNSSMONL(
+            packet=room.to_packet()
+        ))
+
+    @with_session
+    def on_createroom(self, serv, packet, session):
+        room = schema.Room(
+            name=packet["title"],
+            description=packet["description"],
+            type=packet["type"],
+            password=hashlib.sha256(packet["password"].encode('utf-8')).hexdigest(),
+            creator_id=serv.user
+        )
+        session.add(room)
+
+        self.log.info("New room %s created by player %s" % (room.name, room.creator))
+
+        serv.send(smpacket.SMPacketServerNSSMONL(
+            packet=room.to_packet()
+        ))
+
+    def on_roominfo(self, serv, packet):
+        pass
+
+    def update_schema(self):
+        self.log.info("DROP all the database tables")
+        self.db.recreate_tables()
 
 def main():
     config = conf.Conf(*sys.argv[1:])

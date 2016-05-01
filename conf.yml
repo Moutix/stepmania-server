@@ -19,7 +19,7 @@ logger:
     stderr:
         level: "debug"
     file:
-        level: "warning"
+        level: "info"
         file: "log/stepmania.log"
 
 auth:

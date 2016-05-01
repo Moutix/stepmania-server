@@ -48,8 +48,9 @@ class StepmaniaThread(Thread):
         func(self, packet)
 
     def send(self, packet):
-        self.logger.debug("packet send to %s: %s" % (self.ip, packet))
-        self._conn.sendall(packet.binary)
+        with self._serv.mutex:
+            self.logger.debug("packet send to %s: %s" % (self.ip, packet))
+            self._conn.sendall(packet.binary)
 
 class StepmaniaServer(object):
     def __init__(self, ip, port):
@@ -68,6 +69,10 @@ class StepmaniaServer(object):
             with self.mutex:
                 self.connections.append(thread)
             thread.start()
+
+    def sendall(self, packet):
+        for conn in self.connections:
+            conn.send(packet)
 
     def on_disconnect(self, serv):
         pass
@@ -94,7 +99,7 @@ class StepmaniaServer(object):
         pass
 
     def on_nsccm(self, serv, packet):
-        pass
+        self.sendall(smpacket.SMPacketServerNSCCM(message="|c0%s" % packet["message"]))
 
     def on_nscrsg(self, serv, packet):
         pass

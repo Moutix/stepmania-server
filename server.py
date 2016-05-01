@@ -130,7 +130,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=packet["title"],
             description=packet["description"],
             type=packet["type"],
-            password=hashlib.sha256(packet["password"].encode('utf-8')).hexdigest(),
+            password=hashlib.sha256(packet["password"].encode('utf-8')).hexdigest() if packet["password"] else None,
             creator_id=serv.user
         )
         session.add(room)

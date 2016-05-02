@@ -4,31 +4,12 @@
 import datetime
 from smutils import smpacket
 
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+import models.schema
 
-class User(Base):
-    __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255))
-    password = Column(String(255))
-    email = Column(String(255))
-    rank = Column(Integer, default=0)
-    xp = Column(Integer, default=0)
-    last_ip = Column(String(255))
-    rooms = relationship("Room", back_populates="creator")
-
-    created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
-
-    def __repr__(self):
-        return "<User #%s (name='%s')>" % (self.id, self.name)
-
-class Room(Base):
+class Room(models.schema.Base):
     __tablename__ = 'rooms'
 
     id = Column(Integer, primary_key=True)
@@ -37,8 +18,9 @@ class Room(Base):
     description = Column(Text, default="")
     status = Column(Integer, default=0)
     type = Column(Integer, default=1)
-    creator_id = Column(Integer, ForeignKey('users.id', ondelete="SET NULL"))
+    creator_id = Column(Integer, ForeignKey('users.id', ondelete="SET NULL", use_alter=True))
     creator = relationship("User", back_populates="rooms")
+    users = relationship("User", back_populates="room")
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)

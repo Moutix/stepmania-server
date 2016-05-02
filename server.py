@@ -3,21 +3,20 @@
 
 import sys
 import hashlib
-
 from sqlalchemy import or_, and_
+
 from smutils import smserver, smpacket
-import conf
 from pluginmanager import PluginManager
 from authplugin import AuthPlugin
 from database import DataBase
+import conf
 import logger
-import schema
-
+import models
 
 def with_session(func):
-    def wrapper(self, serv, packet):
+    def wrapper(self, *opt):
         with self.db.session_scope() as session:
-            func(self, serv, packet, session)
+            func(self, session, *opt)
     return wrapper
 
 class StepmaniaServer(smserver.StepmaniaServer):
@@ -64,7 +63,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=self.config.server["name"]))
 
     @with_session
-    def on_login(self, serv, packet, session):
+    def on_login(self, session, serv, packet):
         connected = self.auth.login(packet["username"], packet["password"])
 
         if not connected:
@@ -77,13 +76,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
             ))
             return
 
-        user = session.query(schema.User).filter_by(name=packet["username"]).first()
-        if not user:
-            user = schema.User(name=packet["username"])
-            session.add(user)
-        user.last_ip = serv.ip
-
-        session.commit()
+        user = models.User.connect(packet["username"], serv.ip, session)
 
         serv.user = user.id
 
@@ -93,23 +86,23 @@ class StepmaniaServer(smserver.StepmaniaServer):
                 text="Successfully login"
             )
         ))
-        serv.send(schema.Room.smo_list(session))
+        serv.send(models.Room.smo_list(session))
 
     @with_session
-    def on_enterroom(self, serv, packet, session):
+    def on_enterroom(self, session, serv, packet):
         if packet["enter"] == 0:
-            serv.send(schema.Room.smo_list(session))
+            serv.send(models.Room.smo_list(session))
             #TODO: Player leaves room
             return
 
         room = (
-            session.query(schema.Room)
+            session.query(models.Room)
             .filter_by(name=packet["room"])
             .filter(or_(
-                schema.Room.password.is_(None),
+                models.Room.password.is_(None),
                 and_(
-                    schema.Room.password.isnot(None),
-                    schema.Room.password == hashlib.sha256(packet["password"].encode('utf-8')).hexdigest()
+                    models.Room.password.isnot(None),
+                    models.Room.password == hashlib.sha256(packet["password"].encode('utf-8')).hexdigest()
                 )))
             .first()
             )
@@ -125,8 +118,8 @@ class StepmaniaServer(smserver.StepmaniaServer):
         ))
 
     @with_session
-    def on_createroom(self, serv, packet, session):
-        room = schema.Room(
+    def on_createroom(self, session, serv, packet):
+        room = models.Room(
             name=packet["title"],
             description=packet["description"],
             type=packet["type"],

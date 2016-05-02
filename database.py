@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-import schema
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 
+from models import schema
 
 class DataBase(object):
     def __init__(self, type="sqlite", database=None, user=None,

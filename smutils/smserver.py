@@ -5,7 +5,7 @@ import socket
 import logging
 from threading import Thread, Lock
 
-from . import smpacket
+from smutils import smpacket
 
 class StepmaniaThread(Thread):
     logger = logging.getLogger('stepmania')

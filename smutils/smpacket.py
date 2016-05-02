@@ -466,15 +466,6 @@ class SMOPacketServerRoomUpdate(SMOPacketServer):
         })),
     ]
 
-    class RoomStatus(Enum):
-        normal = 0
-        unused = 1
-        in_game = 2
-        first_stage = 3
-        second_stage = 4
-
-    roomStatus = RoomStatus
-
 class SMOPacketServerGeneralInfo(SMOPacketServer):
     _command = SMOServerCommand.GENERALINFO
     _payload = [
@@ -764,9 +755,13 @@ class SMPacketServerNSSCSMS(SMPacket):
 
 
 class SMPacketServerNSCUOpts(SMPacket):
+    """ Reserved """
     _command = SMServerCommand.NSCUOpts
 
 class SMPacketServerNSSMONL(SMPacket):
+    """ SMOnline Packet
+    The SMLan packet 12 is a wrapper for the SMOnline packet. """
+
     _command = SMServerCommand.NSSMONL
     _payload = [
         (SMPayloadType.PACKET, "packet", SMOPacketServer)

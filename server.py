@@ -63,6 +63,14 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=self.config.server["name"]))
 
     @with_session
+    def on_nsccuul(self, session, serv, packet):
+        user = session.query(models.User).get(serv.id)
+        if not user:
+            return
+
+        user.status = packet["status"]
+
+    @with_session
     def on_login(self, session, serv, packet):
         connected = self.auth.login(packet["username"], packet["password"])
 

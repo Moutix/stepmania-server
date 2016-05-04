@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import datetime
+import enum
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -18,6 +19,7 @@ class User(models.schema.Base):
     xp = Column(Integer, default=0)
     last_ip = Column(String(255))
     online = Column(Boolean)
+    status = Column(Integer, default=0)
 
     room_id = Column(Integer, ForeignKey('rooms.id', ondelete="SET NULL", use_alter=True))
     room = relationship("Room", back_populates="users")

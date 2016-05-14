@@ -108,11 +108,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_disconnect(self, session, serv):
-        if not serv.user:
-            self.log.info("Player %s disconnected" % serv.ip)
-            return
-
-        user = session.query(models.User).get(serv.user)
+        user = self.get_user(serv.user, session)
         if not user:
             self.log.info("Player %s disconnected" % serv.ip)
             return
@@ -123,9 +119,14 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_enterroom(self, session, serv, packet):
+        user = self.get_user(serv.user, session)
+        if not user:
+            self.log.info("User unknown return")
+            return
+
         if packet["enter"] == 0:
             serv.send(models.Room.smo_list(session))
-            #TODO: Player leaves room
+            user.room = None
             return
 
         room = (
@@ -145,7 +146,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
         if not room:
             return
 
-        #TODO: Player enter room (store in database ?)
+        room.users.append(user)
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))
@@ -172,6 +173,13 @@ class StepmaniaServer(smserver.StepmaniaServer):
     def update_schema(self):
         self.log.info("DROP all the database tables")
         self.db.recreate_tables()
+
+
+    def get_user(self, user_id, session):
+        if not user_id:
+            return None
+
+        return session.query(models.User).get(user_id)
 
 def main():
     config = conf.Conf(*sys.argv[1:])

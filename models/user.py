@@ -29,7 +29,7 @@ class User(models.schema.Base):
     status = Column(Integer, default=1)
 
     room_id = Column(Integer, ForeignKey('rooms.id'))
-    room = relationship("Room")
+    room = relationship("Room", back_populates="users")
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)

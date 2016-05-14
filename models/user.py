@@ -8,6 +8,13 @@ from sqlalchemy.orm import relationship
 
 import models.schema
 
+class UserStatus(enum.Enum):
+    unknown = 1
+    music_selection = 2
+    option = 3
+    evaluation = 4
+    room_selection = 5
+
 class User(models.schema.Base):
     __tablename__ = 'users'
 
@@ -19,17 +26,20 @@ class User(models.schema.Base):
     xp = Column(Integer, default=0)
     last_ip = Column(String(255))
     online = Column(Boolean)
-    status = Column(Integer, default=0)
+    status = Column(Integer, default=1)
 
-    room_id = Column(Integer, ForeignKey('rooms.id', ondelete="SET NULL", use_alter=True))
-    room = relationship("Room", back_populates="users")
-    rooms = relationship("Room", back_populates="creator")
+    room_id = Column(Integer, ForeignKey('rooms.id'))
+    room = relationship("Room")
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
         return "<User #%s (name='%s')>" % (self.id, self.name)
+
+    @property
+    def enum_status(self):
+        return UserStatus(self.status)
 
     @classmethod
     def connect(cls, name, ip, session):
@@ -42,5 +52,11 @@ class User(models.schema.Base):
 
         session.commit()
 
+        return user
+
+    @classmethod
+    def disconnect(cls, user, session):
+        user.online = False
+        session.commit()
         return user
 

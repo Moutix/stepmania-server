@@ -63,12 +63,22 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=self.config.server["name"]))
 
     @with_session
-    def on_nsccuul(self, session, serv, packet):
-        user = session.query(models.User).get(serv.id)
+    def on_nsscsms(self, session, serv, packet):
+        if not serv.user:
+            return
+
+        user = session.query(models.User).get(serv.user)
         if not user:
             return
 
-        user.status = packet["status"]
+        status_mapping = {
+            1: models.UserStatus.music_selection,
+            3: models.UserStatus.option,
+            5: models.UserStatus.evaluation,
+            7: models.UserStatus.room_selection
+        }
+
+        user.status = status_mapping.get(packet["action"], models.UserStatus.unknown).value
 
     @with_session
     def on_login(self, session, serv, packet):
@@ -95,6 +105,21 @@ class StepmaniaServer(smserver.StepmaniaServer):
             )
         ))
         serv.send(models.Room.smo_list(session))
+
+    @with_session
+    def on_disconnect(self, session, serv):
+        if not serv.user:
+            self.log.info("Player %s disconnected" % serv.ip)
+            return
+
+        user = session.query(models.User).get(serv.user)
+        if not user:
+            self.log.info("Player %s disconnected" % serv.ip)
+            return
+
+        models.User.disconnect(user, session)
+
+        self.log.info("Player %s disconnected" % user.name)
 
     @with_session
     def on_enterroom(self, session, serv, packet):
@@ -131,12 +156,11 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=packet["title"],
             description=packet["description"],
             type=packet["type"],
-            password=hashlib.sha256(packet["password"].encode('utf-8')).hexdigest() if packet["password"] else None,
-            creator_id=serv.user
+            password=hashlib.sha256(packet["password"].encode('utf-8')).hexdigest() if packet["password"] else None
         )
         session.add(room)
 
-        self.log.info("New room %s created by player %s" % (room.name, room.creator))
+        self.log.info("New room %s created by player %s" % (room.name, serv.user))
 
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()

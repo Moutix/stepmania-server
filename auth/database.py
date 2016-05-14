@@ -5,11 +5,11 @@ import authplugin
 import models
 
 class AuthDatabase(authplugin.AuthPlugin):
-    def login(self, user, password):
+    def login(self, name, password):
         with self.server.db.session_scope() as session:
             user = (session
                     .query(models.User)
-                    .filter_by(name=user)
+                    .filter_by(name=name)
                     .filter_by(password=password)
                     .first()
                     )
@@ -21,6 +21,6 @@ class AuthDatabase(authplugin.AuthPlugin):
             return False
 
         with self.server.db.session_scope() as session:
-            session.add(models.User(name=user, password=password))
+            session.add(models.User(name=name, password=password))
         return True
 

@@ -18,9 +18,7 @@ class Room(models.schema.Base):
     description = Column(Text, default="")
     status = Column(Integer, default=0)
     type = Column(Integer, default=1)
-    creator_id = Column(Integer, ForeignKey('users.id', ondelete="SET NULL", use_alter=True))
-    creator = relationship("User", back_populates="rooms")
-    users = relationship("User", back_populates="room")
+    users = relationship("User")
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)

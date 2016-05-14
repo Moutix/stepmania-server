@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import socket
+import sys
 import logging
 from threading import Thread, Lock
 
@@ -23,14 +24,30 @@ class StepmaniaThread(Thread):
     def run(self):
         while True:
             try:
-                self._on_data(self._conn.recv(1024))
+                data = self.received_data()
             except socket.error:
                 self._serv.on_disconnect(self)
                 break
 
+            self._on_data(data)
+
         with self._serv.mutex:
             self._serv.connections.remove(self)
         self._conn.close()
+
+    def received_data(self):
+        full_data = b""
+        size = None
+        while size is None or len(full_data) - 4 < size:
+            data = self._conn.recv(8192)
+            if data == b'':
+                raise socket.error
+
+            full_data += data
+            if not size and len(full_data) > 4:
+                size = int.from_bytes(full_data[:4], byteorder='big')
+
+        return full_data
 
     def _on_data(self, data):
         packet = smpacket.SMPacket.parse_binary(data)

@@ -29,6 +29,13 @@ class Conf(dict):
                         help="Port to listen to (default: 8765)",
                         default=8765)
 
+    parser.add_argument('-users', '--server.max_users',
+                        dest='server.max_users',
+                        type=int,
+                        help="Maximum number of users allow (default: 255)",
+                        default=255)
+
+
     parser.add_argument('--auth.plugin',
                         dest='auth.plugin',
                         type=str,

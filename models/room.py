@@ -2,11 +2,12 @@
 # -*- coding: utf8 -*-
 
 import datetime
-from smutils import smpacket
+import hashlib
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, or_, and_
 from sqlalchemy.orm import relationship
 
+from smutils import smpacket
 import models.schema
 
 class Room(models.schema.Base):
@@ -58,4 +59,18 @@ class Room(models.schema.Base):
     def smo_list(cls, session):
         rooms = session.query(Room).all()
         return cls.list_smopacket(rooms)
+
+    @classmethod
+    def login(cls, name, password, session):
+        return (
+            session.query(cls)
+            .filter_by(name=name)
+            .filter(or_(
+                cls.password.is_(None),
+                and_(
+                    cls.password.isnot(None),
+                    cls.password == hashlib.sha256(password.encode('utf-8')).hexdigest()
+                )))
+            .first()
+            )
 

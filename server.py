@@ -3,7 +3,6 @@
 
 import sys
 import hashlib
-from sqlalchemy import or_, and_
 
 from smutils import smserver, smpacket
 from pluginmanager import PluginManager
@@ -58,6 +57,9 @@ class StepmaniaServer(smserver.StepmaniaServer):
                                           config.server["port"])
 
     def on_nschello(self, serv, packet):
+        serv.stepmania_version = packet["version"]
+        serv.stepmania_name = packet["name"]
+
         serv.send(smpacket.SMPacketServerNSCHello(
             version=128,
             name=self.config.server["name"]))
@@ -94,7 +96,11 @@ class StepmaniaServer(smserver.StepmaniaServer):
             ))
             return
 
-        user = models.User.connect(packet["username"], serv.ip, session)
+        user = models.User.connect(packet["username"], session)
+
+        user.ip = serv.ip
+        user.stepmania_name = serv.stepmania_name
+        user.stepmania_version = serv.stepmania_version
 
         serv.user = user.id
 
@@ -104,6 +110,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
                 text="Successfully login"
             )
         ))
+        self.sendall(models.User.sm_list(session, self.config.server["max_users"]))
         serv.send(models.Room.smo_list(session))
 
     @with_session
@@ -129,24 +136,14 @@ class StepmaniaServer(smserver.StepmaniaServer):
             user.room = None
             return
 
-        room = (
-            session.query(models.Room)
-            .filter_by(name=packet["room"])
-            .filter(or_(
-                models.Room.password.is_(None),
-                and_(
-                    models.Room.password.isnot(None),
-                    models.Room.password == hashlib.sha256(packet["password"].encode('utf-8')).hexdigest()
-                )))
-            .first()
-            )
+        room = models.Room.login(packet["room"], packet["password"], session)
 
         self.log.info("Player %d enter in room %s" % (serv.user, room.name))
 
         if not room:
             return
 
-        room.users.append(user)
+        user.room = room
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))
@@ -167,13 +164,14 @@ class StepmaniaServer(smserver.StepmaniaServer):
             packet=room.to_packet()
         ))
 
+        self.sendall(models.Room.smo_list(session))
+
     def on_roominfo(self, serv, packet):
         pass
 
     def update_schema(self):
         self.log.info("DROP all the database tables")
         self.db.recreate_tables()
-
 
     def get_user(self, user_id, session):
         if not user_id:

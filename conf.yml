@@ -5,6 +5,7 @@ server:
     port: 8765
     fps: 120
     readtimeout: 250
+    max_users: 255
 
 database:
     type: "mysql"

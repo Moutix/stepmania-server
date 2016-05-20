@@ -6,14 +6,15 @@ import enum
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 
+from smutils import smpacket
 import models.schema
 
 class UserStatus(enum.Enum):
-    unknown = 1
+    unknown = 0
+    room_selection = 1
     music_selection = 2
     option = 3
     evaluation = 4
-    room_selection = 5
 
 class User(models.schema.Base):
     __tablename__ = 'users'
@@ -25,6 +26,8 @@ class User(models.schema.Base):
     rank = Column(Integer, default=0)
     xp = Column(Integer, default=0)
     last_ip = Column(String(255))
+    stepmania_version = Column(Integer)
+    stepmania_name = Column(String(255))
     online = Column(Boolean)
     status = Column(Integer, default=1)
 
@@ -42,17 +45,27 @@ class User(models.schema.Base):
         return UserStatus(self.status)
 
     @classmethod
-    def connect(cls, name, ip, session):
+    def connect(cls, name, session):
         user = session.query(cls).filter_by(name=name).first()
         if not user:
             user = models.User(name=name)
             session.add(user)
         user.online = True
-        user.last_ip = ip
 
         session.commit()
 
         return user
+
+    @classmethod
+    def sm_list(cls, session, max_users=255):
+        users = session.query(User).all()
+
+        return smpacket.SMPacketServerNSCCUUL(
+            max_players=max_users,
+            nb_player=len(users),
+            users=[{"status": u.enum_status.value, "name": u.name}
+                   for u in users]
+            )
 
     @classmethod
     def disconnect(cls, user, session):

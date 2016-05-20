@@ -2,20 +2,26 @@
 # -*- coding: utf8 -*-
 
 import socket
-import sys
+import datetime
 import logging
+import time
 from threading import Thread, Lock
 
 from smutils import smpacket
 
 class StepmaniaThread(Thread):
+    _FPS = 60
     logger = logging.getLogger('stepmania')
 
     def __init__(self, serv, conn, ip, port):
         Thread.__init__(self)
+        self.mutex = Lock()
         self.ip = ip
         self.port = port
         self.user = None
+        self.last_ping = datetime.datetime.now()
+        self.stepmania_version = None
+        self.stepmania_name = None
         self._serv = serv
         self._conn = conn
 
@@ -34,6 +40,11 @@ class StepmaniaThread(Thread):
         with self._serv.mutex:
             self._serv.connections.remove(self)
         self._conn.close()
+
+    def send_ping(self):
+        while True:
+            self.send(smpacket.SMPacketServerNSCPing())
+            time.sleep(self._FPS)
 
     def received_data(self):
         full_data = b""
@@ -65,7 +76,7 @@ class StepmaniaThread(Thread):
         func(self, packet)
 
     def send(self, packet):
-        with self._serv.mutex:
+        with self.mutex:
             self.logger.debug("packet send to %s: %s" % (self.ip, packet))
             self._conn.sendall(packet.binary)
 
@@ -99,7 +110,8 @@ class StepmaniaServer(object):
         serv.send(smpacket.SMPacketServerNSCPingR())
 
     def on_nscpingr(self, serv, packet):
-        pass
+        with serv.mutex:
+            serv.last_ping = datetime.datetime.now()
 
     def on_nschello(self, serv, packet):
         serv.send(smpacket.SMPacketServerNSCHello(version=128, name="Stepmania-Server"))

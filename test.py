@@ -13,6 +13,7 @@ from smutils import smpacket, smserver
 class ClientTest(smserver.StepmaniaThread):
     def send(self, packet):
         self._serv.log.debug("%s (%s) send: %s" % (self.ip, self.user, packet))
+        print(packet.binary)
         return packet.binary
 
 
@@ -20,7 +21,8 @@ class ServerTest(server.StepmaniaServer):
     pass
 
 def main():
-    os.remove("stepmania_test.db")
+    if "stepmania_test.db" in os.listdir():
+        os.remove("stepmania_test.db")
     config = conf.Conf("-c", "conf_test.yml")
 
     server_test = ServerTest(config)
@@ -44,6 +46,9 @@ def main():
     client1._on_data(smpacket.SMPacketClientNSSMONL(
         packet=smpacket.SMOPacketClientCreateRoom(type=1, title="Room client1", description="Room de test", password="aaa")
         ).binary)
+
+    client1._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
+    client2._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
 
 if __name__ == "__main__":
     main()

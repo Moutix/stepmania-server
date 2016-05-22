@@ -710,7 +710,7 @@ class SMPacketServerNSCCM(SMPacket):
     """ Chat Message
     Add a chat message to the chat window on some StepMania screens. """
 
-    _command = SMServerCommand.NSCSU
+    _command = SMServerCommand.NSCCM
     _payload = [
         (SMPayloadType.NT, "message", None)
     ]

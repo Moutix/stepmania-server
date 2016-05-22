@@ -52,7 +52,7 @@ class StepmaniaPlugin(object):
         if not func:
             return None
 
-        return func(self, session, serv, packet["packet"])
+        return func(session, serv, packet["packet"])
 
     def on_nscformatted(self, session, serv, packet):
         pass
@@ -98,8 +98,8 @@ class PluginManager(dict):
                                             force_reload=force_reload)
 
     def init(self, *opt):
-        for app in self.values():
-            app = app(*opt)
+        for key, app in self.items():
+            self[key] = app(*opt)
 
 
     @staticmethod
@@ -121,5 +121,6 @@ if __name__ == "__main__":
     print(PluginManager.import_plugin("auth.database", "AuthPlugin"))
     plugins = PluginManager("StepmaniaPlugin", ["chat"], "plugins", "plugin")
     plugins.load()
-    plugins.init_plugins("a")
+    plugins.init("a")
+    print(plugins)
 

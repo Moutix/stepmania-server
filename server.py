@@ -70,7 +70,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
             with self.db.session_scope() as session:
                 try:
-                    func(app, session, serv, packet)
+                    func(session, serv, packet)
                 except Exception as err:
                     self.log.exception("Message %s %s %s",
                                        type(app).__name__, app.__module__, err)
@@ -173,7 +173,8 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=packet["title"],
             description=packet["description"],
             type=packet["type"],
-            password=hashlib.sha256(packet["password"].encode('utf-8')).hexdigest() if packet["password"] else None
+            password=hashlib.sha256(packet["password"].encode('utf-8')).hexdigest() if packet["password"] else None,
+            status=2,
         )
         session.add(room)
 

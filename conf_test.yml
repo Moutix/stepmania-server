@@ -8,20 +8,12 @@ server:
     max_users: 255
 
 database:
-    type: "mysql"
-    user: "stepmania"
-    password: "stepmania"
-    database: "stepmania"
-    host: "localhost"
-    port:
-    driver: "pymysql"
+    type: "sqlite"
+    database: "stepmania_test.db"
 
 logger:
     stderr:
         level: "debug"
-    file:
-        level: "info"
-        file: "log/stepmania.log"
 
 auth:
     plugin: "database"

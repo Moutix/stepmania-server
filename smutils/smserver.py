@@ -68,12 +68,7 @@ class StepmaniaThread(Thread):
 
         self.logger.debug("Packet received from %s: %s" % (self.ip, packet))
 
-        func = getattr(self._serv, "on_%s" % packet.command.name.lower(), None)
-        if not func:
-            self.logger.warning("No action for packet: %s" % packet)
-            return None
-
-        func(self, packet)
+        self._serv.on_packet(self, packet)
 
     def send(self, packet):
         with self.mutex:
@@ -103,6 +98,13 @@ class StepmaniaServer(object):
         for conn in self.connections:
             conn.send(packet)
 
+    def on_packet(self, serv, packet):
+        func = getattr(self, "on_%s" % packet.command.name.lower(), None)
+        if not func:
+            return None
+
+        func(serv, packet)
+
     def on_disconnect(self, serv):
         pass
 
@@ -129,7 +131,7 @@ class StepmaniaServer(object):
         pass
 
     def on_nsccm(self, serv, packet):
-        self.sendall(smpacket.SMPacketServerNSCCM(message="|c0%s" % packet["message"]))
+        pass
 
     def on_nscrsg(self, serv, packet):
         pass
@@ -156,7 +158,7 @@ class StepmaniaServer(object):
     def on_nscattack(self, serv, packet):
         pass
 
-    def on_xmlpacket (self, serv, packet):
+    def on_xmlpacket(self, serv, packet):
         pass
 
     def on_login(self, serv, packet):

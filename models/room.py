@@ -40,7 +40,7 @@ class Room(models.schema.Base):
         packet = smpacket.SMOPacketServerRoomUpdate(
             type=1,
             nb_rooms=len(rooms),
-            rooms={},
+            rooms=[],
             room_status=[],
             room_flags=[]
         )
@@ -50,8 +50,8 @@ class Room(models.schema.Base):
                 "title": room.name,
                 "description": room.description
             })
-            packet['status'].append(room.status)
-            packet['flags'].append(1 if room.password else 0)
+            packet['room_status'].append(room.status)
+            packet['room_flags'].append(1 if room.password else 0)
 
         return smpacket.SMPacketServerNSSMONL(packet=packet)
 

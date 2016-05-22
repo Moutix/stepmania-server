@@ -42,6 +42,9 @@ class StepmaniaServer(smserver.StepmaniaServer):
         else:
             self.db.create_tables()
 
+        with self.db.session_scope() as session:
+            models.User.disconnect_all(session)
+
         self.auth = PluginManager.import_plugin(
             'auth.%s' % config.auth["plugin"],
             "AuthPlugin",
@@ -49,12 +52,28 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
         self.log.debug("Load Plugins")
         self.plugins = PluginManager("StepmaniaPlugin", config.plugins, "plugins", "plugin")
+        self.plugins.init(self)
         self.log.debug("Plugins loaded")
 
         self.log.debug("Start server")
         smserver.StepmaniaServer.__init__(self,
                                           config.server["ip"],
                                           config.server["port"])
+
+    def on_packet(self, serv, packet):
+        smserver.StepmaniaServer.on_packet(self, serv, packet)
+
+        for app in self.plugins.values():
+            func = getattr(app, "on_%s" % packet.command.name.lower(), None)
+            if not func:
+                continue
+
+            with self.db.session_scope() as session:
+                try:
+                    func(app, session, serv, packet)
+                except Exception as err:
+                    self.log.exception("Message %s %s %s",
+                                       type(app).__name__, app.__module__, err)
 
     def on_nschello(self, serv, packet):
         serv.stepmania_version = packet["version"]

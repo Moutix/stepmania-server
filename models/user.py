@@ -57,8 +57,12 @@ class User(models.schema.Base):
         return user
 
     @classmethod
+    def onlines(cls, session):
+        return session.query(User).filter_by(online=True).all()
+
+    @classmethod
     def sm_list(cls, session, max_users=255):
-        users = session.query(User).all()
+        users = cls.onlines(session)
 
         return smpacket.SMPacketServerNSCCUUL(
             max_players=max_users,
@@ -72,4 +76,13 @@ class User(models.schema.Base):
         user.online = False
         session.commit()
         return user
+
+    @classmethod
+    def disconnect_all(cls, session):
+        users = cls.onlines(session)
+
+        for user in users:
+            user.online = False
+
+        session.commit()
 

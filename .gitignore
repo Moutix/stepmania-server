@@ -60,4 +60,5 @@ target/
 
 # Logging
 log/
+*.db
 

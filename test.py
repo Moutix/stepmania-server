@@ -13,7 +13,7 @@ from smutils import smpacket, smserver
 class ClientTest(smserver.StepmaniaThread):
     def send(self, packet):
         self._serv.log.debug("%s (%s) send: %s" % (self.ip, self.user, packet))
-        return packet
+        return packet.binary
 
 
 class ServerTest(server.StepmaniaServer):

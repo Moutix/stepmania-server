@@ -38,7 +38,7 @@ class Room(models.schema.Base):
         )
 
     @staticmethod
-    def list_smopacket(rooms):
+    def _list_smopacket(rooms):
         packet = smpacket.SMOPacketServerRoomUpdate(
             type=1,
             nb_rooms=len(rooms),
@@ -59,11 +59,20 @@ class Room(models.schema.Base):
 
     @classmethod
     def smo_list(cls, session):
+        """ Return the list of rooms already formatted in a SMO packet
+        Send the list of room with:
+            serv.send(models.Room.smo_list(session))
+        """
+
         rooms = session.query(Room).all()
-        return cls.list_smopacket(rooms)
+        return cls._list_smopacket(rooms)
 
     @classmethod
     def login(cls, name, password, session):
+        """ Find a room matching the couple name and password
+        Return the room if the match is good
+        """
+
         if password:
             password = hashlib.sha256(password.encode('utf-8')).hexdigest()
 

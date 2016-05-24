@@ -100,6 +100,9 @@ class StepmaniaServer(smserver.StepmaniaServer):
             7: models.UserStatus.room_selection
         }
 
+        if packet["action"] == 7:
+            serv.send(models.Room.smo_list(session))
+
         user.status = status_mapping.get(packet["action"], models.UserStatus.unknown).value
 
     @with_session

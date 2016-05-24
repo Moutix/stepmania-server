@@ -12,12 +12,15 @@ class AuthDatabase(authplugin.AuthPlugin):
                     .filter_by(name=name)
                     .filter_by(password=password)
                     .first()
-                    )
+                   )
 
         if user:
             return True
 
         if not self.autocreate:
+            return False
+
+        if session.query(models.User).filter_by(name=name).first():
             return False
 
         with self.server.db.session_scope() as session:

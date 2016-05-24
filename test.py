@@ -12,7 +12,7 @@ from smutils import smpacket, smserver
 
 class ClientTest(smserver.StepmaniaThread):
     def send(self, packet):
-        self._serv.log.debug("%s (%s) send: %s" % (self.ip, self.user, packet))
+        self._serv.log.debug("%s (%s) send: %s" % (self.ip, self.users, packet))
         print(packet.binary)
         return packet.binary
 
@@ -34,6 +34,9 @@ def main():
 
     client1._on_data(smpacket.SMPacketClientNSCHello(name="stepmania", version=42).binary)
     client2._on_data(smpacket.SMPacketClientNSCHello(name="stepmania", version=45).binary)
+
+    client1._on_data(smpacket.SMPacketClientNSCSU(player_id=0, nb_players=1, player_name="test").binary)
+    client2._on_data(smpacket.SMPacketClientNSCSU(player_id=1, nb_players=1, player_name="test2").binary)
 
     client1._on_data(smpacket.SMPacketClientNSSMONL(
         packet=smpacket.SMOPacketClientLogin(username="test", password="test")

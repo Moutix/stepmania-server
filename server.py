@@ -85,12 +85,36 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=self.config.server["name"]))
 
     @with_session
-    def on_nsscsms(self, session, serv, packet):
-        if not serv.user:
-            return
+    def on_nscsu(self, session, serv, packet):
+        if packet["player_name"] not in serv.users:
+            serv.users[packet["player_name"]] = {}
 
-        user = session.query(models.User).get(serv.user)
-        if not user:
+        serv.users[packet["player_name"]]["#"] = packet["player_id"]
+
+        db_user = self.get_user(serv.users[packet["player_name"]].get("id"), session)
+        if db_user:
+            db_user.pos = packet["player_id"]
+
+        for name, user in serv.users.items():
+            if name == packet["player_name"]:
+                continue
+
+            if packet["nb_players"] == 1:
+                user["#"] = None
+
+            elif packet["nb_players"] == 2 and user.get("#") is not None:
+                user["#"] = {0: 1, 1: 0}[packet["player_id"]]
+
+            db_user = self.get_user(user.get("id"), session)
+            if db_user:
+                db_user.pos = None
+
+        self.log.debug("New list of players: %s" % serv.users)
+
+    @with_session
+    def on_nsscsms(self, session, serv, packet):
+        users = self.get_users(serv.online_users, session)
+        if not users:
             return
 
         status_mapping = {
@@ -103,7 +127,8 @@ class StepmaniaServer(smserver.StepmaniaServer):
         if packet["action"] == 7:
             serv.send(models.Room.smo_list(session))
 
-        user.status = status_mapping.get(packet["action"], models.UserStatus.unknown).value
+        for user in users:
+            user.status = status_mapping.get(packet["action"], models.UserStatus.unknown).value
 
     @with_session
     def on_login(self, session, serv, packet):
@@ -125,7 +150,17 @@ class StepmaniaServer(smserver.StepmaniaServer):
         user.stepmania_name = serv.stepmania_name
         user.stepmania_version = serv.stepmania_version
 
-        serv.user = user.id
+        local_name = serv.user_by_pos(packet["player_number"])
+        if local_name:
+            serv.users[local_name]["id"] = user.id
+        else:
+            if user.name not in serv.users:
+                serv.users[user.name] = {}
+
+            serv.users[user.name]["id"] = user.id
+            serv.users[user.name]["#"] = packet["player_number"]
+
+        user.pos = packet["player_number"]
 
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=smpacket.SMOPacketServerLogin(
@@ -138,37 +173,40 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_disconnect(self, session, serv):
-        user = self.get_user(serv.user, session)
-        if not user:
+        users = self.get_users(serv.online_users, session)
+        if not users:
             self.log.info("Player %s disconnected" % serv.ip)
             return
 
-        models.User.disconnect(user, session)
-
-        self.log.info("Player %s disconnected" % user.name)
+        for user in users:
+            models.User.disconnect(user, session)
+            self.log.info("Player %s disconnected" % user.name)
 
     @with_session
     def on_enterroom(self, session, serv, packet):
-        user = self.get_user(serv.user, session)
-        if not user:
+        users = self.get_users(serv.online_users, session)
+        if not users:
             self.log.info("User unknown return")
             return
 
         if packet["enter"] == 0:
             serv.send(models.Room.smo_list(session))
-            user.room = None
+            for user in users:
+                user.room = None
             return
 
         room = models.Room.login(packet["room"], packet["password"], session)
 
 
         if not room:
-            self.log.info("Player %s fail to enter in room %s" % (user.name, packet["room"]))
+            self.log.info("Player %s fail to enter in room %s" % (serv.ip, packet["room"]))
             return
 
-        self.log.info("Player %s enter in room %s" % (user.name, room.name))
 
-        user.room = room
+        for user in users:
+            user.room = room
+            self.log.info("Player %s enter in room %s" % (user.name, room.name))
+
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))
@@ -184,7 +222,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
         )
         session.add(room)
 
-        self.log.info("New room %s created by player %s" % (room.name, serv.user))
+        self.log.info("New room %s created by player %s" % (room.name, serv.ip))
 
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
@@ -198,6 +236,9 @@ class StepmaniaServer(smserver.StepmaniaServer):
     def update_schema(self):
         self.log.info("DROP all the database tables")
         self.db.recreate_tables()
+
+    def get_users(self, user_ids, session):
+        return [self.get_user(user_id, session) for user_id in user_ids]
 
     def get_user(self, user_id, session):
         if not user_id:

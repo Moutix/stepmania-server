@@ -121,7 +121,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
         user = models.User.connect(packet["username"], session)
 
-        user.ip = serv.ip
+        user.last_ip = serv.ip
         user.stepmania_name = serv.stepmania_name
         user.stepmania_version = serv.stepmania_version
 

@@ -158,10 +158,12 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
         room = models.Room.login(packet["room"], packet["password"], session)
 
-        self.log.info("Player %d enter in room %s" % (serv.user, room.name))
 
         if not room:
+            self.log.info("Player %s fail to enter in room %s" % (user.name, packet["room"]))
             return
+
+        self.log.info("Player %s enter in room %s" % (user.name, room.name))
 
         user.room = room
         serv.send(smpacket.SMPacketServerNSSMONL(

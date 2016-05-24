@@ -15,6 +15,11 @@ logger:
     stderr:
         level: "debug"
 
+rooms:
+    - name: Miku
+      description: super description
+      password: miku
+
 auth:
     plugin: "database"
     autocreate: True

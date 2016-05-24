@@ -44,6 +44,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
         with self.db.session_scope() as session:
             models.User.disconnect_all(session)
+            models.Room.init_from_hashes(config.get("rooms", []), session)
 
         self.auth = PluginManager.import_plugin(
             'auth.%s' % config.auth["plugin"],

@@ -4,7 +4,7 @@
 import datetime
 import hashlib
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, or_, and_
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, or_, and_, Boolean
 from sqlalchemy.orm import relationship
 
 from smutils import smpacket
@@ -17,6 +17,8 @@ class Room(models.schema.Base):
     name = Column(String(255))
     password = Column(String(255))
     description = Column(Text, default="")
+    static = Column(Boolean, default=False)
+
     status = Column(Integer, default=0)
     type = Column(Integer, default=1)
     users = relationship("User", back_populates="room")
@@ -73,4 +75,23 @@ class Room(models.schema.Base):
                 )))
             .first()
             )
+
+    @classmethod
+    def init_from_hashes(cls, hrooms, session):
+        rooms = []
+
+        for hroom in hrooms:
+            room = session.query(cls).filter_by(name=hroom["name"]).first()
+
+            if not room:
+                room = cls(name=hroom["name"])
+                session.add(room)
+
+            room.description = hroom.get("description", ""),
+            room.password = hashlib.sha256(hroom["password"].encode('utf-8')).hexdigest() if hroom.get("password") else None
+
+            rooms.append(room)
+
+        return rooms
+
 

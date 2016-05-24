@@ -2,7 +2,10 @@
 # -*- coding: utf8 -*-
 
 import inspect
-from importlib import reload
+try:
+    from importlib import reload
+except ImportError:
+    pass
 
 class StepmaniaPlugin(object):
     def __init__(self, server):

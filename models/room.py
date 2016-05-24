@@ -89,6 +89,7 @@ class Room(models.schema.Base):
 
             room.description = hroom.get("description", ""),
             room.password = hashlib.sha256(hroom["password"].encode('utf-8')).hexdigest() if hroom.get("password") else None
+            room.static = True
 
             rooms.append(room)
 

@@ -64,6 +64,9 @@ class Room(models.schema.Base):
 
     @classmethod
     def login(cls, name, password, session):
+        if password:
+            password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+
         return (
             session.query(cls)
             .filter_by(name=name)
@@ -71,7 +74,7 @@ class Room(models.schema.Base):
                 cls.password.is_(None),
                 and_(
                     cls.password.isnot(None),
-                    cls.password == hashlib.sha256(password.encode('utf-8')).hexdigest()
+                    cls.password == password
                 )))
             .first()
             )

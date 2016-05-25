@@ -46,12 +46,13 @@ class User(models.schema.Base):
         return UserStatus(self.status)
 
     @classmethod
-    def connect(cls, name, session):
+    def connect(cls, name, pos, session):
         user = session.query(cls).filter_by(name=name).first()
         if not user:
             user = models.User(name=name)
             session.add(user)
         user.online = True
+        user.pos = pos
 
         session.commit()
 
@@ -75,6 +76,7 @@ class User(models.schema.Base):
     @classmethod
     def disconnect(cls, user, session):
         user.online = False
+        user.pos = None
         session.commit()
         return user
 
@@ -83,6 +85,7 @@ class User(models.schema.Base):
         users = cls.onlines(session)
 
         for user in users:
+            user.pos = None
             user.online = False
 
         session.commit()

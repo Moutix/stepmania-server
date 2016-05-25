@@ -18,7 +18,8 @@ class StepmaniaThread(Thread):
         self.mutex = Lock()
         self.ip = ip
         self.port = port
-        self.users = {}
+        self.users = []
+        self.logged_users = []
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None
         self.stepmania_name = None
@@ -26,21 +27,6 @@ class StepmaniaThread(Thread):
         self._conn = conn
 
         self.logger.info("New connection: %s on port %s" % (ip, port))
-
-    @property
-    def active_users(self):
-        return [user.get("id") for user in self.users.values() if user.get("#")]
-
-    @property
-    def online_users(self):
-        return [user["id"] for user in self.users.values() if user.get("id")]
-
-    def user_by_pos(self, pos):
-        users = [user["id"] for user in self.users.values() if user.get("pos") == pos]
-        if not users:
-            return None
-
-        return users[0]
 
     def run(self):
         while True:

@@ -86,28 +86,18 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_nscsu(self, session, serv, packet):
-        if packet["player_name"] not in serv.users:
-            serv.users[packet["player_name"]] = {}
+        users = self.get_users(serv.users, session)
 
-        serv.users[packet["player_name"]]["#"] = packet["player_id"]
-
-        db_user = self.get_user(serv.users[packet["player_name"]].get("id"), session)
-        if db_user:
-            db_user.pos = packet["player_id"]
-
-        for name, user in serv.users.items():
-            if name == packet["player_name"]:
+        for user in users:
+            if user.pos == packet["player_id"]:
+                user.online = True
                 continue
 
             if packet["nb_players"] == 1:
-                user["#"] = None
+                user.online = False
+                continue
 
-            elif packet["nb_players"] == 2 and user.get("#") is not None:
-                user["#"] = {0: 1, 1: 0}[packet["player_id"]]
-
-            db_user = self.get_user(user.get("id"), session)
-            if db_user:
-                db_user.pos = None
+            user.online = True
 
         self.log.debug("New list of players: %s" % serv.users)
 
@@ -144,23 +134,19 @@ class StepmaniaServer(smserver.StepmaniaServer):
             ))
             return
 
-        user = models.User.connect(packet["username"], session)
+        user = models.User.connect(packet["username"], packet["player_number"], session)
 
         user.last_ip = serv.ip
         user.stepmania_name = serv.stepmania_name
         user.stepmania_version = serv.stepmania_version
 
-        local_name = serv.user_by_pos(packet["player_number"])
-        if local_name:
-            serv.users[local_name]["id"] = user.id
-        else:
-            if user.name not in serv.users:
-                serv.users[user.name] = {}
+        for online_user in self.get_users(serv.users, session):
+            if online_user.pos == packet["player_number"] and online_user.name != user.name:
+                online_user.pos = None
+                serv.users.remove(online_user.id)
 
-            serv.users[user.name]["id"] = user.id
-            serv.users[user.name]["#"] = packet["player_number"]
-
-        user.pos = packet["player_number"]
+        if user.id not in serv.users:
+            serv.users.append(user.id)
 
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=smpacket.SMOPacketServerLogin(

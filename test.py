@@ -36,14 +36,21 @@ def main():
     client2._on_data(smpacket.SMPacketClientNSCHello(name="stepmania", version=45).binary)
 
     client1._on_data(smpacket.SMPacketClientNSCSU(player_id=0, nb_players=1, player_name="test").binary)
-    client2._on_data(smpacket.SMPacketClientNSCSU(player_id=1, nb_players=1, player_name="test2").binary)
 
     client1._on_data(smpacket.SMPacketClientNSSMONL(
-        packet=smpacket.SMOPacketClientLogin(username="test", password="test")
+        packet=smpacket.SMOPacketClientLogin(username="client1-user1", password="test")
         ).binary)
 
+    client1._on_data(smpacket.SMPacketClientNSSMONL(
+        packet=smpacket.SMOPacketClientLogin(username="client1-user2", password="test")
+        ).binary)
+
+    client1._on_data(smpacket.SMPacketClientNSCSU(player_id=1, nb_players=1, player_name="machin").binary)
+    client1._on_data(smpacket.SMPacketClientNSCSU(player_id=1, nb_players=2, player_name="machin").binary)
+
+
     client2._on_data(smpacket.SMPacketClientNSSMONL(
-        packet=smpacket.SMOPacketClientLogin(username="test2", password="test")
+        packet=smpacket.SMOPacketClientLogin(username="client2-user", password="test")
         ).binary)
 
     client1._on_data(smpacket.SMPacketClientNSSMONL(

@@ -577,10 +577,10 @@ class SMPacketClientNSCRSG(SMPacket):
 
     _command = SMClientCommand.NSCRSG
     _payload = [
-        (SMPayloadType.INT, "usage", None),
+        (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),
-        (SMPayloadType.NT, "song_subtitle", None),
         (SMPayloadType.NT, "song_artist", None),
+        (SMPayloadType.NT, "song_subtitle", None),
     ]
 
 

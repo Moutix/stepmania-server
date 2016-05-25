@@ -137,6 +137,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
             return
 
         user = models.User.connect(packet["username"], packet["player_number"], session)
+        self.log.info("Player %s successfully connect" % packet["username"])
 
         user.last_ip = serv.ip
         user.stepmania_name = serv.stepmania_name

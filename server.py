@@ -85,6 +85,27 @@ class StepmaniaServer(smserver.StepmaniaServer):
             name=self.config.server["name"]))
 
     @with_session
+    def on_nscrsg(self, session, serv, packet):
+        room = self.get_room(serv.room, session)
+        if not room:
+            return
+
+        song = models.Song.find_or_create(
+            packet["song_title"],
+            packet["song_subtitle"],
+            packet["song_artist"],
+            session)
+
+        if packet["usage"] == 2:
+            #TODO: Handle permission, for now just ask to start the song
+            self.sendroom(room.id, smpacket.SMPacketServerNSCRSG(
+                usage=3,
+                song_title=song.title,
+                song_subtitle=song.subtitle,
+                song_artist=song.artist
+                ))
+
+    @with_session
     def on_nscsu(self, session, serv, packet):
         users = self.get_users(serv.users, session)
         if not users:
@@ -181,18 +202,20 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
         if packet["enter"] == 0:
             serv.send(models.Room.smo_list(session))
+            serv.room = None
             for user in users:
                 user.room = None
+
             return
 
         room = models.Room.login(packet["room"], packet["password"], session)
-
 
         if not room:
             self.log.info("Player %s fail to enter in room %s" % (serv.ip, packet["room"]))
             return
 
 
+        serv.room = room.id
         for user in users:
             user.room = room
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
@@ -203,6 +226,8 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_createroom(self, session, serv, packet):
+        users = self.get_users(serv.users, session)
+
         room = models.Room(
             name=packet["title"],
             description=packet["description"],
@@ -213,6 +238,11 @@ class StepmaniaServer(smserver.StepmaniaServer):
         session.add(room)
 
         self.log.info("New room %s created by player %s" % (room.name, serv.ip))
+
+        serv.room = room.id
+        for user in users:
+            user.room = room
+            self.log.info("Player %s enter in room %s" % (user.name, room.name))
 
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
@@ -235,6 +265,12 @@ class StepmaniaServer(smserver.StepmaniaServer):
             return None
 
         return session.query(models.User).get(user_id)
+
+    def get_room(self, room_id, session):
+        if not room_id:
+            return None
+
+        return session.query(models.Room).get(room_id)
 
 def main():
     config = conf.Conf(*sys.argv[1:])

@@ -23,6 +23,9 @@ class Room(models.schema.Base):
     type = Column(Integer, default=1)
     users = relationship("User", back_populates="room")
 
+    active_song_id = Column(Integer, ForeignKey('songs.id'))
+    active_song = relationship("Song", back_populates="active_rooms")
+
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 

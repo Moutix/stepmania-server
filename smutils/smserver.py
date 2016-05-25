@@ -19,6 +19,7 @@ class StepmaniaThread(Thread):
         self.ip = ip
         self.port = port
         self.users = []
+        self.room = None
         self.logged_users = []
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None
@@ -97,6 +98,13 @@ class StepmaniaServer(object):
 
     def sendall(self, packet):
         for conn in self.connections:
+            conn.send(packet)
+
+    def sendroom(self, room_id, packet):
+        for conn in self.connections:
+            if conn.room != room_id:
+                continue
+
             conn.send(packet)
 
     def on_packet(self, serv, packet):

@@ -87,6 +87,8 @@ class StepmaniaServer(smserver.StepmaniaServer):
     @with_session
     def on_nscsu(self, session, serv, packet):
         users = self.get_users(serv.users, session)
+        if not users:
+            return
 
         for user in users:
             if user.pos == packet["player_id"]:
@@ -103,7 +105,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_nsscsms(self, session, serv, packet):
-        users = self.get_users(serv.online_users, session)
+        users = self.get_users(serv.users, session)
         if not users:
             return
 
@@ -143,6 +145,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
         for online_user in self.get_users(serv.users, session):
             if online_user.pos == packet["player_number"] and online_user.name != user.name:
                 online_user.pos = None
+                online_user.online = False
                 serv.users.remove(online_user.id)
 
         if user.id not in serv.users:
@@ -159,7 +162,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_disconnect(self, session, serv):
-        users = self.get_users(serv.online_users, session)
+        users = self.get_users(serv.users, session)
         if not users:
             self.log.info("Player %s disconnected" % serv.ip)
             return
@@ -170,7 +173,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_enterroom(self, session, serv, packet):
-        users = self.get_users(serv.online_users, session)
+        users = self.get_users(serv.users, session)
         if not users:
             self.log.info("User unknown return")
             return

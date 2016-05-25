@@ -131,7 +131,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
             serv.send(smpacket.SMPacketServerNSSMONL(
                 packet=smpacket.SMOPacketServerLogin(
                     approval=1,
-                    text="Connection failed"
+                    text="Connection failed for user %s" % packet["username"]
                 )
             ))
             return
@@ -155,7 +155,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
         serv.send(smpacket.SMPacketServerNSSMONL(
             packet=smpacket.SMOPacketServerLogin(
                 approval=0,
-                text="Successfully login"
+                text="Player %s successfully login" % packet["username"]
             )
         ))
         self.sendall(models.User.sm_list(session, self.config.server["max_users"]))

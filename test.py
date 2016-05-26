@@ -57,6 +57,20 @@ def main():
         packet=smpacket.SMOPacketClientCreateRoom(type=1, title="Room client1", description="Room de test", password="aaa")
         ).binary)
 
+
+    client2._on_data(smpacket.SMPacketClientNSSMONL(
+        packet=smpacket.SMOPacketClientEnterRoom(enter=1, room="Room client1", password="pas aaa")
+        ).binary)
+
+    client2._on_data(smpacket.SMPacketClientNSSMONL(
+        packet=smpacket.SMOPacketClientEnterRoom(enter=1, room="Room client1", password="aaa")
+        ).binary)
+
+    print(client1.room)
+    print(client2.room)
+
+    client1._on_data(smpacket.SMPacketClientNSCRSG(usage=2, song_title="title", song_subtitle="subtitle", song_artist="artist").binary)
+
     client1._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
     client2._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
 

@@ -126,7 +126,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_nsscsms(self, session, serv, packet):
-        users = self.get_users(serv.users, session)
+        users = self.get_active_users(serv.users, session)
         if not users:
             return
 
@@ -168,7 +168,6 @@ class StepmaniaServer(smserver.StepmaniaServer):
             if online_user.pos == packet["player_number"] and online_user.name != user.name:
                 online_user.pos = None
                 online_user.online = False
-                serv.users.remove(online_user.id)
 
         if user.id not in serv.users:
             serv.users.append(user.id)
@@ -195,7 +194,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_enterroom(self, session, serv, packet):
-        users = self.get_users(serv.users, session)
+        users = self.get_active_users(serv.users, session)
         if not users:
             self.log.info("User unknown return")
             return
@@ -226,7 +225,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_createroom(self, session, serv, packet):
-        users = self.get_users(serv.users, session)
+        users = self.get_active_users(serv.users, session)
 
         room = models.Room(
             name=packet["title"],
@@ -236,6 +235,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
             status=2,
         )
         session.add(room)
+        session.commit()
 
         self.log.info("New room %s created by player %s" % (room.name, serv.ip))
 
@@ -259,6 +259,15 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     def get_users(self, user_ids, session):
         return [self.get_user(user_id, session) for user_id in user_ids]
+
+    def get_active_users(self, user_ids, session):
+        users = []
+        for user_id in user_ids:
+            user = self.get_user(user_id, session)
+            if user.online:
+                users.append(user)
+
+        return users
 
     def get_user(self, user_id, session):
         if not user_id:

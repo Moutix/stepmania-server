@@ -107,84 +107,99 @@ class StepmaniaServer(object):
 
             conn.send(packet)
 
-    def on_packet(self, serv, packet):
-        func = getattr(self, "on_%s" % packet.command.name.lower(), None)
-        if not func:
-            return None
-
-        func(serv, packet)
-
     def on_disconnect(self, serv):
         pass
 
-    def on_nscping(self, serv, packet):
-        serv.send(smpacket.SMPacketServerNSCPingR())
+    def on_packet(self, serv, packet):
+        PacketHandler(self, serv, packet).handle()
 
-    def on_nscpingr(self, serv, packet):
-        with serv.mutex:
-            serv.last_ping = datetime.datetime.now()
 
-    def on_nschello(self, serv, packet):
-        serv.send(smpacket.SMPacketServerNSCHello(version=128, name="Stepmania-Server"))
+class PacketHandler(object):
+    def __init__(self, server, conn, packet):
+        self.server = server
+        self.packet = packet
+        self.conn = conn
 
-    def on_nscgsr(self, serv, packet):
-        pass
-
-    def on_nscgon(self, serv, packet):
-        pass
-
-    def on_nscgsu(self, serv, packet):
-        pass
-
-    def on_nscsu(self, serv, packet):
-        pass
-
-    def on_nsccm(self, serv, packet):
-        pass
-
-    def on_nscrsg(self, serv, packet):
-        pass
-
-    def on_nsccuul(self, serv, packet):
-        pass
-
-    def on_nsscsms(self, serv, packet):
-        pass
-
-    def on_nscuopts(self, serv, packet):
-        pass
-
-    def on_nssmonl(self, serv, packet):
-        func = getattr(self, "on_%s" % packet["packet"].command.name.lower(), None)
+    def handle(self):
+        func = getattr(self, "on_%s" % self.packet.command.name.lower(), None)
         if not func:
             return None
 
-        return func(serv, packet["packet"])
+        func()
 
-    def on_nscformatted(self, serv, packet):
+    def on_nscping(self):
+        self.conn.send(smpacket.SMPacketServerNSCPingR())
+
+    def on_nscpingr(self):
+        with self.conn.mutex:
+            self.conn.last_ping = datetime.datetime.now()
+
+    def on_nschello(self):
+        self.conn.send(smpacket.SMPacketServerNSCHello(version=128, name="Stepmania-Server"))
+
+    def on_nscgsr(self):
         pass
 
-    def on_nscattack(self, serv, packet):
+    def on_nscgon(self):
         pass
 
-    def on_xmlpacket(self, serv, packet):
+    def on_nscgsu(self):
         pass
 
-    def on_login(self, serv, packet):
+    def on_nscsu(self):
+        pass
+
+    def on_nsccm(self):
+        pass
+
+    def on_nscrsg(self):
+        pass
+
+    def on_nsccuul(self):
+        pass
+
+    def on_nsscsms(self):
+        pass
+
+    def on_nscuopts(self):
+        pass
+
+    def on_nssmonl(self):
+        PacketHandler(self.server, self.conn, self.packet["packet"]).handle()
+
+    def on_nscformatted(self):
+        pass
+
+    def on_nscattack(self):
+        pass
+
+    def on_xmlpacket(self):
+        pass
+
+    def on_login(self):
         response = smpacket.SMPacketServerNSCUOpts(
             packet=smpacket.SMOPacketServerLogin(
                 approval=1,
                 text="Succesfully Login"
             )
         )
-        serv.send(response)
+        self.conn.send(response)
 
-    def on_enterroom(self, serv, packet):
+    def on_enterroom(self):
         pass
 
-    def on_createroom(self, serv, packet):
+    def on_createroom(self):
         pass
 
-    def on_roominfo(self, serv, packet):
+    def on_roominfo(self):
         pass
+
+    def send(self, packet):
+        self.conn.send(packet)
+
+    def sendall(self, packet):
+        self.server.sendall(packet)
+
+    def sendroom(self, room, packet):
+        self.server.sendroom(room, packet)
 

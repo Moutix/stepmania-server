@@ -13,7 +13,7 @@ from smutils import smpacket, smserver
 class ClientTest(smserver.StepmaniaThread):
     def send(self, packet):
         self._serv.log.debug("%s (%s) send: %s" % (self.ip, self.users, packet))
-        print(packet.binary)
+#        print(packet.binary)
         return packet.binary
 
 
@@ -38,11 +38,11 @@ def main():
     client1._on_data(smpacket.SMPacketClientNSCSU(player_id=0, nb_players=1, player_name="test").binary)
 
     client1._on_data(smpacket.SMPacketClientNSSMONL(
-        packet=smpacket.SMOPacketClientLogin(username="client1-user1", password="test")
+        packet=smpacket.SMOPacketClientLogin(username="client1-user1", password="test", player_number=0)
         ).binary)
 
     client1._on_data(smpacket.SMPacketClientNSSMONL(
-        packet=smpacket.SMOPacketClientLogin(username="client1-user2", password="test")
+        packet=smpacket.SMOPacketClientLogin(username="client1-user2", password="test", player_number=1)
         ).binary)
 
     client1._on_data(smpacket.SMPacketClientNSCSU(player_id=1, nb_players=1, player_name="machin").binary)
@@ -70,6 +70,8 @@ def main():
 
     client1._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
     client2._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
+    client2._on_data(smpacket.SMPacketClientNSCCM(message="/help").binary)
+    client2._on_data(smpacket.SMPacketClientNSCCM(message="/users").binary)
 
 if __name__ == "__main__":
     main()

@@ -2,13 +2,12 @@
 # -*- coding: utf8 -*-
 
 import sys
-import hashlib
 
-from smutils import smserver, smpacket
+from smutils import smserver
 from pluginmanager import PluginManager
 from authplugin import AuthPlugin
 from database import DataBase
-from packethandler import PacketHandler
+
 import conf
 import logger
 import models
@@ -55,6 +54,7 @@ class StepmaniaServer(smserver.StepmaniaServer):
         self.log.debug("Load Plugins")
         self.plugins = PluginManager("StepmaniaPlugin", config.plugins, "plugins", "plugin")
         self.plugins.init(self)
+        self.controllers = self.init_controllers()
         self.log.debug("Plugins loaded")
 
         self.log.debug("Start server")
@@ -62,9 +62,47 @@ class StepmaniaServer(smserver.StepmaniaServer):
                                           config.server["ip"],
                                           config.server["port"])
 
+
+    def init_controllers(self):
+        controllers = {}
+
+        for controller in PluginManager("StepmaniaController", [], "controllers", "controller").values():
+            if not controller.command:
+                continue
+
+            if controller.command not in controllers:
+                controllers[controller.command] = []
+
+            controllers[controller.command].append(controller)
+            self.log.debug("Controller loaded for command %s: %s" % (controller.command, controller))
+
+        self._controllers = controllers
+
+        return controllers
+
     @with_session
     def on_packet(self, session, serv, packet):
-        PacketHandler(self, serv, packet, session).handle()
+        self.handle_packet(session, serv, packet)
+
+    def handle_packet(self, session, serv, packet):
+        for controller in self.controllers.get(packet.command, []):
+            controller(self, serv, packet, session).handle()
+
+            session.commit()
+
+        for app in self.plugins.values():
+            func = getattr(app, "on_%s" % packet.command.name.lower(), None)
+            if not func:
+                continue
+
+            try:
+                func(session, serv, packet)
+            except Exception as err:
+                self.log.exception("Message %s %s %s",
+                                          type(app).__name__, app.__module__, err)
+            session.commit()
+
+
 
     @with_session
     def on_disconnect(self, session, serv):

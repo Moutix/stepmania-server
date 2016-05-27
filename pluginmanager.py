@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import inspect
+import os
 try:
     from importlib import reload
 except ImportError:
@@ -88,10 +89,25 @@ class PluginManager(dict):
         self.plugin_file = plugin_file
         self.directory = directory
         if not paths:
-            paths = []
+            paths = self.all_paths(directory, plugin_file)
+
         self.paths = paths
 
         self.load()
+
+    def all_paths(self, directory, plugin_file):
+        paths = []
+
+        for path in os.listdir(directory):
+            if not os.path.isdir(os.path.join(directory, path)):
+                continue
+
+            if not os.path.isfile("%s.py" % os.path.join(directory, path, plugin_file)):
+                continue
+
+            paths.append(path)
+
+        return paths
 
     def load(self, force_reload=False):
         for path in self.paths:
@@ -104,7 +120,6 @@ class PluginManager(dict):
         for key, app in self.items():
             self[key] = app(*opt)
 
-
     @staticmethod
     def import_plugin(path, plugin_class, force_reload=False, default=None):
         module = __import__(path, fromlist=[plugin_class])
@@ -113,8 +128,7 @@ class PluginManager(dict):
 
         for cls in inspect.getmembers(module, inspect.isclass):
             app = getattr(module, cls[0])
-            if app and (app.__name__ == plugin_class or
-                        plugin_class in [x.__name__ for x in app.__bases__]):
+            if app and (plugin_class in [x.__name__ for x in app.__bases__]):
                 return app
 
         return default
@@ -127,3 +141,4 @@ if __name__ == "__main__":
     plugins.init("a")
     print(plugins)
 
+    print(PluginManager("StepmaniaController", [], "controllers", "controller"))

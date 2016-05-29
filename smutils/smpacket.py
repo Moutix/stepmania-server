@@ -720,7 +720,7 @@ class SMPacketServerNSCRSG(SMPacket):
     """ Tell client to start song/ask if client has song
     The user selected a song on a Net-enabled selection """
 
-    _command = SMServerCommand.NSCCM
+    _command = SMServerCommand.NSCRSG
     _payload = [
         (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),

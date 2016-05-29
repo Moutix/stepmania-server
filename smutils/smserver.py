@@ -21,6 +21,9 @@ class StepmaniaThread(Thread):
         self.users = []
         self.room = None
         self.logged_users = []
+        self.songs = {}
+        self.song = None
+
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None
         self.stepmania_name = None

@@ -120,20 +120,10 @@ class StepmaniaServer(smserver.StepmaniaServer):
         self.db.recreate_tables()
 
     def get_users(self, user_ids, session):
-        return [self.get_user(user_id, session) for user_id in user_ids]
+        if not user_ids:
+            return []
 
-    def get_user(self, user_id, session):
-        if not user_id:
-            return None
-
-        return session.query(models.User).get(user_id)
-
-    def get_room(self, room_id, session):
-        if not room_id:
-            return None
-
-        return session.query(models.Room).get(room_id)
-
+        return session.query(models.User).filter(models.User.id.in_(user_ids))
 def main():
     config = conf.Conf(*sys.argv[1:])
 

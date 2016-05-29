@@ -8,17 +8,35 @@ import server
 import conf
 import random
 
+import datetime
+
 from smutils import smpacket, smserver
 
 class ClientTest(smserver.StepmaniaThread):
     def send(self, packet):
         self._serv.log.debug("%s (%s) send: %s" % (self.ip, self.users, packet))
-#        print(packet.binary)
+        print(packet.binary)
         return packet.binary
-
 
 class ServerTest(server.StepmaniaServer):
     pass
+
+
+def with_benchmark(func):
+    def wrapper(self, *opt):
+        start = datetime.datetime.now()
+        nb_times = 1000
+        for _ in range(1, nb_times):
+            func(self, *opt)
+        total_time = datetime.datetime.now() - start
+        print("Function %s executed %s times in %s s: %s p/s" % (
+            func.__name__, nb_times, total_time, nb_times/total_time.microseconds*1000000
+            ))
+    return wrapper
+
+@with_benchmark
+def benchmark_binary(client, packet):
+    client._on_data(packet)
 
 def main():
     if "stepmania_test.db" in os.listdir():
@@ -72,6 +90,10 @@ def main():
     client2._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
     client2._on_data(smpacket.SMPacketClientNSCCM(message="/help").binary)
     client2._on_data(smpacket.SMPacketClientNSCCM(message="/users").binary)
+
+    packet = smpacket.SMPacketClientNSCGSU().binary
+    print("Becnhmark: %s" % packet)
+    benchmark_binary(client1, packet)
 
 if __name__ == "__main__":
     main()

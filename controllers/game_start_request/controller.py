@@ -8,7 +8,7 @@ from stepmania_controller import StepmaniaController
 import models
 
 class StartGameRequestController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCRSG
+    command = smpacket.SMClientCommand.NSCGSR
 
     def handle(self):
         if not self.room:

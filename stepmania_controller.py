@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 from smutils import smpacket
+import models
 
 class StepmaniaController(object):
     command = None
@@ -13,9 +14,37 @@ class StepmaniaController(object):
         self.session = session
         self.log = self.server.log
 
-        self.room = self.server.get_room(conn.room, session)
-        self.users = self.server.get_users(conn.users, session)
-        self.active_users = [user for user in self.users if user.online]
+        self._room = None
+        self._users = None
+        self._room_users = None
+
+    @property
+    def room(self):
+        if not self.conn.room:
+            return None
+
+        if not self._room:
+            self._room = self.session.query(models.Room).get(self.conn.room)
+
+        return self._room
+
+    @property
+    def users(self):
+        if not self._users:
+            self._users = self.server.get_users(self.conn.users, self.session)
+
+        return self._users
+
+    @property
+    def active_users(self):
+        return [user for user in self.users if user.online]
+
+    @property
+    def room_users(self):
+        if not self._room_users:
+            self._room_users = self.session.query(models.User).filter_by(romm_id=self.conn.room)
+
+        return self._room_users
 
     @property
     def user_repr(self):

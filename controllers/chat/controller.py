@@ -43,14 +43,15 @@ class ChatController(StepmaniaController):
 
         key, value = self._parse_message(message)
 
-        if key:
-            self._on_command(key, value)
+        if not key:
+            self.send_user_message(message)
             return
 
-        self.send_user_message(message)
+        if key not in self.commands:
+            self.send_message("%s: Unknown command. /help for available commands" % key)
+            return
 
-    def _on_command(self, key, value):
-        self.commands.get(key, ChatHelp)(self, value)
+        self.commands[key](self, value)
 
     @staticmethod
     def _parse_message(message, sufix=r"/"):
@@ -63,5 +64,4 @@ class ChatController(StepmaniaController):
             value = None
 
         return key, value
-
 

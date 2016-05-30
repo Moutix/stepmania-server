@@ -35,6 +35,8 @@ class User(models.schema.Base):
     room_id = Column(Integer, ForeignKey('rooms.id'))
     room = relationship("Room", back_populates="users")
 
+    song_stats = relationship("SongStat", back_populates="user")
+
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 

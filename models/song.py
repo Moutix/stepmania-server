@@ -20,6 +20,8 @@ class Song(models.schema.Base):
 
     active_rooms = relationship("Room", back_populates="active_song")
 
+    stats = relationship("SongStat", back_populates="song")
+
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
@@ -29,7 +31,6 @@ class Song(models.schema.Base):
     @classmethod
     def find_or_create(cls, title, subtitle, artist, session):
         song = session.query(cls).filter_by(title=title, artist=artist, subtitle=subtitle).first()
-
         if not song:
             song = cls(title=title, artist=artist, subtitle=subtitle)
             session.add(song)

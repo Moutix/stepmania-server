@@ -67,6 +67,7 @@ def main():
 
     client1._on_data(smpacket.SMPacketClientNSCSU(player_id=1, nb_players=1, player_name="machin").binary)
     client1._on_data(smpacket.SMPacketClientNSCSU(player_id=1, nb_players=2, player_name="machin").binary)
+    client1._on_data(smpacket.SMPacketClientNSCSU(player_id=0, nb_players=1, player_name="machin").binary)
 
 
     client2._on_data(smpacket.SMPacketClientNSSMONL(
@@ -98,6 +99,8 @@ def main():
     packet = smpacket.SMPacketClientNSCGSU().binary
     print("Becnhmark: %s" % packet)
     benchmark_binary(client1, packet)
+
+    client1._on_data(smpacket.SMPacketClientNSCGON().binary)
 
 if __name__ == "__main__":
     main()

@@ -23,7 +23,7 @@ class StepmaniaThread(Thread):
         self.logged_users = []
         self.songs = {}
         self.song = None
-        self.song_stats = {0: [], 1: []}
+        self.song_stats = {0: {"data": []}, 1: {"data": []}}
         self.ingame = False
 
         self.last_ping = datetime.datetime.now()

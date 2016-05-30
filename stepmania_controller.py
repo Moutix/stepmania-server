@@ -17,6 +17,7 @@ class StepmaniaController(object):
         self._room = None
         self._users = None
         self._room_users = None
+        self._song = None
 
     @property
     def room(self):
@@ -27,6 +28,15 @@ class StepmaniaController(object):
             self._room = self.session.query(models.Room).get(self.conn.room)
 
         return self._room
+
+    def song(self):
+        if not self.conn.song:
+            return None
+
+        if not self._song:
+            self._song = self.session.query(models.Song).get(self.conn.song)
+
+        return self._song
 
     @property
     def users(self):

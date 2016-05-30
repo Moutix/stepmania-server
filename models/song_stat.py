@@ -13,7 +13,6 @@ class SongStat(models.schema.Base):
     __tablename__ = 'song_stats'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(255))
 
     song_id = Column(Integer, ForeignKey('songs.id'))
     song = relationship("Song", back_populates="stats")
@@ -34,10 +33,12 @@ class SongStat(models.schema.Base):
     avoid_mine = Column(Integer, default=0)
 
     max_combo = Column(Integer, default=0)
-    settings = Column(Text, default="")
+    options = Column(Text, default="")
     score = Column(Integer, default=0)
     grade = Column(Integer, default=0)
     difficulty = Column(Integer, default=0)
+    feet = Column(Integer, default=0)
+
     percentage = Column(Float(precision=5))
 
     duration = Column(Integer, default=0)
@@ -48,5 +49,5 @@ class SongStat(models.schema.Base):
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
-        return "<SongStat #%s (name='%s')>" % (self.id, self.name)
+        return "<SongStat #%s>" % (self.id)
 

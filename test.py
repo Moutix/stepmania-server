@@ -29,8 +29,10 @@ def with_benchmark(func):
         for _ in range(1, nb_times):
             func(self, *opt)
         total_time = datetime.datetime.now() - start
-        print("Function %s executed %s times in %s s: %s p/s" % (
-            func.__name__, nb_times, total_time, nb_times/total_time.microseconds*1000000
+
+        fps = nb_times/(total_time.seconds + (total_time.microseconds/1000000))
+        print("Function %s executed %s times in %s s: %s p/s (1packet -> %s ms)" % (
+            func.__name__, nb_times, total_time, fps, (1/fps*1000)
             ))
     return wrapper
 
@@ -90,6 +92,8 @@ def main():
     client2._on_data(smpacket.SMPacketClientNSCCM(message="aaa").binary)
     client2._on_data(smpacket.SMPacketClientNSCCM(message="/help").binary)
     client2._on_data(smpacket.SMPacketClientNSCCM(message="/users").binary)
+
+    client1._on_data(smpacket.SMPacketClientNSCGSR(song_title="test_song").binary)
 
     packet = smpacket.SMPacketClientNSCGSU().binary
     print("Becnhmark: %s" % packet)

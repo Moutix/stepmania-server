@@ -62,6 +62,9 @@ class StepmaniaController(object):
     def sendroom(self, room, packet):
         self.server.sendroom(room, packet)
 
+    def sendplayers(self, room, song, packet):
+        self.server.sendroom(room, song, packet)
+
     def send_message(self, message, to=None):
         packet = smpacket.SMPacketServerNSCCM(message=message)
 

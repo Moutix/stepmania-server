@@ -20,5 +20,8 @@ class StartGameRequestController(StepmaniaController):
             self.packet["song_artist"],
             self.session)
 
+        with self.conn.mutex:
+            self.conn.song_id = song.id
+
         self.send(smpacket.SMPacketServerNSCGSR())
 

@@ -23,6 +23,8 @@ class StepmaniaThread(Thread):
         self.logged_users = []
         self.songs = {}
         self.song = None
+        self.song_stats = {0: [], 1: []}
+        self.ingame = False
 
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None
@@ -85,7 +87,7 @@ class StepmaniaServer(object):
         self.ip = ip
         self.port = port
         self.mutex = Lock()
-        self.connections = []
+        self._connections = []
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.bind((self.ip, self.port))
@@ -96,18 +98,38 @@ class StepmaniaServer(object):
             conn, addr = self._socket.accept()
             thread = StepmaniaThread(self, conn, *addr)
             with self.mutex:
-                self.connections.append(thread)
+                self._connections.append(thread)
             thread.start()
+
+    @property
+    def connections(self):
+        with self.mutex:
+            return self._connections
+
+    def room_connections(self, room_id):
+        for conn in self.connections:
+            if conn.room != room_id:
+                continue
+
+            yield conn
+
+    def players_connections(self, room_id, song_id):
+        for conn in self.room_connections(room_id):
+            if not conn.songs.get(song_id):
+                continue
+
+            yield conn
 
     def sendall(self, packet):
         for conn in self.connections:
             conn.send(packet)
 
     def sendroom(self, room_id, packet):
-        for conn in self.connections:
-            if conn.room != room_id:
-                continue
+        for conn in self.room_connections(room_id):
+            conn.send(packet)
 
+    def sendplayers(self, room_id, song_id, packet):
+        for conn in self.players_connections(room_id, song_id):
             conn.send(packet)
 
     def on_disconnect(self, serv):

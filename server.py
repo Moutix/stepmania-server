@@ -7,6 +7,7 @@ from smutils import smserver
 from pluginmanager import PluginManager
 from authplugin import AuthPlugin
 from database import DataBase
+from watcher import StepmaniaWatcher
 
 import conf
 import logger
@@ -62,6 +63,8 @@ class StepmaniaServer(smserver.StepmaniaServer):
                                           config.server["ip"],
                                           config.server["port"])
 
+        self.watcher = StepmaniaWatcher(self)
+        self.watcher.start()
 
     def init_controllers(self):
         controllers = {}

@@ -24,7 +24,6 @@ class StartGameRequestController(StepmaniaController):
         with self.conn.mutex:
             self.conn.song_id = song.id
 
-        with self.conn.mutex:
             self.conn.songs = {
                 0: {"data": [],
                     "feet": self.packet["first_player_feet"],
@@ -41,5 +40,24 @@ class StartGameRequestController(StepmaniaController):
                 "course_title": self.packet["course_title"]
                 }
 
-        self.send(smpacket.SMPacketServerNSCGSR())
+            self.conn.wait_start = True
+
+        for player in self.server.player_connections(self.room.id, song.id):
+            with player.mutex:
+                if not player.wait_start:
+                    return
+
+        self.launch_song(self.room, song, self.server)
+
+    @staticmethod
+    def launch_song(room, song, server):
+        room.active_song = song
+        room.status = 2
+
+        for player in server.player_connections(room.id, song.id):
+            with player.mutex:
+                player.songs["start_at"] = datetime.datetime.now()
+                player.wait_start = False
+                player.send(smpacket.SMPacketServerNSCGSR())
+
 

@@ -23,6 +23,7 @@ class GameOverController(StepmaniaController):
 
         with self.conn.mutex:
             self.conn.songs = {0: {"data": []}, 1: {"data": []}}
+            self.conn.song = None
 
     def create_stats(self, user, raw_stats, duration):
         songstat = models.SongStat(song_id=self.conn.song, user_id=user.id)

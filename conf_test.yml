@@ -3,7 +3,7 @@ server:
     motd: Bienvenue sur ce superbe serveur
     ip: 0.0.0.0
     port: 8765
-    fps: 120
+    fps: 2
     readtimeout: 250
     max_users: 255
 

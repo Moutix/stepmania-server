@@ -24,7 +24,7 @@ class StepmaniaThread(Thread):
         self.songs = {}
         self.song = None
         self.song_stats = {0: {"data": []}, 1: {"data": []}}
-        self.ingame = False
+        self.wait_start = False
 
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None
@@ -113,7 +113,7 @@ class StepmaniaServer(object):
 
             yield conn
 
-    def players_connections(self, room_id, song_id):
+    def player_connections(self, room_id, song_id):
         for conn in self.room_connections(room_id):
             if not conn.songs.get(song_id):
                 continue
@@ -129,7 +129,7 @@ class StepmaniaServer(object):
             conn.send(packet)
 
     def sendplayers(self, room_id, song_id, packet):
-        for conn in self.players_connections(room_id, song_id):
+        for conn in self.player_connections(room_id, song_id):
             conn.send(packet)
 
     def on_disconnect(self, serv):

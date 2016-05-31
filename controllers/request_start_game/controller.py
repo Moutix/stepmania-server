@@ -28,12 +28,7 @@ class RequestStartGameController(StepmaniaController):
 
     def start_game_request(self, song):
         if self.conn.song == song.id:
-            self.sendroom(self.room.id, smpacket.SMPacketServerNSCRSG(
-                usage=2,
-                song_title=song.title,
-                song_subtitle=song.subtitle,
-                song_artist=song.artist
-                ))
+            self.launch_song(song)
             return
 
         self.send_message("%s select %s" % (self.user_repr, song.title))
@@ -52,4 +47,13 @@ class RequestStartGameController(StepmaniaController):
     def check_song_presence(self, song):
         with self.conn.mutex:
             self.conn.songs[song.id] = {0: True, 1: False}[self.packet["usage"]]
+
+    def launch_song(self, song):
+        self.room.active_song = song
+        self.sendroom(self.room.id, smpacket.SMPacketServerNSCRSG(
+            usage=2,
+            song_title=song.title,
+            song_subtitle=song.subtitle,
+            song_artist=song.artist
+            ))
 

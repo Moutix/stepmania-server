@@ -45,8 +45,6 @@ class StepmaniaThread(Thread):
 
             self._on_data(data)
 
-        with self._serv.mutex:
-            self._serv.connections.remove(self)
         self._conn.close()
 
     def send_ping(self):
@@ -134,7 +132,8 @@ class StepmaniaServer(object):
             conn.send(packet)
 
     def on_disconnect(self, serv):
-        pass
+        with self.mutex:
+            self._connections.remove(serv)
 
     def on_packet(self, serv, packet):
         PacketHandler(self, serv, packet).handle()

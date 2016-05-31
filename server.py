@@ -109,6 +109,8 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     @with_session
     def on_disconnect(self, session, serv):
+        smserver.StepmaniaServer.on_disconnect(self, serv)
+
         users = self.get_users(serv.users, session)
         if not users:
             self.log.info("Player %s disconnected" % serv.ip)

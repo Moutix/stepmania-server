@@ -60,8 +60,6 @@ class StepmaniaWatcher(Thread):
 
         return False
 
-
-
     @periodicmethod
     def send_game_start(self, session):
         for conn in self.server.connections:

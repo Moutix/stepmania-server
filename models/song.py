@@ -34,6 +34,7 @@ class Song(models.schema.Base):
         if not song:
             song = cls(title=title, artist=artist, subtitle=subtitle)
             session.add(song)
+            session.commit()
 
         return song
 

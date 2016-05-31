@@ -25,6 +25,7 @@ class StepmaniaThread(Thread):
         self.song = None
         self.song_stats = {0: {"data": []}, 1: {"data": []}}
         self.wait_start = False
+        self.ingame = False
 
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None

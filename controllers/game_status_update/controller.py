@@ -14,11 +14,11 @@ class GameStatusUpdateController(StepmaniaController):
         if not self.room:
             return
 
-        if "start_at" not in self.conn.songs:
+        if "start_at" not in self.conn.songstats:
             return
 
-        stats = {"time": datetime.datetime.now() - self.conn.songs.get("start_at"),
-                 "step_id": self.packet["step_id"],
+        stats = {"time": datetime.datetime.now() - self.conn.songstats.get("start_at"),
+                 "stepid": self.packet["step_id"],
                  "grade": self.packet["grade"],
                  "score": self.packet["score"],
                  "combo": self.packet["combo"],
@@ -27,5 +27,5 @@ class GameStatusUpdateController(StepmaniaController):
                 }
 
         with self.conn.mutex:
-            self.conn.songs[self.packet["player_id"]]["data"].append(stats)
+            self.conn.songstats[self.packet["player_id"]]["data"].append(stats)
 

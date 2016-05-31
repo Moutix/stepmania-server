@@ -27,6 +27,9 @@ class RequestStartGameController(StepmaniaController):
         self.check_song_presence(song)
 
     def start_game_request(self, song):
+        with self.conn.mutex:
+            self.conn.songs[song.id] = True
+
         if self.conn.song == song.id:
             self.launch_song(song)
             return

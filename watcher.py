@@ -36,11 +36,31 @@ class StepmaniaWatcher(Thread):
                 for func in periodicmethod.functions:
                     func(self, session)
 
+                    session.commit()
+
             time.sleep(self.fps)
 
     @periodicmethod
     def send_ping(self, session):
-        self.server.sendall(smpacket.SMPacketClientNSCPing())
+        self.server.sendall(smpacket.SMPacketServerNSCPing())
+
+    @periodicmethod
+    def check_end_game(self, session):
+        for room in session.query(models.Room).filter_by(status=2):
+            if self.room_still_in_game(room, session):
+                continue
+
+            self.server.log.debug("Room %s finish is last song" % room.name)
+            room.status = 1
+
+    def room_still_in_game(self, room, session):
+        for conn in self.server.room_connections(room.id):
+            if conn.ingame is True:
+                return True
+
+        return False
+
+
 
     @periodicmethod
     def send_game_start(self, session):
@@ -49,13 +69,16 @@ class StepmaniaWatcher(Thread):
                 self.check_song_start(session, conn)
 
     def check_song_start(self, session, conn):
+        if not conn.room or not conn.song:
+            return
+
         if not conn.wait_start:
             return
 
-        if "start_at" not in conn.songs:
+        if "start_at" not in conn.songstats:
             return
 
-        if datetime.datetime.now() - conn.songs["start_at"] < datetime.timedelta(seconds=3):
+        if datetime.datetime.now() - conn.songstats["start_at"] < datetime.timedelta(seconds=3):
             return
 
         room = session.query(models.Room).get(conn.room)

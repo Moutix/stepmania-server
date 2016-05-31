@@ -12,6 +12,19 @@ import models.schema
 class SongStat(models.schema.Base):
     __tablename__ = 'song_stats'
 
+    stepid = {
+        1: "hitmine",
+        2: "avoid_mine",
+        3: "miss",
+        4: "bad",
+        5: "good",
+        6: "great",
+        7: "perfect",
+        8: "flawless",
+        9: "not_held",
+        10: "held"
+    }
+
     id = Column(Integer, primary_key=True)
 
     song_id = Column(Integer, ForeignKey('songs.id'))

@@ -79,16 +79,18 @@ class User(models.schema.Base):
     def disconnect(cls, user, session):
         user.online = False
         user.pos = None
+        user.room_id = None
         session.commit()
         return user
 
     @classmethod
     def disconnect_all(cls, session):
-        users = cls.onlines(session)
+        users = session.query(User).all()
 
         for user in users:
             user.pos = None
             user.online = False
+            user.room_id = None
 
         session.commit()
 

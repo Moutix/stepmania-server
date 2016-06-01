@@ -62,9 +62,13 @@ class StepmaniaServer(smserver.StepmaniaServer):
         smserver.StepmaniaServer.__init__(self,
                                           config.server["ip"],
                                           config.server["port"])
-
         self.watcher = StepmaniaWatcher(self)
+
+    def start(self):
         self.watcher.start()
+
+        smserver.StepmaniaServer.start(self)
+
 
     def init_controllers(self):
         controllers = {}

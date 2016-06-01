@@ -67,8 +67,8 @@ class SMOClientCommand(SMOCommand):
 class SMOServerCommand(SMOCommand):
     LOGIN = 0
     ROOMUPDATE = 1
-    GENERALINFO = 3
-    ROOMINFO = 4
+    GENERALINFO = 2
+    ROOMINFO = 3
 
 
 class SMPayloadTypeAbstract(object):
@@ -672,12 +672,12 @@ class SMPacketServerNSCGON(SMPacket):
         (SMPayloadType.INTLIST, "scores", (4, "nb_players")),
         (SMPayloadType.INTLIST, "grades", (1, "nb_players")),
         (SMPayloadType.INTLIST, "miss", (2, "nb_players")),
-        (SMPayloadType.INTLIST, "boo", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "bad", (2, "nb_players")),
         (SMPayloadType.INTLIST, "good", (2, "nb_players")),
         (SMPayloadType.INTLIST, "great", (2, "nb_players")),
         (SMPayloadType.INTLIST, "perfect", (2, "nb_players")),
-        (SMPayloadType.INTLIST, "marvelous", (2, "nb_players")),
-        (SMPayloadType.INTLIST, "ok", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "flawless", (2, "nb_players")),
+        (SMPayloadType.INTLIST, "held", (2, "nb_players")),
         (SMPayloadType.INTLIST, "max_combo", (2, "nb_players")),
         (SMPayloadType.NTLIST, "options", "nb_players"),
     ]

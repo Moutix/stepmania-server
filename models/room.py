@@ -40,6 +40,23 @@ class Room(models.schema.Base):
             room_type=self.type
         )
 
+    @property
+    def room_info(self):
+        packet = smpacket.SMOPacketServerRoomInfo(
+            max_players=255
+        )
+
+        song = self.active_song
+        if song:
+            packet["song_title"] = song.title
+            packet["song_subtitle"] = song.subtitle
+            packet["song_artist"] = song.artist
+
+        packet["players"] = [user.name for user in self.users]
+        packet["num_players"] = len(packet["players"])
+
+        return packet
+
     @staticmethod
     def _list_smopacket(rooms):
         packet = smpacket.SMOPacketServerRoomUpdate(

@@ -95,5 +95,5 @@ class StepmaniaController(object):
         self.server.sendall(packet)
 
     def send_user_message(self, message, to=None):
-        self.send_message("<%s> %s" % (self.user_repr, to))
+        self.send_message("<%s> %s" % (self.user_repr, message), to)
 

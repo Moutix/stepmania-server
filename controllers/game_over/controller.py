@@ -56,6 +56,9 @@ class GameOverController(StepmaniaController):
                     getattr(songstat, models.SongStat.stepid[value["stepid"]]) + 1
                    )
 
+        songstat.percentage = songstat.calc_percentage()
+        songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
+
         self.session.add(songstat)
 
         return songstat

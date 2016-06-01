@@ -79,6 +79,10 @@ def main():
         ).binary)
 
     client2._on_data(smpacket.SMPacketClientNSSMONL(
+        packet=smpacket.SMOPacketClientRoomInfo(room="Room client1")
+        ).binary)
+
+    client2._on_data(smpacket.SMPacketClientNSSMONL(
         packet=smpacket.SMOPacketClientEnterRoom(enter=1, room="Room client1", password="pas aaa")
         ).binary)
 
@@ -96,7 +100,7 @@ def main():
 
     client1._on_data(smpacket.SMPacketClientNSCGSR(song_title="test_song").binary)
 
-    packet = smpacket.SMPacketClientNSCGSU().binary
+    packet = smpacket.SMPacketClientNSCGSU(step_id=7).binary
     print("Becnhmark: %s" % packet)
     benchmark_binary(client1, packet)
 

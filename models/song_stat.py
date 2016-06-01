@@ -8,6 +8,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, T
 from sqlalchemy.orm import relationship
 
 import models.schema
+from smutils.smpacket import SMPacket, SMPayloadType
 
 class SongStat(models.schema.Base):
     __tablename__ = 'song_stats'
@@ -56,11 +57,74 @@ class SongStat(models.schema.Base):
 
     duration = Column(Integer, default=0)
 
-    raw_result = Column(LargeBinary)
+    raw_stats = Column(LargeBinary)
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
-        return "<SongStat #%s>" % (self.id)
+        return "<SongStat #%s score=%s (%s%%)>" % (self.id, self.score, self.percentage)
+
+    def calc_percentage(self, config=None):
+        if not config:
+            config = {
+                "not_held": 0,
+                "miss": 0,
+                "bad": 0,
+                "good": 0,
+                "held": 3,
+                "hitmine": -2,
+                "great": 1,
+                "perfect": 2,
+                "flawless": 3
+            }
+
+        max_weight = max(config.values())
+        percentage = 0
+        nb_note = 0
+        for note, weight in config.items():
+            nb = getattr(self, note, 0)
+            percentage += nb*weight
+            nb_note += nb*max_weight
+
+        return percentage/nb_note*100 if nb_note > 0 else 0
+
+    @staticmethod
+    def encode_stats(raw_data):
+        binary = BinaryStats(nb_notes=len(raw_data), stats=[])
+
+        for stats in raw_data:
+            binary["stats"].append({
+                "grade": stats["grade"],
+                "stepid": stats["stepid"],
+                "score": stats["score"],
+                "combo": stats["combo"],
+                "health": stats["health"],
+                "time": stats["time"].seconds
+            })
+
+        return binary.payload
+
+    @staticmethod
+    def decode_stats(binary):
+        return BinaryStats.from_payload(binary)["stats"]
+
+    @property
+    def stats(self):
+        return self.decode_stats(self.raw_stats)
+
+
+class BinaryStats(SMPacket):
+    _payload = [
+        (SMPayloadType.INT, "nb_notes", 8),
+        (SMPayloadType.LIST, "stats", ("nb_notes", [
+            (SMPayloadType.MSN, "grade", None),
+            (SMPayloadType.LSN, "stepid", None),
+            (SMPayloadType.INT, "score", 4),
+            (SMPayloadType.INT, "combo", 2),
+            (SMPayloadType.INT, "health", 2),
+            (SMPayloadType.INT, "time", 4)
+            ])
+        )
+    ]
 

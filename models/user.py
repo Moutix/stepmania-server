@@ -80,8 +80,8 @@ class User(models.schema.Base):
         return smpacket.SMPacketServerNSCCUUL(
             max_players=max_users,
             nb_players=len(users),
-            users=[{"status": u.enum_status.value, "name": u.name}
-                   for u in users]
+            players=[{"status": u.enum_status.value, "name": u.name}
+                     for u in users]
             )
 
     @classmethod

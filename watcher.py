@@ -12,12 +12,15 @@ class PeriodicMethods(object):
     def __init__(self):
         self.functions = []
 
-    def __call__(self, func):
-        self.functions.append(func)
-        def wrapper(self, *opts):
-            func(self, *opts)
+    def __call__(self, period=1):
+        def handler(func):
+            self.functions.append((func, period))
+            def wrapper(self, *opts):
+                func(self, *opts)
 
-        return wrapper
+            return wrapper
+
+        return handler
 
 periodicmethod = PeriodicMethods()
 
@@ -26,25 +29,33 @@ class StepmaniaWatcher(Thread):
         Thread.__init__(self)
 
         self.server = server
-        self.fps = self.server.config.server.get("fps", 2)
+        self.fps = self.server.config.server.get("fps", 1)
         self.mutex = Lock()
 
     def run(self):
         self.server.log.debug("Watcher start")
+        func_map = {func: 0 for func, _ in periodicmethod.functions}
+
         while True:
             with self.server.db.session_scope() as session:
-                for func in periodicmethod.functions:
+                for func, period in periodicmethod.functions:
+                    func_map[func] += 1
+                    if func_map[func] < period:
+                        continue
+
                     func(self, session)
+
+                    func_map[func] = 0
 
                     session.commit()
 
             time.sleep(self.fps)
 
-    @periodicmethod
+    @periodicmethod(1)
     def send_ping(self, session):
         self.server.sendall(smpacket.SMPacketServerNSCPing())
 
-    @periodicmethod
+    @periodicmethod(2)
     def check_end_game(self, session):
         for room in session.query(models.Room).filter_by(status=2):
             if self.room_still_in_game(room, session):
@@ -78,7 +89,7 @@ class StepmaniaWatcher(Thread):
                 continue
 
             packet["nb_players"] += 1
-            packet["ids"].append(room.user_index(user))
+            packet["ids"].append(models.User.user_index(user, session))
             for option in options:
                 packet[option].append(getattr(songstat, option, None))
 
@@ -91,7 +102,7 @@ class StepmaniaWatcher(Thread):
 
         return False
 
-    @periodicmethod
+    @periodicmethod(1)
     def scoreboard_update(self, session):
         for room in session.query(models.Room).filter_by(status=2):
             self.send_scoreboard(room, session)
@@ -124,10 +135,9 @@ class StepmaniaWatcher(Thread):
         packet = smpacket.SMPacketServerNSCGSU(
             nb_players=len(scores),
         )
-        self.server.sendroom(room.id, room.room_info)
 
         packet["section"] = 0
-        packet["options"] = [room.user_index(score["user"]) for score in scores]
+        packet["options"] = [models.User.user_index(score["user"], session) for score in scores]
         self.server.sendroom(room.id, packet)
 
         packet["section"] = 1
@@ -138,7 +148,7 @@ class StepmaniaWatcher(Thread):
         packet["options"] = [score["grade"] for score in scores]
         self.server.sendroom(room.id, packet)
 
-    @periodicmethod
+    @periodicmethod(1)
     def send_game_start(self, session):
         for conn in self.server.connections:
             with conn.mutex:

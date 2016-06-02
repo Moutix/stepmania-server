@@ -7,6 +7,7 @@ from stepmania_controller import StepmaniaController
 
 class HelloController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCHello
+    require_login = False
 
     def handle(self):
         self.conn.stepmania_version = self.packet["version"]

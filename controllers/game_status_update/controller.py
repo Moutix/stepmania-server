@@ -9,6 +9,7 @@ from stepmania_controller import StepmaniaController
 
 class GameStatusUpdateController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCGSU
+    require_login = False
 
     def handle(self):
         if not self.room:

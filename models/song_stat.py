@@ -14,7 +14,7 @@ class SongStat(models.schema.Base):
     __tablename__ = 'song_stats'
 
     stepid = {
-        1: "hitmine",
+        1: "hit_mine",
         2: "avoid_mine",
         3: "miss",
         4: "bad",
@@ -34,17 +34,16 @@ class SongStat(models.schema.Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="song_stats")
 
-    flawless = Column(Integer, default=0)
-    perfect = Column(Integer, default=0)
-    great = Column(Integer, default=0)
-    good = Column(Integer, default=0)
-    bad = Column(Integer, default=0)
-    miss = Column(Integer, default=0)
-    mine = Column(Integer, default=0)
-    held = Column(Integer, default=0)
-    not_held = Column(Integer, default=0)
     hit_mine = Column(Integer, default=0)
     avoid_mine = Column(Integer, default=0)
+    miss = Column(Integer, default=0)
+    bad = Column(Integer, default=0)
+    good = Column(Integer, default=0)
+    great = Column(Integer, default=0)
+    perfect = Column(Integer, default=0)
+    flawless = Column(Integer, default=0)
+    not_held = Column(Integer, default=0)
+    held = Column(Integer, default=0)
 
     max_combo = Column(Integer, default=0)
     options = Column(Text, default="")
@@ -73,7 +72,7 @@ class SongStat(models.schema.Base):
                 "bad": 0,
                 "good": 0,
                 "held": 3,
-                "hitmine": -2,
+                "hit_mine": -2,
                 "great": 1,
                 "perfect": 2,
                 "flawless": 3
@@ -112,6 +111,10 @@ class SongStat(models.schema.Base):
     @property
     def stats(self):
         return self.decode_stats(self.raw_stats)
+
+    @property
+    def nb_notes(self):
+        return sum(getattr(self, note, 0) for note in self.stepid.values())
 
 
 class BinaryStats(SMPacket):

@@ -10,6 +10,7 @@ import models
 
 class StartGameRequestController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCGSR
+    require_login = True
 
     def handle(self):
         if not self.room:

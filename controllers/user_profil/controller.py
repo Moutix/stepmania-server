@@ -5,8 +5,11 @@ from smutils import smpacket
 
 from stepmania_controller import StepmaniaController
 
+import models
+
 class UserProfilController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCSU
+    require_login = False
 
     def handle(self):
         if not self.users:
@@ -24,5 +27,7 @@ class UserProfilController(StepmaniaController):
 
             user.online = True
             self.log.info("User %s connected" % user.name)
+
+        self.server.send_user_list(self.session)
 
 

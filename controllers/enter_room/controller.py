@@ -9,12 +9,9 @@ import models
 
 class EnterRoomController(StepmaniaController):
     command = smpacket.SMOClientCommand.ENTERROOM
+    require_login = True
 
     def handle(self):
-        if not self.active_users:
-            self.log.info("User unknown return")
-            return
-
         if self.packet["enter"] == 0:
             self.send(models.Room.smo_list(self.session))
             self.conn.room = None

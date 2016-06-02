@@ -10,6 +10,7 @@ import models
 
 class GameOverController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCGON
+    require_login = True
 
     def handle(self):
         if not self.room:

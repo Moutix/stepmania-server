@@ -10,6 +10,7 @@ import models
 
 class CreateRoomController(StepmaniaController):
     command = smpacket.SMOClientCommand.CREATEROOM
+    require_login = True
 
     def handle(self):
         room = models.Room(

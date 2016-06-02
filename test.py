@@ -46,6 +46,7 @@ def main():
     config = conf.Conf("-c", "conf_test.yml")
 
     server_test = ServerTest(config)
+    server_test.watcher.start()
 
     client1 = ClientTest(server_test, None, "42.42.42.42", random.randint(4000, 5000))
     client2 = ClientTest(server_test, None, "50.50.50.50", random.randint(4000, 5000))

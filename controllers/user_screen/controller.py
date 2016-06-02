@@ -9,11 +9,9 @@ import models
 
 class UserStatusController(StepmaniaController):
     command = smpacket.SMClientCommand.NSSCSMS
+    require_login = True
 
     def handle(self):
-        if not self.active_users:
-            return
-
         status_mapping = {
             1: models.UserStatus.music_selection,
             3: models.UserStatus.option,

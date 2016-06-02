@@ -83,8 +83,6 @@ class StepmaniaServer(smserver.StepmaniaServer):
             controllers[controller.command].append(controller)
             self.log.debug("Controller loaded for command %s: %s" % (controller.command, controller))
 
-        self._controllers = controllers
-
         return controllers
 
     @with_session
@@ -93,8 +91,17 @@ class StepmaniaServer(smserver.StepmaniaServer):
 
     def handle_packet(self, session, serv, packet):
         for controller in self.controllers.get(packet.command, []):
-            controller(self, serv, packet, session).handle()
+            app = controller(self, serv, packet, session)
 
+            if app.require_login and not app.active_users:
+                self.log.info("Action forbidden %s for user %s" % (packet.command, serv.ip))
+                continue
+
+            try:
+                app.handle()
+            except Exception as err:
+                self.log.exception("Message %s %s %s",
+                                          type(controller).__name__, controller.__module__, err)
             session.commit()
 
         for app in self.plugins.values():
@@ -110,7 +117,6 @@ class StepmaniaServer(smserver.StepmaniaServer):
             session.commit()
 
 
-
     @with_session
     def on_disconnect(self, session, serv):
         smserver.StepmaniaServer.on_disconnect(self, serv)
@@ -123,6 +129,11 @@ class StepmaniaServer(smserver.StepmaniaServer):
         for user in users:
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected" % user.name)
+
+        self.send_user_list(session)
+
+    def send_user_list(self, session):
+        self.sendall(models.User.sm_list(session, self.config.server["max_users"]))
 
     def update_schema(self):
         self.log.info("DROP all the database tables")

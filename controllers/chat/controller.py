@@ -32,6 +32,7 @@ class ChatUserListing(object):
 
 class ChatController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCCM
+    require_login = True
 
     commands = {
         "help": ChatHelp(),

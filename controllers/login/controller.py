@@ -9,6 +9,7 @@ import models
 
 class LoginController(StepmaniaController):
     command = smpacket.SMOClientCommand.LOGIN
+    require_login = False
 
     def handle(self):
         connected = self.server.auth.login(self.packet["username"], self.packet["password"])
@@ -44,7 +45,6 @@ class LoginController(StepmaniaController):
                 text="Player %s successfully login" % self.packet["username"]
             )
         ))
-        self.sendall(models.User.sm_list(self.session, self.server.config.server["max_users"]))
+        self.server.send_user_list(self.session)
         self.send(models.Room.smo_list(self.session))
-
 

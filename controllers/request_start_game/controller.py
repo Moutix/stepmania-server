@@ -4,11 +4,13 @@
 from smutils import smpacket
 
 from stepmania_controller import StepmaniaController
+from chathelper import with_color
 
 import models
 
 class RequestStartGameController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCRSG
+    require_login = True
 
     def handle(self):
         if not self.room:
@@ -34,7 +36,7 @@ class RequestStartGameController(StepmaniaController):
             self.launch_song(song)
             return
 
-        self.send_message("%s select %s" % (self.user_repr, song.title))
+        self.send_message("%s select %s" % (with_color(self.user_repr), with_color(song.title)))
 
         with self.conn.mutex:
             self.conn.song = song.id

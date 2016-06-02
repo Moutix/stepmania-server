@@ -3,9 +3,11 @@
 
 from smutils import smpacket
 import models
+from chathelper import with_color
 
 class StepmaniaController(object):
     command = None
+    require_login = False
 
     def __init__(self, server, conn, packet, session):
         self.server = server
@@ -95,5 +97,5 @@ class StepmaniaController(object):
         self.server.sendall(packet)
 
     def send_user_message(self, message, to=None):
-        self.send_message("<%s> %s" % (self.user_repr, message), to)
+        self.send_message("<%s> %s" % (with_color(self.user_repr), message), to)
 

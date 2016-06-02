@@ -65,6 +65,15 @@ class User(models.schema.Base):
         return session.query(User).filter_by(online=True).all()
 
     @classmethod
+    def user_index(cls, user_id, session):
+        for idx, user in enumerate(cls.onlines(session)):
+            if user_id == user.id:
+                return idx
+
+        return 0
+
+
+    @classmethod
     def sm_list(cls, session, max_users=255):
         users = cls.onlines(session)
 

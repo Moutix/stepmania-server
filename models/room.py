@@ -57,13 +57,6 @@ class Room(models.schema.Base):
 
         return smpacket.SMPacketServerNSSMONL(packet=packet)
 
-    def user_index(self, user):
-        for idx, usr in enumerate(self.users):
-            if user.id == user.id:
-                return idx
-
-        return 0
-
     @staticmethod
     def _list_smopacket(rooms):
         packet = smpacket.SMOPacketServerRoomUpdate(

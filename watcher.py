@@ -70,7 +70,7 @@ class StepmaniaWatcher(Thread):
         packet = smpacket.SMPacketServerNSCGON(
             nb_players=0)
 
-        options = ("score", "grade", "miss", "bad", "good", "great", "perfect", "flawless", "held", "max_combo", "options")
+        options = ("score", "grade", "difficulty", "miss", "bad", "good", "great", "perfect", "flawless", "held", "max_combo", "options")
         for option in options:
             packet[option] = []
 
@@ -89,7 +89,8 @@ class StepmaniaWatcher(Thread):
                 continue
 
             packet["nb_players"] += 1
-            packet["ids"].append(models.User.user_index(user, session))
+            packet["ids"].append(models.User.user_index(user.id, session))
+
             for option in options:
                 packet[option].append(getattr(songstat, option, None))
 
@@ -137,7 +138,7 @@ class StepmaniaWatcher(Thread):
         )
 
         packet["section"] = 0
-        packet["options"] = [models.User.user_index(score["user"], session) for score in scores]
+        packet["options"] = [models.User.user_index(score["user"].id, session) for score in scores]
         self.server.sendroom(room.id, packet)
 
         packet["section"] = 1

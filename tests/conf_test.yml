@@ -1,0 +1,28 @@
+server:
+    name: Stepmania
+    motd: Bienvenue sur ce superbe serveur
+    ip: 0.0.0.0
+    port: 8765
+    fps: 2
+    readtimeout: 250
+    max_users: 255
+
+database:
+    type: "sqlite"
+    database: "stepmania_test.db"
+
+logger:
+    stderr:
+        level: "debug"
+
+rooms:
+    - name: Miku
+      description: super description
+      password: miku
+
+auth:
+    plugin: "database"
+    autocreate: True
+
+plugins:
+    - "chat"

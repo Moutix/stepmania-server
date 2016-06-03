@@ -32,9 +32,9 @@ score:
 logger:
     stderr:
         level: "info"
-#    file:
-#        level: "info"
-#        file: "/var/log/stepmania.log"
+    file:
+        level: "info"
+        file: "/tmp/stepmania.log"
 
 rooms:
 #    - name: room

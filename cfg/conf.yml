@@ -1,0 +1,50 @@
+server:
+    name: Stepmania Server
+    motd: Welcome !
+    ip: 0.0.0.0
+    port: 8765
+    fps: 1
+    readtimeout: 250
+    max_users: 255
+
+database:
+    type: "sqlite"
+    user:
+    password:
+    database: "/tmp/stepmania.db"
+    host:
+    port:
+    driver:
+
+score:
+    # Write here how the score percentage are calculated
+    percentWeight:
+        held: 3
+        hit_mine: -2
+        not_held: 0
+        miss: 0
+        bad: 0
+        good: 0
+        great: 1
+        perfect: 2
+        flawless: 3
+
+logger:
+    stderr:
+        level: "info"
+#    file:
+#        level: "info"
+#        file: "/var/log/stepmania.log"
+
+rooms:
+#    - name: room
+#      password: password
+#      description: description
+
+auth:
+    plugin: "database"
+    autocreate: True
+
+plugins:
+#    - "chat"
+

@@ -61,5 +61,4 @@ target/
 # Logging
 log/
 *.db
-conf.yml
 

@@ -80,7 +80,7 @@ class StepmaniaController(object):
         self.server.sendroom(room, song, packet)
 
     def send_message(self, message, to=None):
-        message = "[%s] %s" % (datetime.now(), message)
+        message = "[%s] %s" % (datetime.now().strftime("%X"), message)
         packet = smpacket.SMPacketServerNSCCM(message=message)
 
         func = {

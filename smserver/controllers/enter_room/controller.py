@@ -29,7 +29,9 @@ class EnterRoomController(StepmaniaController):
         self.conn.room = room.id
         for user in self.active_users:
             user.room = room
-            user.set_level(room.id, 1, self.session)
+            if not user.room_privilege(self.session, room.id):
+                user.set_level(room.id, 1, self.session)
+
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
 
         self.send(smpacket.SMPacketServerNSSMONL(

@@ -26,7 +26,11 @@ class Song(schema.Base):
     updated_at   = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
-        return "<Song #%s (name='%s')>" % (self.id, self.title)
+        return "<Song #%s (name='%s')>" % (self.id, self.fullname)
+
+    @property
+    def fullname(self):
+        return "%s (%s)" % (self.title, self.artist)
 
     @classmethod
     def find_or_create(cls, title, subtitle, artist, session):

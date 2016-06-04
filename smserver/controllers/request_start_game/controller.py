@@ -34,7 +34,7 @@ class RequestStartGameController(StepmaniaController):
             self.launch_song(song)
             return
 
-        self.send_message("%s select %s" % (with_color(self.user_repr), with_color(song.title)))
+        self.send_message("%s select %s" % (with_color(self.user_repr), with_color(song.fullname)))
 
         with self.conn.mutex:
             self.conn.song = song.id

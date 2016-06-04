@@ -89,7 +89,7 @@ class StepmaniaController(object):
         }.get(to)
 
         if func == self.sendroom or (not func and self.room):
-            self.sendroom(self.room.id, packet)
+            self.sendroom(self.conn.room, packet)
             return
 
         if func:
@@ -101,7 +101,7 @@ class StepmaniaController(object):
     def send_user_message(self, message, to=None):
         self.send_message(
             "%s %s" % (
-                with_color(self.user_repr(self.room.id)),
+                with_color(self.user_repr(self.conn.room)),
                 message),
             to)
 

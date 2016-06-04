@@ -27,8 +27,8 @@ class ChatUserListing(object):
         for user in users:
             serv.send_message(
                 "%s (in %s)" % (
-                    user.fullname(serv.session, serv.room.id),
-                    user.enum_stats.name),
+                    user.fullname(serv.session, serv.room),
+                    user.enum_status.name),
                 to="me")
 
 

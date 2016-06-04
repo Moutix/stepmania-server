@@ -5,6 +5,7 @@ from enum import Enum
 
 class Permissions(Enum):
     create_room = 1
+    enter_room = 1
     chat = 1
 
 class Ability(object):

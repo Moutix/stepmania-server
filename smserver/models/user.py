@@ -24,6 +24,14 @@ class UserStatus(enum.Enum):
 class User(schema.Base):
     __tablename__ = 'users'
 
+    REPR = {
+        0: "",
+        2: "%",
+        3: "@",
+        5: "&",
+        10: "~"
+    }
+
     id                = Column(Integer, primary_key=True)
     pos               = Column(Integer)
     name              = Column(String(255))
@@ -53,6 +61,11 @@ class User(schema.Base):
     def enum_status(self):
         return UserStatus(self.status)
 
+    def fullname(self, session, room_id=None):
+        return "%s%s" % (
+            self._level_to_symbol(self.level(session, room_id)),
+            self.name)
+
     def can(self, action, session, room_id=None):
         return ability.Ability.can(action, self.level(session, room_id))
 
@@ -63,7 +76,11 @@ class User(schema.Base):
         if not room_id:
             return self.rank
 
-        return self.room_privilege(session, room_id)
+        priv = self.room_privilege(session, room_id)
+        if priv:
+            return priv.level
+
+        return 0
 
     def room_privilege(self, session, room_id=None):
         return Privilege.find(room_id, self.id, session)
@@ -76,6 +93,20 @@ class User(schema.Base):
 
         Privilege.find_or_update(room_id, self.id, session, level=level)
         return level
+
+    @classmethod
+    def _level_to_symbol(cls, level):
+        symbol = cls.REPR.get(level)
+        if symbol:
+            return symbol
+
+        keys = sorted(cls.REPR.keys(), reverse=True)
+
+        for key in keys:
+            if key < level:
+                return cls.REPR[key]
+
+        return cls.REPR[keys[-1]]
 
     @classmethod
     def connect(cls, name, pos, session):

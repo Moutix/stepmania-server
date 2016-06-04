@@ -60,9 +60,8 @@ class StepmaniaController(object):
 
         return self._room_users
 
-    @property
-    def user_repr(self):
-        return "<%s>" % ", ".join(user.name for user in self.users)
+    def user_repr(self, room_id=None):
+        return "<%s>" % ", ".join(user.fullname(self.session, room_id) for user in self.active_users)
 
     def handle(self):
         pass
@@ -100,5 +99,9 @@ class StepmaniaController(object):
         self.server.sendall(packet)
 
     def send_user_message(self, message, to=None):
-        self.send_message("%s: %s" % (with_color(self.user_repr), message), to)
+        self.send_message(
+            "%s: %s" % (
+                with_color(self.user_repr(self.room.id)),
+                message),
+            to)
 

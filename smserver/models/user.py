@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 
 from smserver.smutils import smpacket
 from smserver.models import schema
+from smserver.models.privilege import Privilege
 from smserver import ability
 
 __all__ = ['UserStatus', 'User']
@@ -52,15 +53,29 @@ class User(schema.Base):
     def enum_status(self):
         return UserStatus(self.status)
 
-    def can(self, action, room_id=None):
-        return ability.Ability.can(action, self.level(room_id))
+    def can(self, action, session, room_id=None):
+        return ability.Ability.can(action, self.level(session, room_id))
 
-    def cannot(self, action, room_id=None):
-        return ability.Ability.cannot(action, self.level(room_id))
+    def cannot(self, action, session, room_id=None):
+        return ability.Ability.cannot(action, self.level(session, room_id))
 
-    def level(self, room_id=None):
+    def level(self, session, room_id=None):
         if not room_id:
             return self.rank
+
+        return self.room_privilege(session, room_id)
+
+    def room_privilege(self, session, room_id=None):
+        return Privilege.find(room_id, self.id, session)
+
+    def set_level(self, room_id, level, session):
+        if not room_id:
+            self.rank = level
+            session.commit()
+            return level
+
+        Privilege.find_or_update(room_id, self.id, session, level=level)
+        return level
 
     @classmethod
     def connect(cls, name, pos, session):

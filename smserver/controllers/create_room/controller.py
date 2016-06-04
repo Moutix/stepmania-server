@@ -4,6 +4,7 @@
 import hashlib
 
 from smserver.smutils import smpacket
+from smserver.chathelper import with_color
 
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
@@ -13,6 +14,11 @@ class CreateRoomController(StepmaniaController):
     require_login = True
 
     def handle(self):
+        room = self.session.query(models.Room).filter_by(name=self.packet["title"]).first()
+        if room:
+            self.send_message("The room %s already exist! Try another name." % (with_color(self.packet["title"])))
+            return
+
         room = models.Room(
             name=self.packet["title"],
             description=self.packet["description"],
@@ -28,6 +34,7 @@ class CreateRoomController(StepmaniaController):
         self.conn.room = room.id
         for user in self.active_users:
             user.room = room
+            user.set_level(room.id, 10, self.session)
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
 
         self.send(smpacket.SMPacketServerNSSMONL(
@@ -35,5 +42,4 @@ class CreateRoomController(StepmaniaController):
         ))
 
         self.sendall(models.Room.smo_list(self.session))
-
 

@@ -134,4 +134,3 @@ class Room(schema.Base):
 
         return rooms
 
-

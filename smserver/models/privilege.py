@@ -27,3 +27,18 @@ class Privilege(schema.Base):
     def __repr__(self):
         return "<Privileges #%s (level='%s')>" % (self.id, self.level)
 
+    @classmethod
+    def find(cls, room_id, user_id, session):
+        return session.query(cls).filter_by(room_id=room_id, user_id=user_id).first()
+
+    @classmethod
+    def find_or_update(cls, room_id, user_id, session, level=1):
+        priv = cls.find(room_id, user_id, session)
+        if not priv:
+            priv = cls(user_id=user_id, room_id=room_id)
+            session.add(priv)
+
+        priv.level = level
+        session.commit()
+        return priv
+

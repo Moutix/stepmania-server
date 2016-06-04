@@ -26,14 +26,13 @@ class EnterRoomController(StepmaniaController):
             self.log.info("Player %s fail to enter in room %s" % (self.conn.ip, self.packet["room"]))
             return
 
-
         self.conn.room = room.id
         for user in self.active_users:
             user.room = room
+            user.set_level(room.id, 1, self.session)
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
 
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))
-
 

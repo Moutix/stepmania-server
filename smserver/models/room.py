@@ -24,6 +24,7 @@ class Room(schema.Base):
     status         =  Column(Integer, default=0)
     type           =  Column(Integer, default=1)
     users          =  relationship("User", back_populates="room")
+    privileges     = relationship("Privilege", back_populates="room")
 
     active_song_id =  Column(Integer, ForeignKey('songs.id'))
     active_song    =  relationship("Song", back_populates="active_rooms")

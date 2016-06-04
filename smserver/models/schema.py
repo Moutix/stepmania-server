@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-__all__ = ['Base']
-
 from sqlalchemy.ext.declarative import declarative_base
+
+__all__ = ['Base']
 
 Base = declarative_base()
 

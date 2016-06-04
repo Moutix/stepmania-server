@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-__all__ = ['Song']
-
 import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, Text
@@ -10,20 +8,22 @@ from sqlalchemy.orm import relationship
 
 from smserver.models import schema
 
+__all__ = ['Song']
+
 class Song(schema.Base):
     __tablename__ = 'songs'
 
-    id           =  Column(Integer, primary_key=True)
-    title        =  Column(String(255))
-    subtitle     =  Column(String(255))
-    artist       =  Column(Text, default="")
+    id           = Column(Integer, primary_key=True)
+    title        = Column(String(255))
+    subtitle     = Column(String(255))
+    artist       = Column(Text, default="")
 
-    active_rooms =  relationship("Room", back_populates="active_song")
+    active_rooms = relationship("Room", back_populates="active_song")
 
-    stats        =  relationship("SongStat", back_populates="song")
+    stats        = relationship("SongStat", back_populates="song")
 
-    created_at   =  Column(DateTime, default=datetime.datetime.now)
-    updated_at   =  Column(DateTime, onupdate=datetime.datetime.now)
+    created_at   = Column(DateTime, default=datetime.datetime.now)
+    updated_at   = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
         return "<Song #%s (name='%s')>" % (self.id, self.title)

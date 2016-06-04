@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-__all__ = ['UserStatus', 'User']
 
 import datetime
 import enum
@@ -10,6 +9,9 @@ from sqlalchemy.orm import relationship
 
 from smserver.smutils import smpacket
 from smserver.models import schema
+from smserver import ability
+
+__all__ = ['UserStatus', 'User']
 
 class UserStatus(enum.Enum):
     unknown         = 0
@@ -21,26 +23,26 @@ class UserStatus(enum.Enum):
 class User(schema.Base):
     __tablename__ = 'users'
 
-    id                =  Column(Integer, primary_key=True)
-    pos               =  Column(Integer)
-    name              =  Column(String(255))
-    password          =  Column(String(255))
-    email             =  Column(String(255))
-    rank              =  Column(Integer, default=0)
-    xp                =  Column(Integer, default=0)
-    last_ip           =  Column(String(255))
-    stepmania_version =  Column(Integer)
-    stepmania_name    =  Column(String(255))
-    online            =  Column(Boolean)
-    status            =  Column(Integer, default=1)
+    id                = Column(Integer, primary_key=True)
+    pos               = Column(Integer)
+    name              = Column(String(255))
+    password          = Column(String(255))
+    email             = Column(String(255))
+    rank              = Column(Integer, default=1)
+    xp                = Column(Integer, default=0)
+    last_ip           = Column(String(255))
+    stepmania_version = Column(Integer)
+    stepmania_name    = Column(String(255))
+    online            = Column(Boolean)
+    status            = Column(Integer, default=1)
 
-    room_id           =  Column(Integer, ForeignKey('rooms.id'))
-    room              =  relationship("Room", back_populates="users")
+    room_id           = Column(Integer, ForeignKey('rooms.id'))
+    room              = relationship("Room", back_populates="users")
 
-    song_stats        =  relationship("SongStat", back_populates="user")
+    song_stats        = relationship("SongStat", back_populates="user")
 
-    created_at        =  Column(DateTime, default=datetime.datetime.now)
-    updated_at        =  Column(DateTime, onupdate=datetime.datetime.now)
+    created_at        = Column(DateTime, default=datetime.datetime.now)
+    updated_at        = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
         return "<User #%s (name='%s')>" % (self.id, self.name)
@@ -49,11 +51,21 @@ class User(schema.Base):
     def enum_status(self):
         return UserStatus(self.status)
 
+    def can(self, action, room_id=None):
+        return ability.Ability.can(action, self.level(room_id))
+
+    def cannot(self, action, room_id=None):
+        return ability.Ability.cannot(action, self.level(room_id))
+
+    def level(self, room_id=None):
+        if not room_id:
+            return self.rank
+
     @classmethod
     def connect(cls, name, pos, session):
         user = session.query(cls).filter_by(name=name).first()
         if not user:
-            user = models.User(name=name)
+            user = cls(name=name)
             session.add(user)
         user.online = True
         user.pos = pos

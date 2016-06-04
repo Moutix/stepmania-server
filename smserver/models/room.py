@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-__all__ = ['Room']
-
 import datetime
 import hashlib
 
@@ -11,6 +9,8 @@ from sqlalchemy.orm import relationship
 
 from smserver.smutils import smpacket
 from smserver.models import schema
+
+__all__ = ['Room']
 
 class Room(schema.Base):
     __tablename__ = 'rooms'

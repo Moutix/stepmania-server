@@ -55,7 +55,7 @@ class Room(schema.Base):
             packet["song_subtitle"] = song.subtitle
             packet["song_artist"] = song.artist
 
-        packet["players"] = [user.name for user in self.users]
+        packet["players"] = [user.name for user in self.users if user.online]
         packet["num_players"] = len(packet["players"])
 
         return smpacket.SMPacketServerNSSMONL(packet=packet)

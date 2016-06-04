@@ -25,7 +25,11 @@ class ChatUserListing(object):
         users = users.all()
 
         for user in users:
-            serv.send_message("%s" % user.name, to="me")
+            serv.send_message(
+                "%s (in %s)" % (
+                    user.fullname(serv.session, serv.room.id),
+                    user.enum_stats.name),
+                to="me")
 
 
 class ChatController(StepmaniaController):

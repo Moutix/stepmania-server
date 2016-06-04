@@ -100,7 +100,7 @@ class StepmaniaController(object):
 
     def send_user_message(self, message, to=None):
         self.send_message(
-            "%s: %s" % (
+            "%s %s" % (
                 with_color(self.user_repr(self.room.id)),
                 message),
             to)

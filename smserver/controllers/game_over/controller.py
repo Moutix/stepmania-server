@@ -7,6 +7,8 @@ from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 
+from smserver.chathelper import with_color
+
 class GameOverController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCGON
     require_login = True
@@ -19,7 +21,17 @@ class GameOverController(StepmaniaController):
 
         for user in self.active_users:
             with self.conn.mutex:
-                self.create_stats(user, self.conn.songstats[user.pos], song_duration)
+                songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration)
+
+            xp = songstat.calc_xp(self.server.config.get("xpWeight"))
+            user.xp += xp
+
+            self.send_message(
+                "%s gained %s XP!" % (
+                    with_color(user.fullname(self.session, user.room_id)),
+                    with_color(xp, "aaaa00")
+                    ),
+                to="me")
 
         with self.conn.mutex:
             self.conn.ingame = False
@@ -56,7 +68,7 @@ class GameOverController(StepmaniaController):
                     getattr(songstat, models.SongStat.stepid[value["stepid"]]) + 1
                    )
 
-        songstat.percentage = songstat.calc_percentage()
+        songstat.percentage = songstat.calc_percentage(self.server.config.get("percentWeight"))
         songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
 
         self.session.add(songstat)

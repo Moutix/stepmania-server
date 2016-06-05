@@ -90,6 +90,25 @@ class SongStat(schema.Base):
 
         return percentage/nb_note*100 if nb_note > 0 else 0
 
+    def calc_xp(self, config=None):
+        if not config:
+            config = {
+                "miss": 0,
+                "bad": 1,
+                "good": 2,
+                "great": 3,
+                "perfect": 4,
+                "flawless": 5
+            }
+
+        xp = 0
+        for note, weight in config.items():
+            nb = getattr(self, note, 0)
+            xp += nb*weight
+
+        return int(xp/len(config))
+
+
     @staticmethod
     def encode_stats(raw_data):
         binary = BinaryStats(nb_notes=len(raw_data), stats=[])

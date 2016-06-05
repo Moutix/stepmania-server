@@ -24,7 +24,15 @@ class RequestStartGameController(StepmaniaController):
             self.start_game_request(song)
             return
 
-        self.check_song_presence(song)
+        have_song = self.check_song_presence(song)
+
+        if not have_song:
+            self.send_message("%s does %s have the song (%s)!" % (
+                with_color(self.user_repr(self.room.id)),
+                with_color("not", "ff0000"),
+                with_color(song.fullname)
+                )
+            )
 
     def start_game_request(self, song):
         with self.conn.mutex:
@@ -34,9 +42,11 @@ class RequestStartGameController(StepmaniaController):
             self.launch_song(song)
             return
 
-        self.send_message("%s select %s" % (
+        self.send_message("%s select %s which have been played %s times" % (
             with_color(self.user_repr(self.room.id)),
-            with_color(song.fullname)))
+            with_color(song.fullname),
+            song.time_played
+            ))
 
         with self.conn.mutex:
             self.conn.song = song.id
@@ -52,6 +62,8 @@ class RequestStartGameController(StepmaniaController):
     def check_song_presence(self, song):
         with self.conn.mutex:
             self.conn.songs[song.id] = {0: True, 1: False}[self.packet["usage"]]
+
+            return self.conn.songs[song.id]
 
     def launch_song(self, song):
         self.room.active_song = song

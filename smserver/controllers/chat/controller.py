@@ -6,6 +6,7 @@ import re
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
+from smserver.chathelper import with_color
 
 class ChatHelp(object):
     helper = "Show help"
@@ -27,7 +28,7 @@ class ChatUserListing(object):
         for user in users:
             serv.send_message(
                 "%s (in %s)" % (
-                    user.fullname(serv.session, serv.conn.room),
+                    with_color(user.fullname(serv.session, serv.conn.room)),
                     user.enum_status.name),
                 to="me")
 

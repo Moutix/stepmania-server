@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import sys
+import datetime
 
 from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
@@ -73,6 +74,8 @@ class StepmaniaServer(smthread.StepmaniaServer):
                                           config.server["ip"],
                                           config.server["port"])
         self.watcher = StepmaniaWatcher(self)
+
+        self.started_at = datetime.datetime.now()
 
     def start(self):
         """ Start the main thread and the aynchronous one"""

@@ -6,6 +6,7 @@ from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 
 from smserver import models
+from smserver.chathelper import with_color
 
 class EnterRoomController(StepmaniaController):
     command = smpacket.SMOClientCommand.ENTERROOM
@@ -33,6 +34,9 @@ class EnterRoomController(StepmaniaController):
                 user.set_level(room.id, 1, self.session)
 
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
+            self.send_message("%s joined the room" % (
+                with_color(user.fullname(self.session, self.conn.room))
+            ))
 
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()

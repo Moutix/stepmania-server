@@ -5,7 +5,7 @@
 import datetime
 import enum
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, reconstructor
 
 from smserver.smutils import smpacket
 from smserver.models import schema
@@ -54,6 +54,10 @@ class User(schema.Base):
     created_at        = Column(DateTime, default=datetime.datetime.now)
     updated_at        = Column(DateTime, onupdate=datetime.datetime.now)
 
+    @reconstructor
+    def _init_on_load(self):
+        self._room_level = {}
+
     def __repr__(self):
         return "<User #%s (name='%s')>" % (self.id, self.name)
 
@@ -82,8 +86,14 @@ class User(schema.Base):
 
         return 0
 
-    def room_privilege(self, session, room_id=None):
-        return Privilege.find(room_id, self.id, session)
+    def room_privilege(self, session, room_id):
+        if room_id in self._room_level:
+            return self._room_level[room_id]
+
+        priv = Privilege.find(room_id, self.id, session)
+        self._room_level[room_id] = priv
+
+        return priv
 
     def set_level(self, room_id, level, session):
         if not room_id:
@@ -91,7 +101,9 @@ class User(schema.Base):
             session.commit()
             return level
 
-        Privilege.find_or_update(room_id, self.id, session, level=level)
+        priv = Privilege.find_or_update(room_id, self.id, session, level=level)
+        self._room_level[room_id] = priv
+
         return level
 
     @classmethod

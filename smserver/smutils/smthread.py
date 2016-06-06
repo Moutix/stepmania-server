@@ -63,10 +63,12 @@ class StepmaniaThread(Thread):
                 try:
                     data = self._conn.recv(8192)
                 except socket.error:
-                    return None
+                    yield None
+                    continue
 
             if data == b'':
-                return None
+                yield None
+                continue
 
             if not size:
                 if len(data) < 5:

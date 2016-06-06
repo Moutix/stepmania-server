@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 from enum import Enum
+import json
 
 class ParentCommand(Enum):
     @classmethod
@@ -305,9 +306,48 @@ class SMPacket(object):
     def payload(self):
         return self.encode(self.opts, self._payload)
 
+    @property
+    def to_json(self):
+        data = {}
+        data["_command"] = self._command.value
+        for opt, value in self.opts.items():
+            if issubclass(value.__class__, SMPacket):
+                data[opt] = value.to_json
+                continue
+
+            data[opt] = value
+
+        return json.dumps(data)
+
     @classmethod
     def from_payload(cls, payload):
         return cls(**cls.decode(payload, cls._payload)[1])
+
+    @classmethod
+    def from_json(cls, payload):
+        return cls(**cls.decode_json(payload, cls._payload))
+
+    def to_(self, encoding):
+        return {
+            "json": self.to_json,
+            "binary": self.binary
+        }[encoding]
+
+    @classmethod
+    def from_(cls, encoding, data):
+        return {
+            "json": cls.parse_json,
+            "binary": cls.parse_data
+        }[encoding](data)
+
+    @classmethod
+    def parse_json(cls, data):
+        opts = json.loads(data)
+        command = cls._command_type.get(opts.get("_command", -1))
+        if not command:
+            return None
+
+        return cls.get_class(command).from_json(data)
 
     @classmethod
     def parse_data(cls, data):
@@ -366,6 +406,21 @@ class SMPacket(object):
             payload, opts[name] = size.value.decode(payload, cls._replace_from_options(opts, opt))
 
         return payload, opts
+
+    @classmethod
+    def decode_json(cls, payload, payload_option):
+        opts = json.loads(payload)
+
+        for size, name, opt in payload_option:
+            if size != SMPayloadType.PACKET:
+                continue
+
+            if not opt:
+                opt = SMPacket
+
+            opts[name] = opt.parse_json(opts[name])
+
+        return opts
 
     @classmethod
     def _replace_from_options(cls, options, value):
@@ -895,6 +950,8 @@ def main():
     print(packet)
     print(packet.payload)
     assert packet.binary == SMPacket.parse_binary(packet.binary).binary
+
+    assert packet.binary == SMPacket.from_("json", packet.to_("json")).binary
 
 if __name__ == "__main__":
     main()

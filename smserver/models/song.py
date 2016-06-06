@@ -4,9 +4,10 @@
 import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import select, func
+from sqlalchemy.orm import relationship, column_property
 
-from smserver.models import schema
+from smserver.models import schema, song_stat
 
 __all__ = ['Song']
 
@@ -22,11 +23,19 @@ class Song(schema.Base):
 
     stats        = relationship("SongStat", back_populates="song")
 
+    time_played  = column_property(
+            select([func.count(song_stat.SongStat.id)]).\
+            where(song_stat.SongStat.song_id==id).\
+            correlate_except(song_stat.SongStat)
+        )
+
     created_at   = Column(DateTime, default=datetime.datetime.now)
     updated_at   = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
         return "<Song #%s (name='%s')>" % (self.id, self.fullname)
+
+
 
     @property
     def fullname(self):

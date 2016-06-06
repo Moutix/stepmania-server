@@ -4,6 +4,7 @@
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
+from smserver import __version__
 
 class LoginController(StepmaniaController):
     command = smpacket.SMOClientCommand.LOGIN
@@ -44,5 +45,12 @@ class LoginController(StepmaniaController):
             )
         ))
         self.server.send_user_list(self.session)
+        self.send_message(self.server.config.server.get("motd", ""), to="me")
+        self.send_message(
+            "SMServer v%s, started on %s" % (
+                __version__,
+                self.server.started_at.strftime("%x at %X")),
+            to="me")
+
         self.send(models.Room.smo_list(self.session))
 

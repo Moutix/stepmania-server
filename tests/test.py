@@ -9,9 +9,9 @@ import datetime
 
 from smserver import server, conf
 from smserver.smutils import smpacket
-from smserver.smutils.smthread import StepmaniaThread
+from smserver.smutils.smconnections import smtcpsocket
 
-class ClientTest(StepmaniaThread):
+class ClientTest(smtcpsocket.SocketConn):
     def send(self, packet):
         self._serv.log.debug("%s (%s) send: %s" % (self.ip, self.users, packet))
         print(packet.binary)

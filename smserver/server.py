@@ -70,9 +70,14 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.log.debug("Plugins loaded")
 
         self.log.info("Start server")
-        smthread.StepmaniaServer.__init__(self,
-                                          config.server["ip"],
-                                          config.server["port"])
+        servers = [
+            (config.server["ip"], config.server["port"], "classic"),
+        ]
+
+        smthread.StepmaniaServer.__init__(self, servers)
+        for ip, port, server_type in servers:
+            self.log.info("Server %s listening on %s:%s", server_type, ip, port)
+
         self.watcher = StepmaniaWatcher(self)
 
         self.started_at = datetime.datetime.now()

@@ -1,1 +1,3 @@
 include *.md
+include scripts/smserver
+include cfg/*.yml

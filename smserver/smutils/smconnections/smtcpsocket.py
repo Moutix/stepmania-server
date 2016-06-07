@@ -84,7 +84,6 @@ class SocketServer(Thread):
         while 1:
             conn, addr = self._socket.accept()
             thread = SocketConn(self.server, conn, *addr)
-            with self.server.mutex:
-                self.server.conns.append(thread)
+            self.server.add_connection(thread)
             thread.start()
 

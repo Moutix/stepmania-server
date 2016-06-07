@@ -33,12 +33,11 @@ class StepmaniaConn(Thread):
     def run(self):
         for data in self.received_data():
             if data is None:
-                self._serv.on_disconnect(self)
                 break
 
             self._on_data(data)
 
-        self._conn.close()
+        self.close()
 
     def received_data(self):
         pass
@@ -48,4 +47,8 @@ class StepmaniaConn(Thread):
 
     def send(self, packet):
         pass
+
+    def close(self):
+        self._serv.on_disconnect(self)
+        self._conn.close()
 

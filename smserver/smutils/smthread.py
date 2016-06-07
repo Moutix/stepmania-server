@@ -14,7 +14,7 @@ class StepmaniaServer(object):
 
     def __init__(self, servers):
         self.mutex = Lock()
-        self.conns = []
+        self._connections = []
         self._servers = []
         for ip, port, server_type in servers:
             self._servers.append(self.SERVER_TYPE[server_type](self, ip, port))
@@ -29,7 +29,11 @@ class StepmaniaServer(object):
     @property
     def connections(self):
         with self.mutex:
-            return self.conns
+            return self._connections
+
+    def add_connection(self, conn):
+        with self.mutex:
+            self._connections.append(conn)
 
     def room_connections(self, room_id):
         for conn in self.connections:
@@ -46,7 +50,7 @@ class StepmaniaServer(object):
             yield conn
 
     def sendall(self, packet):
-        for conn in self.conns:
+        for conn in self._connections:
             conn.send(packet)
 
     def sendroom(self, room_id, packet):
@@ -59,7 +63,10 @@ class StepmaniaServer(object):
 
     def on_disconnect(self, serv):
         with self.mutex:
-            self.conns.remove(serv)
+            if serv not in self._connections:
+                return
+
+            self._connections.remove(serv)
 
     def on_packet(self, serv, packet):
         PacketHandler(self, serv, packet).handle()

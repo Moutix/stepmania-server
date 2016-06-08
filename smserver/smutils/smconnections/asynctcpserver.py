@@ -8,6 +8,8 @@ import asyncio.streams
 from smserver.smutils import smconn, smpacket
 
 class AsyncSocketClient(smconn.StepmaniaConn):
+    ENCODING = "binary"
+
     def __init__(self, serv, ip, port, reader, writer, loop):
         smconn.StepmaniaConn.__init__(self, serv, ip, port)
         self.reader = reader

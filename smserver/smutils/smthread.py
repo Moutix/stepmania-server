@@ -9,12 +9,13 @@ from smserver.smutils import smpacket
 from smserver.smutils.smconnections import smtcpsocket
 
 if sys.version_info[1] > 2:
-    from smserver.smutils.smconnections import smtcpsocketasynctcpserver
+    from smserver.smutils.smconnections import asynctcpserver, websocket
 
 class StepmaniaServer(object):
     SERVER_TYPE = {
         "classic": smtcpsocket.SocketServer,
-        "async": asynctcpserver.AsyncSocketServer if sys.version_info[1] > 2 else None
+        "async": asynctcpserver.AsyncSocketServer if sys.version_info[1] > 2 else None,
+        "websocket": websocket.WebSocketServer if sys.version_info[1] > 2 else None
     }
 
     def __init__(self, servers):

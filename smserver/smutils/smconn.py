@@ -3,13 +3,14 @@
 
 import datetime
 import logging
-from threading import Thread, Lock
+from threading import Lock
+from smserver.smutils import smpacket
 
-class StepmaniaConn(Thread):
+class StepmaniaConn(object):
     logger = logging.getLogger('stepmania')
+    ENCODING = "binary"
 
-    def __init__(self, serv, conn, ip, port):
-        Thread.__init__(self)
+    def __init__(self, serv, ip, port):
         self.mutex = Lock()
         self.ip = ip
         self.port = port
@@ -26,7 +27,6 @@ class StepmaniaConn(Thread):
         self.stepmania_version = None
         self.stepmania_name = None
         self._serv = serv
-        self._conn = conn
 
         self.logger.info("New connection: %s on port %s" % (ip, port))
 
@@ -43,12 +43,25 @@ class StepmaniaConn(Thread):
         pass
 
     def _on_data(self, data):
-        pass
+        packet = smpacket.SMPacket.from_(self.ENCODING, data)
+        if not packet:
+            self.logger.info("packet %s drop from %s" % (data, self.ip))
+            return None
+
+        self.logger.debug("Packet received from %s: %s" % (self.ip, packet))
+
+        if packet.command == smpacket.SMClientCommand.NSCPingR:
+            self.last_ping = datetime.datetime.now()
+
+        self._serv.on_packet(self, packet)
 
     def send(self, packet):
+        self.logger.debug("packet send to %s: %s" % (self.ip, packet))
+        self._send_data(packet.to_(self.ENCODING))
+
+    def _send_data(self, data):
         pass
 
     def close(self):
         self._serv.on_disconnect(self)
-        self._conn.close()
 

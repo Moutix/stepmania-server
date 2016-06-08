@@ -337,7 +337,7 @@ class SMPacket(object):
     def from_(cls, encoding, data):
         return {
             "json": cls.parse_json,
-            "binary": cls.parse_data
+            "binary": cls.parse_binary
         }[encoding](data)
 
     @classmethod

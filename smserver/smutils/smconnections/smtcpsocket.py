@@ -6,7 +6,14 @@ from threading import Thread
 
 from smserver.smutils import smconn, smpacket
 
-class SocketConn(smconn.StepmaniaConn):
+class SocketConn(smconn.StepmaniaConn, Thread):
+    ENCODING = "binary"
+
+    def __init__(self, serv, ip, port, conn):
+        Thread.__init__(self)
+        smconn.StepmaniaConn.__init__(self, serv, ip, port)
+        self._conn = conn
+
     def received_data(self):
         full_data = b""
         size = None
@@ -49,24 +56,16 @@ class SocketConn(smconn.StepmaniaConn):
             full_data = b""
             size = None
 
-    def _on_data(self, data):
-        packet = smpacket.SMPacket.parse_binary(data)
-        if not packet:
-            self.logger.info("packet %s drop from %s" % (data, self.ip))
-            return None
-
-        self.logger.debug("Packet received from %s: %s" % (self.ip, packet))
-
-        self._serv.on_packet(self, packet)
-
-    def send(self, packet):
-        self.logger.debug("packet send to %s: %s" % (self.ip, packet))
+    def _send_data(self, data):
         with self.mutex:
             try:
-                self._conn.sendall(packet.binary)
+                self._conn.sendall(data)
             except OSError:
-                self._serv.on_disconnect(self)
-                self._conn.close()
+                self.close()
+
+    def close(self):
+        self._conn.close()
+        smconn.StepmaniaConn.close(self)
 
 class SocketServer(Thread):
     def __init__(self, server, ip, port):
@@ -83,7 +82,8 @@ class SocketServer(Thread):
     def run(self):
         while 1:
             conn, addr = self._socket.accept()
-            thread = SocketConn(self.server, conn, *addr)
+            ip, port = addr
+            thread = SocketConn(self.server, ip, port, conn)
             self.server.add_connection(thread)
             thread.start()
 

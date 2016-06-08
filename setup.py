@@ -38,6 +38,11 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
+    install_requires=[
+        'pyyaml',
+        'sqlalchemy',
+    ],
+
     scripts=['scripts/smserver'],
 
     license="MSI",

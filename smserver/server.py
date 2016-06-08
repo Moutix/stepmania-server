@@ -75,8 +75,14 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.log.debug("Plugins loaded")
 
         self.log.info("Start server")
+
+        if config.server.get("type") not in self.SERVER_TYPE:
+            server_type = "classic"
+        else:
+            server_type = config.server["type"]
+
         servers = [
-            (config.server["ip"], config.server["port"], "classic"),
+            (config.server["ip"], config.server["port"], server_type),
         ]
 
         smthread.StepmaniaServer.__init__(self, servers)

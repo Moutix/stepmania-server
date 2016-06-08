@@ -5,11 +5,12 @@ import datetime
 from threading import Lock
 
 from smserver.smutils import smpacket
-from smserver.smutils.smconnections import smtcpsocket
+from smserver.smutils.smconnections import smtcpsocket, asynctcpserver
 
 class StepmaniaServer(object):
     SERVER_TYPE = {
-        "classic": smtcpsocket.SocketServer
+        "classic": smtcpsocket.SocketServer,
+        "async": asynctcpserver.AsyncSocketServer
     }
 
     def __init__(self, servers):

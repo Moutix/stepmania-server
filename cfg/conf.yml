@@ -6,6 +6,7 @@ server:
     fps: 1
     readtimeout: 250
     max_users: 255
+    type: "classic"
 
 database:
     type: "sqlite"

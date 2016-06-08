@@ -10,7 +10,7 @@ from smserver.smutils import smconn, smpacket
 class WebSocketClient(smconn.StepmaniaConn):
     ENCODING = "json"
 
-    def __init__(self, serv, ip, port, websocket, loop):
+    def __init__(self, serv, ip, port, websocket, path, loop):
         smconn.StepmaniaConn.__init__(self, serv, ip, port)
         self.websocket = websocket
         self.task = None
@@ -19,7 +19,11 @@ class WebSocketClient(smconn.StepmaniaConn):
     @asyncio.coroutine
     def run(self):
         while True:
-            data = yield from self.websocket.recv()
+            try:
+                data = yield from self.websocket.recv()
+            except websockets.ConnectionClosed:
+                break
+
             self._on_data(data)
 
         self.close()
@@ -43,9 +47,10 @@ class WebSocketServer(Thread):
         self.port = port
         self.clients = {}
 
-    def _accept_client(self, websocket, path):
-        ip, port = websocket.remode_address
-        client = WebSocketClient(self.server, ip, port, websocket, self.loop)
+    @asyncio.coroutine
+    def _accept_client(self, websocket, path=""):
+        ip, port = websocket.remote_address
+        client = WebSocketClient(self.server, ip, port, websocket, path, self.loop)
 
         task = asyncio.Task(client.run(), loop=self.loop)
         client.task = task

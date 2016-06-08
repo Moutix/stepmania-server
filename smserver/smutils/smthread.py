@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
+import sys
 import datetime
 from threading import Lock
 
 from smserver.smutils import smpacket
-from smserver.smutils.smconnections import smtcpsocket, asynctcpserver
+from smserver.smutils.smconnections import smtcpsocket
+
+if sys.version_info[1] > 2:
+    from smserver.smutils.smconnections import smtcpsocketasynctcpserver
 
 class StepmaniaServer(object):
     SERVER_TYPE = {
         "classic": smtcpsocket.SocketServer,
-        "async": asynctcpserver.AsyncSocketServer
+        "async": asynctcpserver.AsyncSocketServer if sys.version_info[1] > 2 else None
     }
 
     def __init__(self, servers):

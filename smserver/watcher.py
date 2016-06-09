@@ -64,12 +64,13 @@ class StepmaniaWatcher(Thread):
 
     @periodicmethod(2)
     def check_end_game(self, session):
-        for room in session.query(models.Room).filter_by(status=2):
+        for room in session.query(models.Room).filter_by(ingame=True):
             if self.room_still_in_game(room, session):
                 continue
 
             self.server.log.info("Room %s finish is last song: %s" % (room.name, room.active_song_id))
             room.status = 1
+            room.ingame = False
 
             self.send_end_score(room, session)
 
@@ -112,7 +113,7 @@ class StepmaniaWatcher(Thread):
 
     @periodicmethod(1)
     def scoreboard_update(self, session):
-        for room in session.query(models.Room).filter_by(status=2):
+        for room in session.query(models.Room).filter_by(ingame=True):
             self.send_scoreboard(room, session)
 
     def send_scoreboard(self, room, session):

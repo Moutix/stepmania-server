@@ -76,8 +76,8 @@ class RequestStartGameController(StepmaniaController):
             )
             return
 
-        self.room.active_song = song
         self.room.status = 2
+        self.room.active_song = song
         self.sendroom(self.room.id, smpacket.SMPacketServerNSCRSG(
             usage=2,
             song_title=song.title,

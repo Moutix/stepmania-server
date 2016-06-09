@@ -56,6 +56,7 @@ class StartGameRequestController(StepmaniaController):
     @staticmethod
     def launch_song(room, song, server):
         room.active_song = song
+        room.ingame = True
         server.log.info("Room %s start a new song %s" % (room.name, song.fullname))
 
         for player in server.ingame_connections(room.id):

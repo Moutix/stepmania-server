@@ -57,6 +57,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         with self.db.session_scope() as session:
             models.User.disconnect_all(session)
             models.Room.init_from_hashes(config.get("rooms", []), session)
+            models.Room.reset_room_status(session)
             models.BanIP.reset_ban(session, fixed=True)
 
             if self.config.get("ban_ips"):

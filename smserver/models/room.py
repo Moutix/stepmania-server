@@ -20,6 +20,7 @@ class Room(schema.Base):
     password       =  Column(String(255))
     description    =  Column(Text, default="")
     static         =  Column(Boolean, default=False)
+    ingame         =  Column(Boolean, default=False)
 
     status         =  Column(Integer, default=0)
     type           =  Column(Integer, default=1)
@@ -111,6 +112,11 @@ class Room(schema.Base):
                 )))
             .first()
             )
+
+    @classmethod
+    def reset_room_status(cls, session):
+        session.query(cls).update({"status": 0})
+        session.commit()
 
     @classmethod
     def init_from_hashes(cls, hrooms, session):

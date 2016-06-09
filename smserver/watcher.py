@@ -4,6 +4,7 @@
 from threading import Thread, Lock
 import time
 import datetime
+import itertools
 
 from smserver import models
 from smserver.smutils import smpacket
@@ -157,27 +158,38 @@ class StepmaniaWatcher(Thread):
 
     @periodicmethod(1)
     def send_game_start(self, session):
-        for conn in self.server.connections:
+        conn_in_room = itertools.filterfalse(lambda x: x.room is None, self.server.connections)
+
+        conns = sorted(conn_in_room, key=lambda x: x.room)
+        for room_id, room_conns in itertools.groupby(conns, key=lambda x: x.room):
+            if not room_id:
+                continue
+
+            self.check_song_start(session, room_id, room_conns)
+
+    def check_song_start(self, session, room_id, room_conns):
+        room = session.query(models.Room).get(room_id)
+        song = room.active_song
+
+        if room.status != 2:
+            return
+
+        everybody_waiting = True
+        wait_since = None
+        for conn in room_conns:
             with conn.mutex:
-                self.check_song_start(session, conn)
+                if not conn.wait_start:
+                    everybody_waiting = False
+                    continue
 
-    def check_song_start(self, session, conn):
-        if not conn.room or not conn.song:
-            return
+                if conn.songs.get(song.id) is False:
+                    continue
 
-        if not conn.wait_start:
-            return
+                wait_since = conn.songstats.get("start_at", wait_since)
 
-        if "start_at" not in conn.songstats:
-            return
+        if everybody_waiting or (
+                wait_since and
+                datetime.datetime.now() - wait_since < datetime.timedelta(seconds=3)):
 
-        if datetime.datetime.now() - conn.songstats["start_at"] < datetime.timedelta(seconds=3):
-            return
-
-        self.server.log.info("Room %s start a new song %s" % (conn.room, conn.song))
-
-        room = session.query(models.Room).get(conn.room)
-        song = session.query(models.Room).get(conn.song)
-
-        StartGameRequestController.launch_song(room, song, self.server)
+            StartGameRequestController.launch_song(room, song, self.server)
 

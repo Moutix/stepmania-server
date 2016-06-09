@@ -42,6 +42,8 @@ class StepmaniaServer(object):
             self._connections.append(conn)
 
     def room_connections(self, room_id):
+        """ Iterator of all the connections in a given room """
+
         for conn in self.connections:
             if conn.room != room_id:
                 continue
@@ -49,8 +51,19 @@ class StepmaniaServer(object):
             yield conn
 
     def player_connections(self, room_id, song_id):
+        """ Iterator of all the connections in a given room which have the specified song """
+
         for conn in self.room_connections(room_id):
-            if not conn.songs.get(song_id):
+            if conn.songs.get(song_id) is False:
+                continue
+
+            yield conn
+
+    def ingame_connections(self, room_id):
+        """ Iterator of all the connections in a given room which have send a NSCGSR packet """
+
+        for conn in self.room_connections(room_id):
+            if not conn.songstats.get("start_at"):
                 continue
 
             yield conn

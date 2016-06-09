@@ -20,6 +20,13 @@ class UserStatusController(StepmaniaController):
         if self.packet["action"] == 7:
             self.send(models.Room.smo_list(self.session))
 
+        if self.room and self.packet["action"] in status_mapping:
+            self.send_user_message("is in %s screen" % (
+                status_mapping[self.packet["action"]].name
+                ))
+
         for user in self.active_users:
             user.status = status_mapping.get(self.packet["action"], models.UserStatus.unknown).value
+
+        self.server.send_user_list(self.session)
 

@@ -72,6 +72,7 @@ class GameOverController(StepmaniaController):
         songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
 
         self.session.add(songstat)
+        self.session.commit()
 
         return songstat
 

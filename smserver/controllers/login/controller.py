@@ -30,6 +30,8 @@ class LoginController(StepmaniaController):
         user.stepmania_name = self.conn.stepmania_name
         user.stepmania_version = self.conn.stepmania_version
 
+        self.session.commit()
+
         for online_user in self.users:
             if online_user.pos == self.packet["player_number"] and online_user.name != user.name:
                 online_user.pos = None

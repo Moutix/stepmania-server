@@ -15,6 +15,9 @@ class StartGameRequestController(StepmaniaController):
         if not self.room:
             return
 
+        if self.room.status != 2:
+            return
+
         song = models.Song.find_or_create(
             self.packet["song_title"],
             self.packet["song_subtitle"],
@@ -23,6 +26,7 @@ class StartGameRequestController(StepmaniaController):
 
         with self.conn.mutex:
             self.conn.song_id = song.id
+            self.conn.songs[song.id] = True
 
             self.conn.songstats = {
                 0: {"data": [],
@@ -43,7 +47,7 @@ class StartGameRequestController(StepmaniaController):
 
             self.conn.wait_start = True
 
-        for player in self.server.player_connections(self.room.id, song.id):
+        for player in self.server.room_connections(self.room.id):
             if player.wait_start is False:
                 return
 
@@ -52,9 +56,9 @@ class StartGameRequestController(StepmaniaController):
     @staticmethod
     def launch_song(room, song, server):
         room.active_song = song
-        room.status = 2
+        server.log.info("Room %s start a new song %s" % (room.name, song.fullname))
 
-        for player in server.player_connections(room.id, song.id):
+        for player in server.ingame_connections(room.id):
             with player.mutex:
                 player.songstats["start_at"] = datetime.datetime.now()
                 player.wait_start = False

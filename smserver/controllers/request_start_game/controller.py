@@ -66,7 +66,18 @@ class RequestStartGameController(StepmaniaController):
             return self.conn.songs[song.id]
 
     def launch_song(self, song):
+        if self.room.status == 2:
+            self.send_message(
+                "Room %s is already playing %s." % (
+                    with_color(self.room.name),
+                    with_color(song.fullname)
+                    ),
+                to="me"
+            )
+            return
+
         self.room.active_song = song
+        self.room.status = 2
         self.sendroom(self.room.id, smpacket.SMPacketServerNSCRSG(
             usage=2,
             song_title=song.title,

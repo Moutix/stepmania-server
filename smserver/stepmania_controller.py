@@ -61,7 +61,10 @@ class StepmaniaController(object):
         return self._room_users
 
     def user_repr(self, room_id=None):
-        return "<%s>" % ", ".join(user.fullname(self.session, room_id) for user in self.active_users)
+        return "%s" % "& ".join(user.fullname(self.session, room_id) for user in self.active_users)
+
+    def colored_user_repr(self, room_id=None):
+        return "%s" % "& ".join(with_color(user.fullname(self.session, room_id)) for user in self.active_users)
 
     def handle(self):
         pass
@@ -101,7 +104,7 @@ class StepmaniaController(object):
     def send_user_message(self, message, to=None):
         self.send_message(
             "%s %s" % (
-                with_color(self.user_repr(self.conn.room)),
+                self.colored_user_repr(self.conn.room),
                 message),
             to)
 

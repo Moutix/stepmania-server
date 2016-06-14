@@ -15,24 +15,25 @@ __all__ = ['Room']
 class Room(schema.Base):
     __tablename__ = 'rooms'
 
-    id             =  Column(Integer, primary_key=True)
-    name           =  Column(String(255))
-    password       =  Column(String(255))
-    description    =  Column(Text, default="")
-    static         =  Column(Boolean, default=False)
-    ingame         =  Column(Boolean, default=False)
+    id             = Column(Integer, primary_key=True)
+    name           = Column(String(255))
+    motd           = Column(String(255))
+    password       = Column(String(255))
+    description    = Column(Text, default="")
+    static         = Column(Boolean, default=False)
+    ingame         = Column(Boolean, default=False)
 
-    status         =  Column(Integer, default=0)
-    type           =  Column(Integer, default=1)
-    users          =  relationship("User", back_populates="room")
-    privileges     =  relationship("Privilege", back_populates="room")
-    ban_ips        =  relationship("BanIP", back_populates="room")
+    status         = Column(Integer, default=0)
+    type           = Column(Integer, default=1)
+    users          = relationship("User", back_populates="room")
+    privileges     = relationship("Privilege", back_populates="room")
+    ban_ips        = relationship("BanIP", back_populates="room")
 
-    active_song_id =  Column(Integer, ForeignKey('songs.id'))
-    active_song    =  relationship("Song", back_populates="active_rooms")
+    active_song_id = Column(Integer, ForeignKey('songs.id'))
+    active_song    = relationship("Song", back_populates="active_rooms")
 
-    created_at     =  Column(DateTime, default=datetime.datetime.now)
-    updated_at     =  Column(DateTime, onupdate=datetime.datetime.now)
+    created_at     = Column(DateTime, default=datetime.datetime.now)
+    updated_at     = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
         return "<Room #%s (name='%s')>" % (self.id, self.name)

@@ -33,6 +33,8 @@ class EnterRoomController(StepmaniaController):
             if not user.room_privilege(self.session, room.id):
                 user.set_level(room.id, 1, self.session)
 
+            self._send_room_resume(room)
+
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
             self.send_message("%s joined the room" % (
                 with_color(user.fullname(self.session, self.conn.room))
@@ -41,4 +43,16 @@ class EnterRoomController(StepmaniaController):
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))
+
+    def _send_room_resume(self, room):
+        players = [user for user in self.users if user.online]
+
+        self.send_message("Welcome to %s room, created at %s" % (with_color(room.name), room.created_at), to="me")
+        self.send_message(
+            "%s players online. Moderators: %s" % (
+                len(players),
+                ", ".join(with_color(player.fullname(self.session, room.id)) for player in players if player.level(self.session, room.id) > 2)),
+            to="me")
+        if room.motd:
+            self.send_message(room.motd, to="me")
 

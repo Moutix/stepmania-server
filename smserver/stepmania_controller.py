@@ -2,7 +2,7 @@
 # -*- coding: utf8 -*-
 
 from smserver.smutils import smpacket
-from smserver import models
+from smserver import models, ability
 from smserver.chathelper import with_color
 
 from datetime import datetime
@@ -65,6 +65,15 @@ class StepmaniaController(object):
 
     def colored_user_repr(self, room_id=None):
         return "%s" % "& ".join(with_color(user.fullname(self.session, room_id)) for user in self.active_users)
+
+    def level(self, room_id):
+        return max(user.level(self.session, room_id) for user in self.active_users)
+
+    def can(self, action, room_id=None):
+        return ability.Ability.can(action, self.level(room_id))
+
+    def cannot(self, action, room_id=None):
+        return ability.Ability.cannot(action, self.level(room_id))
 
     def handle(self):
         pass

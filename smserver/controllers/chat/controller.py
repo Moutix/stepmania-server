@@ -5,18 +5,27 @@ import re
 
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
-from smserver import models
+from smserver import models, ability
 from smserver.chathelper import with_color
 
-class ChatHelp(object):
+class ChatPlugin(object):
+    helper = ""
+
+    def can(self, serv):
+        return True
+
+class ChatHelp(ChatPlugin):
     helper = "Show help"
 
     def __call__(self, serv, message):
         for command, action in serv.commands.items():
+            if not action.can(serv):
+                continue
+
             serv.send_message("/%s: %s" % (command, action.helper), to="me")
 
-class ChatUserListing(object):
-    helper = "Show users"
+class ChatUserListing(ChatPlugin):
+    helper = "List users"
 
     def __call__(self, serv, message):
         users = serv.session.query(models.User).filter_by(online=True)
@@ -32,6 +41,23 @@ class ChatUserListing(object):
                     user.enum_status.name),
                 to="me")
 
+class ChatMOTD(ChatPlugin):
+    helper = "Update room MOTD"
+
+    def can(self, serv):
+        if not serv.room:
+            return False
+
+        if serv.cannot(ability.Permissions.change_room_motd, serv.room.id):
+            return False
+
+        return True
+
+    def __call__(self, serv, message):
+        serv.room.motd = message
+        serv.session.commit()
+        serv.send_message("Room MOTD set to: %s" % message)
+
 
 class ChatController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCCM
@@ -39,7 +65,8 @@ class ChatController(StepmaniaController):
 
     commands = {
         "help": ChatHelp(),
-        "users": ChatUserListing()
+        "users": ChatUserListing(),
+        "motd": ChatMOTD()
     }
 
     def handle(self):
@@ -52,7 +79,11 @@ class ChatController(StepmaniaController):
             return
 
         if key not in self.commands:
-            self.send_message("%s: Unknown command. /help for available commands" % key)
+            self.send_message("%s: Unknown command. /help for available commands" % key, to="me")
+            return
+
+        if not self.commands[key].can(self):
+            self.send_message("%s: Unauthorized action." % key, to="me")
             return
 
         self.commands[key](self, value)

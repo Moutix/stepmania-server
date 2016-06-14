@@ -91,8 +91,6 @@ class StepmaniaController(object):
         self.server.sendroom(room, song, packet)
 
     def send_message(self, message, to=None):
-        message = "[%s] %s" % (datetime.now().strftime("%X"), message)
-        packet = smpacket.SMPacketServerNSCCM(message=message)
 
         func = {
             "me": self.send,
@@ -101,8 +99,13 @@ class StepmaniaController(object):
         }.get(to)
 
         if func == self.sendroom or (not func and self.room):
+            message = "[%s] #%s %s" % (datetime.now().strftime("%X"), with_color(self.room.name), message)
+            packet = smpacket.SMPacketServerNSCCM(message=message)
             self.sendroom(self.conn.room, packet)
             return
+
+        message = "[%s] %s" % (datetime.now().strftime("%X"), message)
+        packet = smpacket.SMPacketServerNSCCM(message=message)
 
         if func:
             func(packet)

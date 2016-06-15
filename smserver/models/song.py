@@ -4,8 +4,8 @@
 import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, Text
-from sqlalchemy import select, func
-from sqlalchemy.orm import relationship, column_property
+from sqlalchemy import select, func, desc
+from sqlalchemy.orm import relationship, column_property, object_session
 
 from smserver.models import schema, song_stat
 
@@ -24,16 +24,43 @@ class Song(schema.Base):
     stats        = relationship("SongStat", back_populates="song")
 
     time_played  = column_property(
-            select([func.count(song_stat.SongStat.id)]).\
-            where(song_stat.SongStat.song_id==id).\
-            correlate_except(song_stat.SongStat)
-        )
+        select([func.count(song_stat.SongStat.id)]).\
+        where(song_stat.SongStat.song_id == id).\
+        correlate_except(song_stat.SongStat)
+    )
 
     created_at   = Column(DateTime, default=datetime.datetime.now)
     updated_at   = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
         return "<Song #%s (name='%s')>" % (self.id, self.fullname)
+
+    @property
+    def best_scores(self):
+        return [self.best_score(feet[0]) for feet in
+                (object_session(self)
+                 .query(song_stat.SongStat.feet)
+                 .filter_by(song_id=self.id)
+                 .group_by(song_stat.SongStat.feet))]
+
+    def best_score(self, feet):
+        """ Return the song_stat element with the highest score for this feet """
+
+        return (object_session(self)
+                .query(song_stat.SongStat)
+                .filter_by(feet=feet)
+                .filter_by(song_id=self.id)
+                .order_by(desc(song_stat.SongStat.score))
+                .first())
+
+    def best_score_value(self, feet):
+        """ Return the highest score for this feet """
+
+        stat = self.best_score(feet)
+        if not stat:
+            return None
+
+        return stat.score
 
     @property
     def fullname(self):

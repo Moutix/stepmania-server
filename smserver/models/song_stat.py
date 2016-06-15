@@ -15,6 +15,25 @@ __all__ = ['SongStat']
 class SongStat(schema.Base):
     __tablename__ = 'song_stats'
 
+    GRADES = {
+        0: "AAAA",
+        1: "AAA",
+        2: "AA",
+        3: "A",
+        4: "B",
+        5: "C",
+        6: "D",
+        7: "F",
+    }
+
+    DIFFICULTIES = {
+        0: "BEGINNER",
+        1: "EASY",
+        2: "MEDIUM",
+        3: "HARD",
+        4: "EXPERT",
+    }
+
     stepid = {
         1: "hit_mine",
         2: "avoid_mine",
@@ -65,6 +84,20 @@ class SongStat(schema.Base):
 
     def __repr__(self):
         return "<SongStat #%s score=%s (%s%%)>" % (self.id, self.score, self.percentage)
+
+    @property
+    def lit_difficulty(self):
+        if not self.difficulty:
+            return self.difficulty
+
+        return self.DIFFICULTIES.get(self.difficulty, self.difficulty)
+
+    @property
+    def lit_grade(self):
+        if not self.grade:
+            return self.grade
+
+        return self.GRADES.get(self.grade, self.grade)
 
     def calc_percentage(self, config=None):
         if not config:

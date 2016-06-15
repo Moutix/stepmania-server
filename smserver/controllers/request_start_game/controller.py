@@ -42,11 +42,23 @@ class RequestStartGameController(StepmaniaController):
             self.launch_song(song)
             return
 
-        self.send_message("%s select %s which have been played %s times" % (
+        self.send_message("%s select %s which have been played %s times.%s" % (
             with_color(self.user_repr(self.room.id)),
             with_color(song.fullname),
-            song.time_played
+            song.time_played,
+            " Best scores:" if song.time_played > 0 else ""
             ))
+
+        if song.time_played > 0:
+            for song_stat in song.best_scores:
+                self.send_message("%s(%s): %s %s (%s%%) on %s" % (
+                    song_stat.lit_difficulty,
+                    song_stat.feet,
+                    with_color(song_stat.user.fullname(self.room.id)),
+                    song_stat.lit_grade,
+                    song_stat.percentage,
+                    song_stat.created_at.strftime("%x")
+                    ))
 
         with self.conn.mutex:
             self.conn.song = song.id

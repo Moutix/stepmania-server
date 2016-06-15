@@ -61,13 +61,13 @@ class StepmaniaController(object):
         return self._room_users
 
     def user_repr(self, room_id=None):
-        return "%s" % "& ".join(user.fullname(self.session, room_id) for user in self.active_users)
+        return "%s" % "& ".join(user.fullname(room_id) for user in self.active_users)
 
     def colored_user_repr(self, room_id=None):
-        return "%s" % "& ".join(with_color(user.fullname(self.session, room_id)) for user in self.active_users)
+        return "%s" % "& ".join(with_color(user.fullname(room_id)) for user in self.active_users)
 
     def level(self, room_id):
-        return max(user.level(self.session, room_id) for user in self.active_users)
+        return max(user.level(room_id) for user in self.active_users)
 
     def can(self, action, room_id=None):
         return ability.Ability.can(action, self.level(room_id))

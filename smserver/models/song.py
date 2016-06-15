@@ -35,8 +35,6 @@ class Song(schema.Base):
     def __repr__(self):
         return "<Song #%s (name='%s')>" % (self.id, self.fullname)
 
-
-
     @property
     def fullname(self):
         return "%s (%s)" % (self.title, self.artist)

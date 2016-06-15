@@ -5,7 +5,7 @@
 import datetime
 import enum
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
-from sqlalchemy.orm import relationship, reconstructor
+from sqlalchemy.orm import relationship, reconstructor, object_session
 
 from smserver.smutils import smpacket
 from smserver.models import schema
@@ -65,37 +65,39 @@ class User(schema.Base):
     def enum_status(self):
         return UserStatus(self.status)
 
-    def fullname(self, session, room_id=None):
+    def fullname(self, room_id=None):
         return "%s%s" % (
-            self._level_to_symbol(self.level(session, room_id)),
+            self._level_to_symbol(self.level(room_id)),
             self.name)
 
-    def can(self, action, session, room_id=None):
-        return ability.Ability.can(action, self.level(session, room_id))
+    def can(self, action, room_id=None):
+        return ability.Ability.can(action, self.level(room_id))
 
-    def cannot(self, action, session, room_id=None):
-        return ability.Ability.cannot(action, self.level(session, room_id))
+    def cannot(self, action, room_id=None):
+        return ability.Ability.cannot(action, self.level(room_id))
 
-    def level(self, session, room_id=None):
+    def level(self, room_id=None):
         if not room_id:
             return self.rank
 
-        priv = self.room_privilege(session, room_id)
+        priv = self.room_privilege(room_id)
         if priv:
             return priv.level
 
         return 0
 
-    def room_privilege(self, session, room_id):
+    def room_privilege(self, room_id):
         if room_id in self._room_level:
             return self._room_level[room_id]
 
-        priv = Privilege.find(room_id, self.id, session)
+        priv = Privilege.find(room_id, self.id, object_session(self))
+
         self._room_level[room_id] = priv
 
         return priv
 
-    def set_level(self, room_id, level, session):
+    def set_level(self, room_id, level):
+        session = object_session(self)
         if not room_id:
             self.rank = level
             session.commit()

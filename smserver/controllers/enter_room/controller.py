@@ -27,6 +27,13 @@ class EnterRoomController(StepmaniaController):
             self.log.info("Player %s fail to enter in room %s" % (self.conn.ip, self.packet["room"]))
             return
 
+        self.send(smpacket.SMPacketServerNSSMONL(
+            packet=room.to_packet()
+        ))
+
+        if self.conn.room == room.id:
+            return
+
         self.conn.room = room.id
         for user in self.active_users:
             user.room = room
@@ -39,10 +46,6 @@ class EnterRoomController(StepmaniaController):
             self.send_message("%s joined the room" % (
                 with_color(user.fullname(self.conn.room))
             ))
-
-        self.send(smpacket.SMPacketServerNSSMONL(
-            packet=room.to_packet()
-        ))
 
     def _send_room_resume(self, room):
         players = [user for user in self.users if user.online]

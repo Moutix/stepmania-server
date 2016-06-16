@@ -22,6 +22,7 @@ class Song(schema.Base):
     active_rooms = relationship("Room", back_populates="active_song")
 
     stats        = relationship("SongStat", back_populates="song")
+    games        = relationship("Game", back_populates="song")
 
     time_played  = column_property(
         select([func.count(song_stat.SongStat.id)]).\

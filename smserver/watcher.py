@@ -65,7 +65,7 @@ class StepmaniaWatcher(Thread):
     @periodicmethod(2)
     def check_end_game(self, session):
         for room in session.query(models.Room).filter_by(ingame=True):
-            if self.room_still_in_game(room, session):
+            if self.room_still_in_game(room):
                 continue
 
             self.server.log.info("Room %s finish is last song: %s" % (room.name, room.active_song_id))
@@ -78,9 +78,14 @@ class StepmaniaWatcher(Thread):
         packet = smpacket.SMPacketServerNSCGON(
             nb_players=0)
 
+        game = room.last_game
+        game.end_at = datetime.datetime.now()
+        game.active = False
+
         options = ("score", "grade", "difficulty", "miss", "bad", "good", "great", "perfect", "flawless", "held", "max_combo", "options")
         for option in options:
             packet[option] = []
+
 
         packet["ids"] = []
 
@@ -89,7 +94,7 @@ class StepmaniaWatcher(Thread):
                 continue
 
             songstat = (session.query(models.SongStat)
-                        .filter_by(user_id=user.id, song_id=room.active_song_id)
+                        .filter_by(user_id=user.id, game_id=game.id)
                         .order_by(models.SongStat.id.desc())
                         .first())
 
@@ -104,7 +109,7 @@ class StepmaniaWatcher(Thread):
 
         self.server.sendroom(room.id, packet)
 
-    def room_still_in_game(self, room, session):
+    def room_still_in_game(self, room):
         for conn in self.server.room_connections(room.id):
             if conn.ingame is True:
                 return True

@@ -31,8 +31,7 @@ class RequestStartGameController(StepmaniaController):
                 with_color(self.user_repr(self.room.id)),
                 with_color("not", "ff0000"),
                 with_color(song.fullname)
-                )
-            )
+                ))
 
     def start_game_request(self, song):
         with self.conn.mutex:

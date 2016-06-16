@@ -4,11 +4,11 @@
 import datetime
 import hashlib
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, or_, and_, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, or_, and_, Boolean, desc
+from sqlalchemy.orm import relationship, object_session
 
 from smserver.smutils import smpacket
-from smserver.models import schema
+from smserver.models import schema, game
 
 __all__ = ['Room']
 
@@ -26,6 +26,7 @@ class Room(schema.Base):
     status         = Column(Integer, default=0)
     type           = Column(Integer, default=1)
     users          = relationship("User", back_populates="room")
+    games          = relationship("Game", back_populates="room")
     privileges     = relationship("Privilege", back_populates="room")
     ban_ips        = relationship("BanIP", back_populates="room")
 
@@ -45,6 +46,14 @@ class Room(schema.Base):
             room_description=self.description,
             room_type=self.type
         )
+
+    @property
+    def last_game(self):
+        return (object_session(self)
+                .query(game.Game)
+                .filter_by(room_id=self.id)
+                .order_by(desc(game.Game.created_at))
+                .first())
 
     @property
     def room_info(self):

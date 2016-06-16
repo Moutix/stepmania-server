@@ -39,7 +39,7 @@ class GameOverController(StepmaniaController):
             self.conn.song = None
 
     def create_stats(self, user, raw_stats, duration):
-        songstat = models.SongStat(song_id=self.conn.song, user_id=user.id)
+        songstat = models.SongStat(song_id=self.conn.song, user_id=user.id, game_id=self.room.last_game.id)
 
         songstat.duration = duration.seconds
 

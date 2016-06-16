@@ -55,6 +55,9 @@ class SongStat(schema.Base):
     user_id    = Column(Integer, ForeignKey('users.id'))
     user       = relationship("User", back_populates="song_stats")
 
+    game_id    = Column(Integer, ForeignKey('games.id'))
+    game       = relationship("Game", back_populates="song_stats")
+
     hit_mine   = Column(Integer, default=0)
     avoid_mine = Column(Integer, default=0)
     miss       = Column(Integer, default=0)

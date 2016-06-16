@@ -26,6 +26,8 @@ class GameOverController(StepmaniaController):
             xp = songstat.calc_xp(self.server.config.get("xpWeight"))
             user.xp += xp
 
+            self.send_message("New result: %s" % songstat.pretty_result(room_id=self.room.id, color=True))
+
             self.send_message(
                 "%s gained %s XP!" % (
                     with_color(user.fullname(user.room_id)),

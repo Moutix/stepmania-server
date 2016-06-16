@@ -8,7 +8,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, T
 from sqlalchemy.orm import relationship
 
 from smserver.models import schema
-from smserver.chathelper import with_color
+from smserver.chathelper import with_color, nick_color
 from smserver.smutils.smpacket import SMPacket, SMPayloadType
 
 __all__ = ['SongStat']
@@ -97,20 +97,24 @@ class SongStat(schema.Base):
         return self.DIFFICULTIES.get(self.difficulty, self.difficulty)
 
     @property
+    def full_difficulty(self):
+        return "%s (%s)" % (self.lit_difficulty, self.feet)
+
+    @property
     def lit_grade(self):
         if not self.grade:
             return self.grade
 
         return self.GRADES.get(self.grade, self.grade)
 
-    def pretty_result(self, color=False):
-        color_func = with_color if color else lambda x: x
+    def pretty_result(self, room_id=None, color=False):
+        color_func = with_color if color else lambda x, *_: x
 
-        return "{difficulty}({feet}): {user_name} {grade} ({percentage}%) on {date}".format(
-            difficulty=self.lit_difficulty,
+        return "{difficulty}: {user_name} {grade} ({percentage}%) on {date}".format(
+            difficulty=color_func(self.full_difficulty, color=nick_color(self.lit_difficulty)),
             feet=self.feet,
-            user_name=color_func(self.user.fullname(self.room.id)),
-            grade=self.lit_grade,
+            user_name=color_func(self.user.fullname(room_id)),
+            grade=color_func(self.lit_grade),
             percentage=self.percentage,
             date=self.created_at.strftime("%x")
         )

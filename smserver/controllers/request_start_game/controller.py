@@ -50,7 +50,7 @@ class RequestStartGameController(StepmaniaController):
 
         if song.time_played > 0:
             for song_stat in song.best_scores:
-                self.send_message(song_stat.pretty_result(color=True))
+                self.send_message(song_stat.pretty_result(room_id=self.room.id, color=True))
 
         with self.conn.mutex:
             self.conn.song = song.id

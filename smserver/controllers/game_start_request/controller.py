@@ -20,6 +20,10 @@ class StartGameRequestController(StepmaniaController):
         if self.room.status != 2:
             return
 
+        if self.packet["start_position"] == 1:
+            self.send(smpacket.SMPacketServerNSCGSR())
+            return
+
         song = models.Song.find_or_create(
             self.packet["song_title"],
             self.packet["song_subtitle"],

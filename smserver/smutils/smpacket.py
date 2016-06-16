@@ -342,7 +342,11 @@ class SMPacket(object):
 
     @classmethod
     def parse_json(cls, data):
-        opts = json.loads(data)
+        try:
+            opts = json.loads(data)
+        except ValueError:
+            return None
+
         command = cls._command_type.get(opts.get("_command", -1))
         if not command:
             return None

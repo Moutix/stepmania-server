@@ -24,7 +24,7 @@ class CreateRoomController(StepmaniaController):
             description=self.packet["description"],
             type=self.packet["type"],
             password=hashlib.sha256(self.packet["password"].encode('utf-8')).hexdigest() if self.packet["password"] else None,
-            status=2,
+            status=1,
         )
         self.session.add(room)
         self.session.commit()

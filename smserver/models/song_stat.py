@@ -8,6 +8,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, T
 from sqlalchemy.orm import relationship
 
 from smserver.models import schema
+from smserver.chathelper import with_color
 from smserver.smutils.smpacket import SMPacket, SMPayloadType
 
 __all__ = ['SongStat']
@@ -101,6 +102,18 @@ class SongStat(schema.Base):
             return self.grade
 
         return self.GRADES.get(self.grade, self.grade)
+
+    def pretty_result(self, color=False):
+        color_func = with_color if color else lambda x: x
+
+        return "{difficulty}({feet}): {user_name} {grade} ({percentage}%) on {date}".format(
+            difficulty=self.lit_difficulty,
+            feet=self.feet,
+            user_name=color_func(self.user.fullname(self.room.id)),
+            grade=self.lit_grade,
+            percentage=self.percentage,
+            date=self.created_at.strftime("%x")
+        )
 
     def calc_percentage(self, config=None):
         if not config:

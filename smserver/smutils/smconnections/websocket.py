@@ -52,17 +52,12 @@ class WebSocketServer(Thread):
         ip, port = websocket.remote_address
         client = WebSocketClient(self.server, ip, port, websocket, path, self.loop)
 
-        task = asyncio.Task(client.run(), loop=self.loop)
-        client.task = task
-        self.clients[client.task] = client
-
         self.server.add_connection(client)
-
-        def client_done(task):
-            self.clients[task].close()
-            del self.clients[task]
-
-        client.task.add_done_callback(client_done)
+        try:
+            yield from client.run()
+        except Exception:
+            client.close()
+            raise
 
     def run(self):
         self._serv = self.loop.run_until_complete(

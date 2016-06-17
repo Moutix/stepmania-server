@@ -41,19 +41,20 @@ class GameOverController(StepmaniaController):
             self.conn.song = None
 
     def create_stats(self, user, raw_stats, duration):
-        songstat = models.SongStat(song_id=self.conn.song, user_id=user.id, game_id=self.room.last_game.id)
-
-        songstat.duration = duration.seconds
+        songstat = models.SongStat(
+            song_id=self.room.active_song.id,
+            user_id=user.id,
+            game_id=self.room.last_game.id,
+            duration=duration.seconds,
+            max_combo=0,
+            feet=raw_stats["feet"],
+            difficulty=raw_stats["difficulty"],
+            options=raw_stats["options"],
+        )
 
         if raw_stats["data"]:
             songstat.grade = raw_stats["data"][-1]["grade"]
             songstat.score = raw_stats["data"][-1]["score"]
-
-        songstat.feet = raw_stats["feet"]
-        songstat.difficulty = raw_stats["difficulty"]
-        songstat.options = raw_stats["options"]
-
-        songstat.max_combo = 0
 
         for stepid in models.SongStat.stepid.values():
             setattr(songstat, stepid, 0)

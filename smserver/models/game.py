@@ -3,10 +3,11 @@
 
 import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean
-from sqlalchemy.orm import relationship, column_property, object_session
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean, desc
+from sqlalchemy.orm import relationship, object_session
 
-from smserver.models import schema, song_stat
+from smserver.models import schema, song_stat, user
+from smserver.smutils import smpacket
 
 __all__ = ['Game']
 
@@ -31,4 +32,32 @@ class Game(schema.Base):
 
     def __repr__(self):
         return "<Game #%s)>" % (self.id)
+
+    @property
+    def scoreboard_packet(self):
+        packet = smpacket.SMPacketServerNSCGON(
+            nb_players=0,
+            ids=[]
+        )
+
+        session = object_session(self)
+
+
+        options = ("score", "grade", "difficulty", "miss", "bad",
+                   "good", "great", "perfect", "flawless", "held",
+                   "max_combo", "options")
+
+        for option in options:
+            packet[option] = []
+
+        for songstat in (session.query(song_stat.SongStat)
+                         .filter_by(game_id=self.id)
+                         .order_by(desc(song_stat.SongStat.score))):
+
+            packet["nb_players"] += 1
+            packet["ids"].append(user.User.user_index(songstat.user.id, session))
+            for option in options:
+                packet[option].append(getattr(songstat, option, None))
+
+        return packet
 

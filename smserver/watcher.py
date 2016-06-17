@@ -72,42 +72,10 @@ class StepmaniaWatcher(Thread):
             room.status = 1
             room.ingame = False
 
-            self.send_end_score(room, session)
-
-    def send_end_score(self, room, session):
-        packet = smpacket.SMPacketServerNSCGON(
-            nb_players=0)
-
-        game = room.last_game
-        game.end_at = datetime.datetime.now()
-        game.active = False
-
-        options = ("score", "grade", "difficulty", "miss", "bad", "good", "great", "perfect", "flawless", "held", "max_combo", "options")
-        for option in options:
-            packet[option] = []
-
-
-        packet["ids"] = []
-
-        for user in room.users:
-            if not user.online:
-                continue
-
-            songstat = (session.query(models.SongStat)
-                        .filter_by(user_id=user.id, game_id=game.id)
-                        .order_by(models.SongStat.id.desc())
-                        .first())
-
-            if not songstat:
-                continue
-
-            packet["nb_players"] += 1
-            packet["ids"].append(models.User.user_index(user.id, session))
-
-            for option in options:
-                packet[option].append(getattr(songstat, option, None))
-
-        self.server.sendroom(room.id, packet)
+            game = room.last_game
+            game.end_at = datetime.datetime.now()
+            game.active = False
+            self.server.sendroom(room.id, game.scoreboard_packet)
 
     def room_still_in_game(self, room):
         for conn in self.server.room_connections(room.id):
@@ -143,6 +111,17 @@ class StepmaniaWatcher(Thread):
                         "grade": stat[-1].get("grade"),
                         "score": stat[-1].get("score")
                     })
+
+        for songstat in room.last_game.song_stats:
+            if not songstat.user.online:
+                continue
+
+            scores.append({
+                "user": songstat.user,
+                "combo": songstat.max_combo,
+                "grade": songstat.grade,
+                "score": songstat.score,
+            })
 
         scores.sort(key=lambda x: x['score'], reverse=True)
 

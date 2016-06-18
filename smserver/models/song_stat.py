@@ -91,10 +91,10 @@ class SongStat(schema.Base):
 
     @property
     def lit_difficulty(self):
-        if not self.difficulty:
-            return self.difficulty
+        if self.difficulty is None:
+            return None
 
-        return self.DIFFICULTIES.get(self.difficulty, self.difficulty)
+        return self.DIFFICULTIES.get(self.difficulty, str(self.difficulty))
 
     @property
     def full_difficulty(self):

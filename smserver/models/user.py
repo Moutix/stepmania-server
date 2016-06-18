@@ -12,7 +12,10 @@ from smserver.models import schema
 from smserver.models.privilege import Privilege
 from smserver import ability
 
-__all__ = ['UserStatus', 'User']
+__all__ = ['UserStatus', 'User', 'AlreadyConnectError']
+
+class AlreadyConnectError(Exception):
+    pass
 
 class UserStatus(enum.Enum):
     unknown         = 0
@@ -128,6 +131,10 @@ class User(schema.Base):
         if not user:
             user = cls(name=name)
             session.add(user)
+
+        if user.online:
+            raise AlreadyConnectError
+
         user.online = True
         user.pos = pos
 

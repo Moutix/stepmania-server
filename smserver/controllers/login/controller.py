@@ -23,7 +23,17 @@ class LoginController(StepmaniaController):
             ))
             return
 
-        user = models.User.connect(self.packet["username"], self.packet["player_number"], self.session)
+        try:
+            user = models.User.connect(self.packet["username"], self.packet["player_number"], self.session)
+        except models.user.AlreadyConnectError:
+            self.log.info("Player %s is already connected", self.packet["username"])
+            self.send(smpacket.SMPacketServerNSSMONL(
+                packet=smpacket.SMOPacketServerLogin(
+                    approval=1,
+                    text="User %s is already connected" % self.packet["username"]
+                )
+            ))
+
         self.log.info("Player %s successfully connect" % self.packet["username"])
 
         user.last_ip = self.conn.ip

@@ -9,5 +9,8 @@ class SMOController(StepmaniaController):
     require_login = False
 
     def handle(self):
+        if not self.packet["packet"]:
+            return None
+
         self.server.handle_packet(self.session, self.conn, self.packet["packet"])
 

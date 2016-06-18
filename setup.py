@@ -41,6 +41,8 @@ setup(
     install_requires=[
         'pyyaml',
         'sqlalchemy',
+        'asyncio',
+        'websockets',
     ],
 
     scripts=['scripts/smserver'],

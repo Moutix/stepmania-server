@@ -74,6 +74,7 @@ class StartGameRequestController(StepmaniaController):
         session.commit()
 
         server.log.info("Room %s start a new song %s" % (room.name, song.fullname))
+        server.send_user_list(session, room.id)
 
         for player in server.ingame_connections(room.id):
             with player.mutex:

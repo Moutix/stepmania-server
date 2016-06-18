@@ -161,6 +161,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
     @with_session
     def on_disconnect(self, session, serv):
+        room = serv.room
         smthread.StepmaniaServer.on_disconnect(self, serv)
 
         users = self.get_users(serv.users, session)
@@ -172,10 +173,12 @@ class StepmaniaServer(smthread.StepmaniaServer):
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected" % user.name)
 
-        self.send_user_list(session)
+        if room:
+            self.send_user_list(session, room)
 
-    def send_user_list(self, session):
-        self.sendall(models.User.sm_list(session, self.config.server["max_users"]))
+
+    def send_user_list(self, session, room_id):
+        self.sendroom(room_id, models.User.sm_list(session, room_id, self.config.server["max_users"]))
 
     def update_schema(self):
         self.log.info("DROP all the database tables")

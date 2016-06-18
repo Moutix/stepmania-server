@@ -25,6 +25,7 @@ class UserProfilController(StepmaniaController):
             user.online = True
             self.log.info("User %s connected" % user.name)
 
-        self.server.send_user_list(self.session)
+        if self.conn.room:
+            self.server.send_user_list(self.session, self.conn.room)
 
 

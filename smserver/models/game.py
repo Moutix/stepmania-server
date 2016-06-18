@@ -55,7 +55,7 @@ class Game(schema.Base):
                          .order_by(desc(song_stat.SongStat.score))):
 
             packet["nb_players"] += 1
-            packet["ids"].append(user.User.user_index(songstat.user.id, session))
+            packet["ids"].append(user.User.user_index(songstat.user.id, self.room_id, session))
             for option in options:
                 packet[option].append(getattr(songstat, option, None))
 

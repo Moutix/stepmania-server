@@ -149,21 +149,24 @@ class User(schema.Base):
         return session.query(func.count(User.id)).filter_by(online=True).scalar()
 
     @classmethod
-    def onlines(cls, session):
-        return session.query(User).filter_by(online=True).all()
+    def onlines(cls, session, room_id=None):
+        users = session.query(User).filter_by(online=True)
+        if room_id:
+            users = users.filter_by(room_id=room_id)
+
+        return users.all()
 
     @classmethod
-    def user_index(cls, user_id, session):
-        for idx, user in enumerate(cls.onlines(session)):
+    def user_index(cls, user_id, room_id, session):
+        for idx, user in enumerate(cls.onlines(session, room_id)):
             if user_id == user.id:
                 return idx
 
         return 0
 
-
     @classmethod
-    def sm_list(cls, session, max_users=255):
-        users = cls.onlines(session)
+    def sm_list(cls, session, room_id=None, max_users=255):
+        users = cls.onlines(session, room_id)
 
         return smpacket.SMPacketServerNSCCUUL(
             max_players=max_users,

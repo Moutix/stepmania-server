@@ -23,5 +23,6 @@ class UserStatusController(StepmaniaController):
         for user in self.active_users:
             user.status = status_mapping.get(self.packet["action"], models.UserStatus.unknown).value
 
-        self.server.send_user_list(self.session)
+        if self.conn.room:
+            self.server.send_user_list(self.session, self.conn.room)
 

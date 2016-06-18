@@ -46,7 +46,6 @@ class EnterRoomController(StepmaniaController):
             return
 
         precedent_room = self.conn.room
-
         self.conn.room = room.id
         self._send_room_resume(room)
         for user in self.active_users:
@@ -66,6 +65,11 @@ class EnterRoomController(StepmaniaController):
             self.send_message("%s joined the room" % (
                 with_color(user.fullname(self.conn.room))
             ))
+
+
+        if precedent_room:
+            self.server.send_user_list(self.session, precedent_room)
+        self.server.send_user_list(self.session, self.conn.room)
 
     def _send_room_resume(self, room):
         players = [user for user in self.users if user.online]

@@ -80,6 +80,7 @@ class ChatBan(ChatPlugin):
 
         serv.send_message("User %s has been ban from this room" % with_color(user.fullname(serv.conn.room)))
         user.room = None
+        serv.server.send_user_list(serv.session, serv.room.id)
 
 
 class ChatUnBan(ChatPlugin):

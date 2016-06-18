@@ -67,12 +67,12 @@ class LoginController(StepmaniaController):
                 text="Player %s successfully login" % self.packet["username"]
             )
         ))
-        self.server.send_user_list(self.session)
         self.send_message(self.server.config.server.get("motd", ""), to="me")
         self.send_message(
-            "SMServer v%s, started on %s" % (
+            "SMServer v%s, started on %s. %s users online" % (
                 __version__,
-                self.server.started_at.strftime("%x at %X")),
+                self.server.started_at.strftime("%x at %X"),
+                models.User.nb_onlines(self.session)),
             to="me")
 
         self.send(models.Room.smo_list(self.session))

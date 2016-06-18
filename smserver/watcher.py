@@ -130,7 +130,7 @@ class StepmaniaWatcher(Thread):
         )
 
         packet["section"] = 0
-        packet["options"] = [models.User.user_index(score["user"].id, session) for score in scores]
+        packet["options"] = [models.User.user_index(score["user"].id, room.id, session) for score in scores]
         self.server.sendroom(room.id, packet)
 
         packet["section"] = 1

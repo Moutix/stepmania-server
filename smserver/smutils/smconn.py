@@ -9,6 +9,7 @@ from smserver.smutils import smpacket
 class StepmaniaConn(object):
     logger = logging.getLogger('stepmania')
     ENCODING = "binary"
+    ALLOWED_PACKET = []
 
     def __init__(self, serv, ip, port):
         self.mutex = Lock()
@@ -49,6 +50,10 @@ class StepmaniaConn(object):
             return None
 
         self.logger.debug("Packet received from %s: %s" % (self.ip, packet))
+
+        if self.ALLOWED_PACKET and packet.command not in self.ALLOWED_PACKET:
+            self.logger.info("packet %s refused from %s" % (data, self.ip))
+            return None
 
         if packet.command == smpacket.SMClientCommand.NSCPingR:
             self.last_ping = datetime.datetime.now()

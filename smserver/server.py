@@ -84,6 +84,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         servers = [
             (config.server["ip"], config.server["port"], server_type),
+            (config.server["ip"], config.server["port"], "udp"),
         ]
 
         smthread.StepmaniaServer.__init__(self, servers)

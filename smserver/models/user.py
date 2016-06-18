@@ -4,7 +4,7 @@
 
 import datetime
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func
 from sqlalchemy.orm import relationship, reconstructor, object_session
 
 from smserver.smutils import smpacket
@@ -134,6 +134,11 @@ class User(schema.Base):
         session.commit()
 
         return user
+
+
+    @classmethod
+    def nb_onlines(cls, session):
+        return session.query(func.count(User.id)).filter_by(online=True).scalar()
 
     @classmethod
     def onlines(cls, session):

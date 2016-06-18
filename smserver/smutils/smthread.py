@@ -6,7 +6,7 @@ import datetime
 from threading import Lock
 
 from smserver.smutils import smpacket
-from smserver.smutils.smconnections import smtcpsocket
+from smserver.smutils.smconnections import smtcpsocket, udpsocket
 
 if sys.version_info[1] > 2:
     from smserver.smutils.smconnections import asynctcpserver, websocket
@@ -14,6 +14,7 @@ if sys.version_info[1] > 2:
 class StepmaniaServer(object):
     SERVER_TYPE = {
         "classic": smtcpsocket.SocketServer,
+        "udp": udpsocket.UDPServer,
         "async": asynctcpserver.AsyncSocketServer if sys.version_info[1] > 2 else None,
         "websocket": websocket.WebSocketServer if sys.version_info[1] > 2 else None
     }

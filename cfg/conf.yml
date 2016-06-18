@@ -8,6 +8,15 @@ server:
     max_users: 255
     type: "classic"
 
+additional_servers:
+    - ip: 0.0.0.0
+      port: 8765
+      type: "udp"
+
+#    - ip: 0.0.0.0
+#      port: 8766
+#      type: "websocket"
+
 database:
     type: "sqlite"
     user:

@@ -84,8 +84,9 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         servers = [
             (config.server["ip"], config.server["port"], server_type),
-            (config.server["ip"], config.server["port"], "udp"),
         ]
+        for server in config.get("additional_servers", []):
+            servers.append((server["ip"], server["port"], server.get("type")))
 
         smthread.StepmaniaServer.__init__(self, servers)
         for ip, port, server_type in servers:

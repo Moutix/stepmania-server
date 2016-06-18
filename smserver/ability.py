@@ -8,6 +8,8 @@ class Permissions(Enum):
     enter_room = 1
     chat = 1
     change_room_motd = 2
+    ban_user = 5
+    unban_user = 5
 
 class Ability(object):
     @staticmethod

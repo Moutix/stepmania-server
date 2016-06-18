@@ -33,6 +33,17 @@ class LoginController(StepmaniaController):
                     text="User %s is already connected" % self.packet["username"]
                 )
             ))
+            return
+
+        if models.Ban.is_ban(self.session, user_id=user.id):
+            self.log.info("Connection failed for ban user %s", self.packet["username"])
+            self.send(smpacket.SMPacketServerNSSMONL(
+                packet=smpacket.SMOPacketServerLogin(
+                    approval=1,
+                    text="User %s is ban from this server" % self.packet["username"]
+                )
+            ))
+            return
 
         self.log.info("Player %s successfully connect" % self.packet["username"])
 

@@ -58,11 +58,11 @@ class StepmaniaServer(smthread.StepmaniaServer):
             models.User.disconnect_all(session)
             models.Room.init_from_hashes(config.get("rooms", []), session)
             models.Room.reset_room_status(session)
-            models.BanIP.reset_ban(session, fixed=True)
+            models.Ban.reset_ban(session, fixed=True)
 
             if self.config.get("ban_ips"):
                 for ip in self.config.get("ban_ips", []):
-                    models.BanIP.ban(session, ip, fixed=True)
+                    models.Ban.ban(session, ip, fixed=True)
 
         self.auth = PluginManager.import_plugin(
             'smserver.auth.%s' % config.auth["plugin"],
@@ -120,7 +120,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
     @with_session
     def add_connection(self, session, conn):
-        if models.BanIP.is_ban(session, conn.ip):
+        if models.Ban.is_ban(session, conn.ip):
             self.log.info("Reject connection from ban ip %s", conn.ip)
             conn.close()
             return

@@ -28,7 +28,7 @@ class Room(schema.Base):
     users          = relationship("User", back_populates="room")
     games          = relationship("Game", back_populates="room")
     privileges     = relationship("Privilege", back_populates="room")
-    ban_ips        = relationship("BanIP", back_populates="room")
+    bans           = relationship("Ban", back_populates="room")
 
     active_song_id = Column(Integer, ForeignKey('songs.id'))
     active_song    = relationship("Song", back_populates="active_rooms")

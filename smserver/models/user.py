@@ -53,6 +53,7 @@ class User(schema.Base):
 
     song_stats        = relationship("SongStat", back_populates="user")
     privileges        = relationship("Privilege", back_populates="user")
+    bans              = relationship("Ban", back_populates="user")
 
     created_at        = Column(DateTime, default=datetime.datetime.now)
     updated_at        = Column(DateTime, onupdate=datetime.datetime.now)

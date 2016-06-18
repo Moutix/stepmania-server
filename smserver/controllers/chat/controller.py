@@ -58,6 +58,48 @@ class ChatMOTD(ChatPlugin):
         serv.session.commit()
         serv.send_message("Room MOTD set to: %s" % message)
 
+class ChatBan(ChatPlugin):
+    helper = "Ban a user"
+
+    def can(self, serv):
+        if serv.cannot(ability.Permissions.ban_user, serv.conn.room):
+            return False
+
+        return True
+
+    def __call__(self, serv, message):
+        user = serv.session.query(models.User).filter_by(name=message).first()
+        if not user:
+            serv.send_message("Unknown user %s" % with_color(message), to="me")
+            return
+
+        models.Ban.ban(serv.session, user_id=user.id, room_id=serv.conn.room)
+        for conn in serv.server.connections:
+            if user.id in conn.users:
+                conn.room = None
+
+        serv.send_message("User %s has been ban from this room" % with_color(user.fullname(serv.conn.room)))
+        user.room = None
+
+
+class ChatUnBan(ChatPlugin):
+    helper = "UnBan a user"
+
+    def can(self, serv):
+        if serv.cannot(ability.Permissions.unban_user, serv.conn.room):
+            return False
+
+        return True
+
+    def __call__(self, serv, message):
+        user = serv.session.query(models.User).filter_by(name=message).first()
+        if not user:
+            serv.send_message("Unknown user %s" % with_color(message), to="me")
+            return
+
+        models.Ban.unban(serv.session, user_id=user.id, room_id=serv.conn.room)
+        serv.send_message("User %s has been unban from this room" % with_color(user.fullname(serv.conn.room)))
+
 
 class ChatController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCCM
@@ -66,7 +108,9 @@ class ChatController(StepmaniaController):
     commands = {
         "help": ChatHelp(),
         "users": ChatUserListing(),
-        "motd": ChatMOTD()
+        "motd": ChatMOTD(),
+        "ban": ChatBan(),
+        "unban": ChatUnBan(),
     }
 
     def handle(self):

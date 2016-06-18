@@ -28,7 +28,7 @@ class RequestStartGameController(StepmaniaController):
 
         if not have_song:
             self.send_message("%s does %s have the song (%s)!" % (
-                with_color(self.user_repr(self.room.id)),
+                self.colored_user_repr(self.room.id),
                 with_color("not", "ff0000"),
                 with_color(song.fullname)
                 ))
@@ -80,6 +80,7 @@ class RequestStartGameController(StepmaniaController):
             )
             return
 
+        self.send_message("New game started: %s" % with_color(song.fullname))
         self.room.status = 2
         self.room.active_song = song
         self.sendroom(self.room.id, smpacket.SMPacketServerNSCRSG(

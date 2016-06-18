@@ -31,16 +31,26 @@ class EnterRoomController(StepmaniaController):
             packet=room.to_packet()
         ))
 
+
         if self.conn.room == room.id:
             return
 
+        precedent_room = self.conn.room
+
         self.conn.room = room.id
+        self._send_room_resume(room)
         for user in self.active_users:
+            if precedent_room:
+                self.send_message(
+                    "Player %s leave the room" % (
+                        with_color(user.fullname(precedent_room))
+                    ),
+                    room_id=precedent_room
+                )
+
             user.room = room
             if not user.room_privilege(room.id):
                 user.set_level(room.id, 1)
-
-            self._send_room_resume(room)
 
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
             self.send_message("%s joined the room" % (

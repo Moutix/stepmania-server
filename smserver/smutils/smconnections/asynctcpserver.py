@@ -69,7 +69,7 @@ class AsyncSocketServer(Thread):
     def __init__(self, server, ip, port):
         Thread.__init__(self)
 
-        self.loop = asyncio.get_event_loop()
+        self.loop = asyncio.new_event_loop()
 
         self._serv = None
         self.server = server

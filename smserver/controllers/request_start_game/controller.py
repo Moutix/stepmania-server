@@ -42,7 +42,7 @@ class RequestStartGameController(StepmaniaController):
             return
 
         self.send_message("%s select %s which have been played %s times.%s" % (
-            with_color(self.user_repr(self.room.id)),
+            self.colored_user_repr(self.room.id),
             with_color(song.fullname),
             song.time_played,
             " Best scores:" if song.time_played > 0 else ""

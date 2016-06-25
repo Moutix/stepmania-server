@@ -78,33 +78,98 @@ class SMOServerCommand(SMOCommand):
 class SMPayloadTypeAbstract(object):
     @staticmethod
     def encode(data, opt=None):
+        """
+            Define here how the data is encoded.
+
+            Take the data and option and return the encoded data
+        """
+
         return b''
 
     @staticmethod
     def decode(payload, opt=None):
+        """
+            Define here how the data is dedoced.
+
+            Take the payload and option and return the data and remaining payload
+        """
+
+
         return payload, None
 
 class SMPayloadTypeINT(SMPayloadTypeAbstract):
     @staticmethod
-    def encode(data, opt=None):
+    def encode(data, size=1):
+        """
+            Encode integer into binary string
+
+            :Example:
+
+            >>> SMPayloadTypeINT.encode(2, size=2)
+            b'\\x00\\x02'
+
+            >>> SMPayloadTypeINT.encode(255, size=1)
+            b'\\xff'
+
+            >>> SMPayloadTypeINT.encode(256, size=1) # Return the max is size exceed
+            b'\\xff'
+
+        """
+
         if not data:
             data = 0
 
-        if not opt:
-            opt = 1
+        if not size:
+            size = 1
 
-        return data.to_bytes(opt, byteorder='big')
+        if data > size * 255:
+            data = 255
+
+        return data.to_bytes(size, byteorder='big')
 
     @staticmethod
-    def decode(payload, opt=None):
-        if not opt:
-            opt = 1
+    def decode(payload, size=1):
+        """
+            Decode binary string into integer
 
-        return payload[opt:], int.from_bytes(payload[:opt], byteorder='big')
+            :Example:
+
+            >>> SMPayloadTypeINT.decode(b"\x01remaining_payload", size=1)
+            (b'remaining_payload', 1)
+
+            >>> SMPayloadTypeINT.decode(b"\x01", size=50) # Return None if size exceed
+            (b'\\x01', None)
+
+        """
+
+        if not size:
+            size = 1
+
+        if len(payload) < size:
+            return payload, None
+
+        return payload[size:], int.from_bytes(payload[:size], byteorder='big')
 
 class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data, opt=None):
+        """
+            Encode integer list into binary string.
+
+            :param data: the list to encode
+            :param opt: the encoding option: (integer size, size of the array)
+
+            :Example:
+
+            >>> SMPayloadTypeINTLIST.encode([2, 5], opt=(1, 2))
+            b'\\x02\\x05'
+
+            >>> SMPayloadTypeINTLIST.encode([1], opt=(1, 2)) # zero padding
+            b'\\x01\\x00'
+
+        """
+
+
         if not data:
             data = []
 
@@ -118,8 +183,30 @@ class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
 
     @staticmethod
     def decode(payload, opt=None):
+        """
+            Decode binary string into int list
+
+            :param data: the string to decode
+            :param opt: the encoding option: (integer size, size of the array)
+
+            :Example:
+
+            >>> SMPayloadTypeINTLIST.decode(b"\x02\x05", opt=(1, 2))
+            (b'', [2, 5])
+
+            >>> SMPayloadTypeINTLIST.decode(b"\x02\x05remaining_payload", opt=(2, 1))
+            (b'remaining_payload', [517])
+
+            >>> SMPayloadTypeINTLIST.decode(b'\x01', opt=(1, 5)) # Return none if size exceed
+            (b'\\x01', None)
+
+        """
+
         if not opt or len(opt) != 2:
             opt = (1, 1)
+
+        if len(payload) < opt[0]*opt[1]:
+            return payload, None
 
         return payload[opt[0]*opt[1]:], [int.from_bytes(payload[i:i+opt[0]], byteorder='big')
                                          for i in range(0, opt[0]*opt[1], opt[0])]
@@ -127,39 +214,118 @@ class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
 class SMPayloadTypeNT(SMPayloadTypeAbstract):
     @staticmethod
     def encode(data, opt=None):
+        """
+            Encode unicode string into null terminated string.
+
+            :param data: the string to encode
+            :param opt: Do nothing
+
+            :Example:
+
+            >>> SMPayloadTypeNT.encode("unicode_string")
+            b'unicode_string\\x00'
+
+        """
+
         if not data:
             return b'\x00'
+
         return data.replace('\x00', '').encode('utf-8') + b'\x00'
 
     @staticmethod
     def decode(payload, opt=None):
+        """
+            Decode null terminated string into unicode string
+
+            :param data: the null terminated string
+            :param opt: Do nothing
+
+            :Example:
+
+            >>> SMPayloadTypeNT.decode(b"nt_string\\x00remaining_string...")
+            (b'remaining_string...', 'nt_string')
+
+        """
+
+
         tmp = payload.split(b'\x00', 1)
         if len(tmp) < 2:
             return payload, None
+
         return tmp[1], tmp[0].decode('utf-8')
 
 class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
     @staticmethod
-    def encode(data, opt=None):
-        if not data:
-            return b'\x00'*opt if opt else b'\x00'
+    def encode(data, size=None):
+        """
+            Encode list of unicode string into null terminated strings.
 
-        if opt and len(data) < opt:
-            data.extend(['' for _ in range(opt - len(data))])
+            :param data: the list to encode
+            :param size: Size of the list
+
+            :Example:
+
+            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 2)
+            b'string1\\x00string2\\x00'
+
+            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 5) # zero padding
+            b'string1\\x00string2\\x00\\x00\\x00\\x00'
+
+            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 1) # force size
+            b'string1\\x00'
+
+            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"]) # guess size
+            b'string1\\x00string2\\x00'
+
+        """
+
+        if not data:
+            return b'\x00'*size if size else b'\x00'
+
+        if size and len(data) < size:
+            data.extend(['' for _ in range(size - len(data))])
+
+        if size and len(data) > size:
+            data = data[:size]
 
         return b'\x00'.join([d.replace('\x00', '').encode('utf-8') for d in data]) + b'\x00'
 
     @staticmethod
-    def decode(payload, opt=None):
-        if opt:
-            tmp = payload.split(b'\x00', opt)
+    def decode(payload, size=None):
+        """
+            Decode byte strings into list of unicode string
+
+            :param data: List of unicode string
+            :param size: size of the list
+
+            :Example:
+
+            >>> SMPayloadTypeNTLIST.decode(b"string1\\x00string2\\x00remaining\\x00_string...", 2)
+            (b'remaining\\x00_string...', ['string1', 'string2'])
+
+            >>> SMPayloadTypeNTLIST.decode(b"string1\\x00string2\\x00remaining_string...") # guess size
+            (b'remaining_string...', ['string1', 'string2'])
+
+            >>> SMPayloadTypeNTLIST.decode(b"string1\\x00remaining_string...", 3)
+            (b'remaining_string...', ['string1', '', ''])
+
+
+        """
+
+        if size:
+            tmp = payload.split(b'\x00', size)
         else:
             tmp = payload.split(b'\x00')
+
+        remaining_payload = tmp.pop()
+
+        if size and len(tmp) < size:
+            tmp.extend([b'' for _ in range(size - len(tmp))])
 
         if not tmp:
             return payload, None
 
-        return tmp[-1], [t.decode('utf-8') for t in tmp[:-1]]
+        return remaining_payload, [t.decode('utf-8') for t in tmp]
 
 class SMPayloadTypeLIST(SMPayloadTypeAbstract):
     @staticmethod
@@ -215,6 +381,7 @@ class SMPayloadTypePacket(SMPayloadTypeAbstract):
     def encode(data, opt=None):
         if not data:
             return b''
+
         return data.data
 
     @staticmethod
@@ -225,6 +392,7 @@ class SMPayloadTypePacket(SMPayloadTypeAbstract):
         tmp = opt.parse_data(payload)
         if not tmp:
             return payload, None
+
         return payload[len(tmp.payload):], tmp
 
 
@@ -390,6 +558,7 @@ class SMPacket(object):
             res = size.value.encode(values.get(name), cls._replace_from_options(values, opt))
             if not res:
                 continue
+
             payload += res
 
         return payload
@@ -863,6 +1032,9 @@ class SMPacketServerXMLPacket(SMPacket):
 
 
 def main():
+    import doctest
+    doctest.testmod()
+
     packet = SMPacket.new(
         SMClientCommand.NSCGSR,
         second_player_feet=8,

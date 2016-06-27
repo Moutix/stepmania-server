@@ -10,6 +10,9 @@ class Permissions(Enum):
     change_room_motd = 2
     ban_user = 5
     unban_user = 5
+    set_op = 5
+    set_owner = 10
+    set_voice = 1
 
 class Ability(object):
     @staticmethod

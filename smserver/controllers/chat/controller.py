@@ -10,15 +10,24 @@ from smserver.chathelper import with_color
 
 class ChatPlugin(object):
     helper = ""
+    permission = None
+    room = False
 
     def can(self, serv):
+        if self.room and not serv.room:
+            return False
+
+        if self.permission and serv.cannot(self.permission, serv.conn.room):
+            return False
+
         return True
+
 
 class ChatHelp(ChatPlugin):
     helper = "Show help"
 
     def __call__(self, serv, message):
-        for command, action in serv.commands.items():
+        for command, action in sorted(serv.commands.items()):
             if not action.can(serv):
                 continue
 
@@ -41,36 +50,96 @@ class ChatUserListing(ChatPlugin):
                     user.enum_status.name),
                 to="me")
 
+
 class ChatMOTD(ChatPlugin):
     helper = "Update room MOTD"
-
-    def can(self, serv):
-        if not serv.room:
-            return False
-
-        if serv.cannot(ability.Permissions.change_room_motd, serv.room.id):
-            return False
-
-        return True
+    room = True
+    permission = ability.Permissions.change_room_motd
 
     def __call__(self, serv, message):
         serv.room.motd = message
         serv.session.commit()
         serv.send_message("Room MOTD set to: %s" % message)
 
-class ChatBan(ChatPlugin):
-    helper = "Ban a user"
 
-    def can(self, serv):
-        if serv.cannot(ability.Permissions.ban_user, serv.conn.room):
-            return False
-
-        return True
+class ChatOP(ChatPlugin):
+    helper = "Change user level to operator. /op user"
+    room = True
+    permission = ability.Permissions.set_op
 
     def __call__(self, serv, message):
         user = serv.session.query(models.User).filter_by(name=message).first()
         if not user:
             serv.send_message("Unknown user %s" % with_color(message), to="me")
+            return
+
+        if user.level(serv.conn.room) > serv.level(serv.conn.room):
+            serv.send_message("Not authorize to op %s" % with_color(user.fullname(serv.conn.room)), to="me")
+            return
+
+        user.set_level(serv.room.id, 5)
+        serv.send_message("%s give operator right to %s" % (
+            serv.colored_user_repr(serv.room.id),
+            with_color(user.fullname(serv.room.id))
+        ))
+
+
+class ChatOwner(ChatPlugin):
+    helper = "Change user level to owner. /owner user"
+    room = True
+    permission = ability.Permissions.set_owner
+
+    def __call__(self, serv, message):
+        user = serv.session.query(models.User).filter_by(name=message).first()
+        if not user:
+            serv.send_message("Unknown user %s" % with_color(message), to="me")
+            return
+
+        if user.level(serv.conn.room) > serv.level(serv.conn.room):
+            serv.send_message("Not authorize to owner %s" % with_color(user.fullname(serv.conn.room)), to="me")
+            return
+
+        user.set_level(serv.room.id, 10)
+        serv.send_message("%s give operator right to %s" % (
+            serv.colored_user_repr(serv.room.id),
+            with_color(user.fullname(serv.room.id))
+        ))
+
+
+class ChatVoice(ChatPlugin):
+    helper = "Change user level to voice. /voice user"
+    room = True
+    permission = ability.Permissions.set_voice
+
+    def __call__(self, serv, message):
+        user = serv.session.query(models.User).filter_by(name=message).first()
+        if not user:
+            serv.send_message("Unknown user %s" % with_color(message), to="me")
+            return
+
+        if user.level(serv.conn.room) > serv.level(serv.conn.room):
+            serv.send_message("Not authorize to voice %s" % with_color(user.fullname(serv.conn.room)), to="me")
+            return
+
+        user.set_level(serv.room.id, 1)
+        serv.send_message("%s give voice right to %s" % (
+            serv.colored_user_repr(serv.room.id),
+            with_color(user.fullname(serv.room.id))
+        ))
+
+
+class ChatBan(ChatPlugin):
+    helper = "Ban a user. /ban user"
+    permission = ability.Permissions.ban_user
+
+    def __call__(self, serv, message):
+        user = serv.session.query(models.User).filter_by(name=message).first()
+        if not user:
+            serv.send_message("Unknown user %s" % with_color(message), to="me")
+            return
+
+        if user.level(serv.conn.room) > serv.level(serv.conn.room):
+            serv.send_message("Not authorize to ban %s" % with_color(user.fullname(serv.conn.room)), to="me")
             return
 
         models.Ban.ban(serv.session, user_id=user.id, room_id=serv.conn.room)
@@ -84,13 +153,8 @@ class ChatBan(ChatPlugin):
 
 
 class ChatUnBan(ChatPlugin):
-    helper = "UnBan a user"
-
-    def can(self, serv):
-        if serv.cannot(ability.Permissions.unban_user, serv.conn.room):
-            return False
-
-        return True
+    helper = "UnBan a user. /unban user"
+    permission = ability.Permissions.unban_user
 
     def __call__(self, serv, message):
         user = serv.session.query(models.User).filter_by(name=message).first()
@@ -112,6 +176,9 @@ class ChatController(StepmaniaController):
         "motd": ChatMOTD(),
         "ban": ChatBan(),
         "unban": ChatUnBan(),
+        "op": ChatOP(),
+        "owner": ChatOwner(),
+        "voice": ChatVoice()
     }
 
     def handle(self):

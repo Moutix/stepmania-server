@@ -106,7 +106,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
     def init_controllers(self):
         controllers = {}
 
-        for controller in PluginManager("StepmaniaController", None, "smserver.controllers", "controller").values():
+        for controller in PluginManager("StepmaniaController", None, "smserver.controllers").values():
             if not controller.command:
                 continue
 

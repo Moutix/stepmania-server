@@ -3,6 +3,8 @@
 
 import inspect
 import os
+import pkgutil
+
 try:
     from importlib import reload
 except ImportError:
@@ -91,7 +93,7 @@ class PluginManager(dict):
         self.plugin_file = plugin_file
         self.directory = directory
         if paths is None:
-            paths = self.all_paths(directory, plugin_file)
+            paths = self.all_paths(directory)
         if not paths:
             paths = []
 
@@ -99,21 +101,10 @@ class PluginManager(dict):
 
         self.load()
 
-    def all_paths(self, directory, plugin_file):
-        paths = []
-
+    def all_paths(self, directory):
         directory_path = os.path.join(self.__location__, "/".join(directory.split(".")[1:]))
-
-        for path in os.listdir(directory_path):
-            if not os.path.isdir(os.path.join(directory_path, path)):
-                continue
-
-            if not os.path.isfile("%s.py" % os.path.join(directory_path, path, plugin_file)):
-                continue
-
-            paths.append(path)
-
-        return paths
+        for _, name, _ in pkgutil.iter_modules([directory_path]):
+            yield name
 
     def load(self, force_reload=False):
         for path in self.paths:
@@ -147,4 +138,4 @@ if __name__ == "__main__":
     plugins.init("a")
     print(plugins)
 
-    print(PluginManager("StepmaniaController", [], "controllers", "controller"))
+    print(PluginManager("StepmaniaController", None, "smserver.controllers"))

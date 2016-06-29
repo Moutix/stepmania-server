@@ -8,7 +8,7 @@ import itertools
 
 from smserver import models
 from smserver.smutils import smpacket
-from smserver.controllers.game_start_request.controller import StartGameRequestController
+from smserver.controllers.game_start_request import StartGameRequestController
 
 class PeriodicMethods(object):
     """ Decorator to indicate the periodicity of a methods """

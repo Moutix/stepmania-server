@@ -134,8 +134,10 @@ class Room(schema.Base):
 
     @classmethod
     def smo_list(cls, session):
-        """ Return the list of rooms already formatted in a SMO packet
-        Send the list of room with:
+        """
+            Return the list of rooms already formatted in a SMO packet
+
+            Send the list of room with:
             serv.send(models.Room.smo_list(session))
         """
 
@@ -144,8 +146,10 @@ class Room(schema.Base):
 
     @classmethod
     def login(cls, name, password, session):
-        """ Find a room matching the couple name and password
-        Return the room if the match is good
+        """
+            Find a room matching the couple name and password
+
+            Return the room if the match is good
         """
 
         if password:

@@ -10,27 +10,27 @@
     :Example:
     >>> from smpacket import *
 
-    Create a new packet instance
+    >>> # Create a new packet instance
     >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="test")
     >>> print(packet)
     <SMPacketServerNSCCM message="test">
 
-    Binary encode your packet
+    >>> # Binary encode your packet
     >>> packet.binary
     b'\\x00\\x00\\x00\\x06\\x87test\\x00'
 
-    Decode binary data
+    >>> # Decode binary data
     >>> packet2 = SMPacket.from_("binary", packet.binary)
     >>> print(packet2)
     <SMPacketServerNSCCM message="test">
 
     >>> packet = SMPacket.new(SMServerCommand.NSCPing)
 
-    JSON encode your packet
+    >>> # JSON encode your packet
     >>> packet.to_json
     '{"_command": 128}'
 
-    Decode JSON data
+    >>> # Decode JSON data
     >>> packet2 = SMPacket.from_("json", packet.to_json)
     >>> print(packet2)
     <SMPacketServerNSCPing >

@@ -1,6 +1,42 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
+"""
+    The ```SMpacket`` module
+    ========================
+
+    Provide easy utilisation of the stepmania protocol.
+
+    :Example:
+    >>> from smpacket import *
+
+    Create a new packet instance
+    >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="test")
+    >>> print(packet)
+    <SMPacketServerNSCCM message="test">
+
+    Binary encode your packet
+    >>> packet.binary
+    b'\\x00\\x00\\x00\\x06\\x87test\\x00'
+
+    Decode binary data
+    >>> packet2 = SMPacket.from_("binary", packet.binary)
+    >>> print(packet2)
+    <SMPacketServerNSCCM message="test">
+
+    >>> packet = SMPacket.new(SMServerCommand.NSCPing)
+
+    JSON encode your packet
+    >>> packet.to_json
+    '{"_command": 128}'
+
+    Decode JSON data
+    >>> packet2 = SMPacket.from_("json", packet.to_json)
+    >>> print(packet2)
+    <SMPacketServerNSCPing >
+
+"""
+
 from enum import Enum
 import json
 
@@ -24,6 +60,10 @@ class SMCommand(ParentCommand):
     pass
 
 class SMClientCommand(SMCommand):
+    """
+        List of client commands available
+    """
+
     NSCPing      = 0
     NSCPingR     = 1
     NSCHello     = 2
@@ -42,6 +82,10 @@ class SMClientCommand(SMCommand):
     XMLPacket    = 15
 
 class SMServerCommand(SMCommand):
+    """
+        List of server commands available
+    """
+
     NSCPing      = 128
     NSCPingR     = 129
     NSCHello     = 130
@@ -63,12 +107,20 @@ class SMOCommand(ParentCommand):
     pass
 
 class SMOClientCommand(SMOCommand):
+    """
+        List of SMO Client commands available
+    """
+
     LOGIN      = 0
     ENTERROOM  = 1
     CREATEROOM = 2
     ROOMINFO   = 3
 
 class SMOServerCommand(SMOCommand):
+    """
+        List of SMO Server commands available
+    """
+
     LOGIN       = 0
     ROOMUPDATE  = 1
     GENERALINFO = 2
@@ -76,6 +128,10 @@ class SMOServerCommand(SMOCommand):
 
 
 class SMPayloadTypeAbstract(object):
+    """
+        Parent class for declaring new type of data.
+    """
+
     @staticmethod
     def encode(data, opt=None):
         """
@@ -98,6 +154,10 @@ class SMPayloadTypeAbstract(object):
         return payload, None
 
 class SMPayloadTypeINT(SMPayloadTypeAbstract):
+    """
+        INT data encode in x bytes.
+    """
+
     @staticmethod
     def encode(data, size=1):
         """
@@ -151,6 +211,11 @@ class SMPayloadTypeINT(SMPayloadTypeAbstract):
         return payload[size:], int.from_bytes(payload[:size], byteorder='big')
 
 class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
+    """
+        List of integer
+    """
+
+
     @staticmethod
     def encode(data, opt=None):
         """
@@ -212,6 +277,10 @@ class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
                                          for i in range(0, opt[0]*opt[1], opt[0])]
 
 class SMPayloadTypeNT(SMPayloadTypeAbstract):
+    """
+        Null terminated string.
+    """
+
     @staticmethod
     def encode(data, opt=None):
         """
@@ -255,6 +324,10 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
         return tmp[1], tmp[0].decode('utf-8')
 
 class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
+    """
+        List of null terminated string
+    """
+
     @staticmethod
     def encode(data, size=None):
         """
@@ -328,6 +401,10 @@ class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
         return remaining_payload, [t.decode('utf-8') for t in tmp]
 
 class SMPayloadTypeLIST(SMPayloadTypeAbstract):
+    """
+        Generic type for declaring list of other type
+    """
+
     @staticmethod
     def encode(data, opt=None):
         if not data:
@@ -354,6 +431,10 @@ class SMPayloadTypeLIST(SMPayloadTypeAbstract):
         return payload, res
 
 class SMPayloadTypeMAP(SMPayloadTypeAbstract):
+    """
+        Generic type for declaring encoding which depends on precedent values.
+    """
+
     @staticmethod
     def encode(data, opt=None):
         if not opt:
@@ -377,6 +458,11 @@ class SMPayloadTypeMAP(SMPayloadTypeAbstract):
         return size.value.decode(payload, sizeopt)
 
 class SMPayloadTypePacket(SMPayloadTypeAbstract):
+    """
+        Type for encoding packet in packet
+    """
+
+
     @staticmethod
     def encode(data, opt=None):
         if not data:
@@ -397,6 +483,10 @@ class SMPayloadTypePacket(SMPayloadTypeAbstract):
 
 
 class SMPayloadType(Enum):
+    """
+        List of the available type
+    """
+
     MSN = 1
     LSN = 2
     NT = SMPayloadTypeNT
@@ -408,12 +498,19 @@ class SMPayloadType(Enum):
     MAP = SMPayloadTypeMAP
 
 class SMPacket(object):
+    """
+        Main class for declare/parse packet
+    """
+
     _command_type = SMCommand
     _command = None
     _payload = []
 
     def __init__(self, **kwargs):
         self.command = self._command
+        if "_command" in kwargs:
+            kwargs.pop("_command")
+
         self.opts = kwargs
 
     def __len__(self):
@@ -440,6 +537,18 @@ class SMPacket(object):
 
     @classmethod
     def new(cls, command, **kwargs):
+        """
+            Return an instance with the corresponding command.
+
+            If no command is found, return None
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> print(SMPacket.new(SMServerCommand.NSCCM, message="msg"))
+            <SMPacketServerNSCCM message="msg">
+        """
+
         klasses = [klass for klass in cls.__subclasses__() if klass._command == command]
         if not klasses:
             return None
@@ -448,6 +557,16 @@ class SMPacket(object):
 
     @classmethod
     def get_class(cls, command):
+        """
+            Get the class which avec the corresponding command
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> print(SMPacket.get_class(SMServerCommand.NSCCM))
+            <class 'smpacket.SMPacketServerNSCCM'>
+        """
+
         klasses = [klass for klass in cls.__subclasses__() if klass._command == command]
         if not klasses:
             return None
@@ -456,26 +575,92 @@ class SMPacket(object):
 
     @property
     def binarycommand(self):
+        """
+            Return the command in a binary string
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
+            >>> print(packet.binarycommand)
+            b'\\x87'
+        """
+
         return self.command.value.to_bytes(1, byteorder='big')
 
     @property
     def binarysize(self):
+        """
+            Return the size of the packet in a 4 bytes string.
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
+            >>> print(packet.binarysize)
+            b'\\x00\\x00\\x00\\x05'
+        """
+
         return len(self).to_bytes(4, byteorder='big')
 
     @property
     def data(self):
+        """
+            Return the command + payload in a binary string
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
+            >>> print(packet.data)
+            b'\\x87msg\\x00'
+        """
+
         return self.binarycommand + self.payload
 
     @property
     def binary(self):
+        """
+            Return the full binary encoded packet (size + command + payload)
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
+            >>> print(packet.binary)
+            b'\\x00\\x00\\x00\\x05\\x87msg\\x00'
+        """
+
         return self.binarysize + self.data
 
     @property
     def payload(self):
+        """
+            Return the paylaod encoded in binary
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
+            >>> print(packet.payload)
+            b'msg\\x00'
+        """
+
         return self.encode(self.opts, self._payload)
 
     @property
     def to_json(self):
+        """
+            Return the JSON encoded packet
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> packet = SMPacket.new(SMServerCommand.NSCPing)
+            >>> print(packet.to_json)
+            {"_command": 128}
+        """
+
         data = {}
         data["_command"] = self._command.value
         for opt, value in self.opts.items():
@@ -489,13 +674,39 @@ class SMPacket(object):
 
     @classmethod
     def from_payload(cls, payload):
+        """
+            Decode the given binary payload
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> payload_data = b'msg\\x00'
+            >>> print(SMPacketServerNSCCM.from_payload(payload_data))
+            <SMPacketServerNSCCM message="msg">
+        """
+
         return cls(**cls.decode(payload, cls._payload)[1])
 
     @classmethod
     def from_json(cls, payload):
+        """
+            Decode a JSON encoded packet
+
+            :Example:
+
+            >>> from smpacket import *
+            >>> json_data = '{"message": "msg"}'
+            >>> print(SMPacketServerNSCCM.from_json(json_data))
+            <SMPacketServerNSCCM message="msg">
+        """
+
         return cls(**cls.decode_json(payload, cls._payload))
 
     def to_(self, encoding):
+        """
+            Encode the packet to the specified format (json or binary)
+        """
+
         return {
             "json": self.to_json,
             "binary": self.binary
@@ -503,6 +714,10 @@ class SMPacket(object):
 
     @classmethod
     def from_(cls, encoding, data):
+        """
+            Decode the packet from the specified format (json or binary)
+        """
+
         return {
             "json": cls.parse_json,
             "binary": cls.parse_binary
@@ -618,6 +833,7 @@ class SMPacket(object):
             return "1"*size
 
         return "0"*(size-len(number)) + number
+
 
 class SMOPacketClient(SMPacket):
     _command_type = SMOClientCommand

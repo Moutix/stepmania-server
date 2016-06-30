@@ -95,13 +95,13 @@ Example for mysql:
 .. code-block:: yaml
 
    database:
-       type: "sqlite"
-       user:
-       password:
-       database: "/tmp/stepmania.db"
-       host:
+       type: "mysql"
+       user: stepmania
+       password: ******
+       database: stepmania
+       host: localhost
        port:
-       driver:
+       driver: pymysql
 
 Ban IPs section
 ***************

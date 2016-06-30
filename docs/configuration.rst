@@ -58,7 +58,7 @@ Server section
 * **port**: Port to use, actually stepmania only support the default port (default to 8765)
 * **fps**: Refresh time of the process in background (in second). (default to 1)
 * **readtimeout**: Not implemented yet
-* **max_users**: NB max of users on the server
+* **max_users**: NB max of users on the server (default to infinite)
 * **type**: Type of server to use. Just choose between async and classic. See next section for details
 
 Additional Servers section
@@ -70,10 +70,12 @@ This section allow you to listen on many interface (UDP + TCP + websocket for in
 * **port**: Port to use
 * **type**: Type of the server
 
-** **classic**: (default): Use one thread by client
-** **async**: Use a Asyncio server
-** **websocket**: Use a websocket server. Expect JSON data
-** **udp**: Listen on UDP for messages. Use it for discovery purposes
+Type available:
+
+* **classic**: (default): Use one thread by client
+* **async**: Use a Asyncio server
+* **websocket**: Use a websocket server. Expect JSON data
+* **udp**: Listen on UDP for messages. Use it for discovery purposes
 
 Database section
 ****************
@@ -138,4 +140,6 @@ Define here the static room on your server
 * **name**: Name of your room, as shown in the room list
 * **password**: Password. Leave empty if it's an open room
 * **description**: Password
+* **motd**: mesage display on user connection
+* **max_users**: nb max of users allow in this room (max to 255)
 

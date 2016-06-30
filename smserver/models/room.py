@@ -4,11 +4,12 @@
 import datetime
 import hashlib
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, or_, and_, Boolean, desc
-from sqlalchemy.orm import relationship, object_session
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy import func, or_, and_, desc
+from sqlalchemy.orm import reconstructor, relationship, object_session
 
 from smserver.smutils import smpacket
-from smserver.models import schema, game
+from smserver.models import schema, game, user
 
 __all__ = ['Room']
 
@@ -25,16 +26,22 @@ class Room(schema.Base):
 
     status         = Column(Integer, default=0)
     type           = Column(Integer, default=1)
+    max_users      = Column(Integer, default=255)
+
     users          = relationship("User", back_populates="room")
     games          = relationship("Game", back_populates="room")
     privileges     = relationship("Privilege", back_populates="room")
     bans           = relationship("Ban", back_populates="room")
 
-    active_song_id = Column(Integer, ForeignKey('songs.id'))
+    active_song_id = Column(Integer, ForeignKey('songs.id', ondelete="SET NULL"))
     active_song    = relationship("Song", back_populates="active_rooms")
 
     created_at     = Column(DateTime, default=datetime.datetime.now)
     updated_at     = Column(DateTime, onupdate=datetime.datetime.now)
+
+    @reconstructor
+    def _init_on_load(self):
+        self._nb_players = None
 
     def __repr__(self):
         return "<Room #%s (name='%s')>" % (self.id, self.name)
@@ -56,9 +63,29 @@ class Room(schema.Base):
                 .first())
 
     @property
+    def nb_players(self):
+        if self._nb_players:
+            return self._nb_players
+
+        self._nb_players = (
+            object_session(self)
+            .query(func.count(user.User.id))
+            .filter_by(online=True, room_id=self.id)
+            .scalar())
+
+        return self._nb_players
+
+    @property
+    def online_users(self):
+        return (object_session(self)
+                .query(user.User.id)
+                .filter_by(online=True, room_id=self.id)
+                .all())
+
+    @property
     def room_info(self):
         packet = smpacket.SMOPacketServerRoomInfo(
-            max_players=255
+            max_players=self.max_users
         )
 
         song = self.active_song
@@ -67,10 +94,23 @@ class Room(schema.Base):
             packet["song_subtitle"] = song.subtitle
             packet["song_artist"] = song.artist
 
-        packet["players"] = [user.name for user in self.users if user.online]
+        packet["players"] = [user.name for user in self.online_users]
         packet["num_players"] = len(packet["players"])
 
         return smpacket.SMPacketServerNSSMONL(packet=packet)
+
+    @property
+    def nsccuul(self):
+        """ Return the NSCCUUP packets listing users in the room """
+
+        users = self.online_users
+
+        return smpacket.SMPacketServerNSCCUUL(
+            max_players=self.max_users,
+            nb_players=len(users),
+            players=[{"status": u.enum_status.value, "name": u.name}
+                     for u in users]
+            )
 
     @staticmethod
     def _list_smopacket(rooms):
@@ -143,8 +183,14 @@ class Room(schema.Base):
                 session.add(room)
 
             room.description = hroom.get("description", "")
+            room.motd = hroom.get("motd")
+
+            max_users = hroom.get("max_users", 255)
+            room.max_users = max_users if max_users > 0 and max_users < 255 else 255
+
             if hroom.get("password"):
                 room.password = hashlib.sha256(hroom["password"].encode('utf-8')).hexdigest()
+
             room.static = True
 
             rooms.append(room)

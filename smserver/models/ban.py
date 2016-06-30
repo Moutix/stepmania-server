@@ -21,7 +21,7 @@ class Ban(schema.Base):
     user_id    = Column(Integer, ForeignKey('users.id'))
     user       = relationship("User", back_populates="bans")
 
-    room_id    = Column(Integer, ForeignKey('rooms.id'))
+    room_id    = Column(Integer, ForeignKey('rooms.id', ondelete="SET NULL"))
     room       = relationship("Room", back_populates="bans")
 
     end_at     = Column(DateTime)

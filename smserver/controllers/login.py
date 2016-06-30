@@ -23,6 +23,20 @@ class LoginController(StepmaniaController):
             ))
             return
 
+        nb_onlines = models.User.nb_onlines(self.session)
+        max_users = self.server.config.server.get("max_users", -1)
+        if max_users > 0 and nb_onlines >= max_users:
+            self.log.info("Player %s cannot login, nb max of user reaches", self.packet["username"])
+            self.send(smpacket.SMPacketServerNSSMONL(
+                packet=smpacket.SMOPacketServerLogin(
+                    approval=1,
+                    text="Can't login, nb max users reaches (%s/%s)" % (nb_onlines, max_users)
+                )
+            ))
+            return
+
+
+
         try:
             user = models.User.connect(self.packet["username"], self.packet["player_number"], self.session)
         except models.user.AlreadyConnectError:
@@ -69,10 +83,12 @@ class LoginController(StepmaniaController):
         ))
         self.send_message(self.server.config.server.get("motd", ""), to="me")
         self.send_message(
-            "SMServer v%s, started on %s. %s users online" % (
+            "SMServer v%s, started on %s. %s/%s users online" % (
                 __version__,
                 self.server.started_at.strftime("%x at %X"),
-                models.User.nb_onlines(self.session)),
+                nb_onlines + 1,
+                max_users if max_users > 0 else "--"
+                ),
             to="me")
 
         self.send(models.Room.smo_list(self.session))

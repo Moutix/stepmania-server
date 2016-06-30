@@ -1,11 +1,11 @@
 server:
     name: Stepmania Server
-    motd: Welcome !
+    motd: Welcome!
     ip: 0.0.0.0
     port: 8765
     fps: 1
     readtimeout: 250
-    max_users: 255
+    max_users: -1
     type: "classic"
 
 additional_servers:
@@ -64,6 +64,8 @@ rooms:
 #    - name: room
 #      password: password
 #      description: description
+#      max_users: 255
+#      motd: Welcome to my room!
 
 auth:
     plugin: "database"

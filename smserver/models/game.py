@@ -20,10 +20,10 @@ class Game(schema.Base):
 
     song_stats = relationship("SongStat", back_populates="game")
 
-    song_id    = Column(Integer, ForeignKey('songs.id'))
+    song_id    = Column(Integer, ForeignKey('songs.id', ondelete="SET NULL"))
     song       = relationship("Song", back_populates="games")
 
-    room_id    = Column(Integer, ForeignKey('rooms.id'))
+    room_id    = Column(Integer, ForeignKey('rooms.id', ondelete="SET NULL"))
     room       = relationship("Room", back_populates="games")
 
     end_at = Column(DateTime)

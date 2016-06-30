@@ -64,15 +64,18 @@ class StepmaniaServer(smthread.StepmaniaServer):
                 for ip in self.config.get("ban_ips", []):
                     models.Ban.ban(session, ip, fixed=True)
 
-        self.auth = PluginManager.import_plugin(
+        self.auth = PluginManager.get_plugin(
             'smserver.auth.%s' % config.auth["plugin"],
             "AuthPlugin",
             default=AuthPlugin)(self, config.auth["autocreate"])
 
         self.log.debug("Load Plugins")
+
         self.plugins = PluginManager("StepmaniaPlugin", config.plugins, "smserver.plugins", "plugin")
         self.plugins.init(self)
+
         self.controllers = self.init_controllers()
+        self.chat_commands = self.init_chat_commands()
         self.log.debug("Plugins loaded")
 
         self.log.info("Start server")
@@ -106,7 +109,16 @@ class StepmaniaServer(smthread.StepmaniaServer):
     def init_controllers(self):
         controllers = {}
 
-        for controller in PluginManager("StepmaniaController", None, "smserver.controllers").values():
+        controller_classes = PluginManager("StepmaniaController", None, "smserver.controllers")
+
+        controller_classes.extend(PluginManager(
+            "StepmaniaController",
+            self.config.plugins,
+            "smserver.plugins",
+            "plugin"
+        ))
+
+        for controller in controller_classes:
             if not controller.command:
                 continue
 
@@ -117,6 +129,29 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.log.debug("Controller loaded for command %s: %s" % (controller.command, controller))
 
         return controllers
+
+    def init_chat_commands(self):
+        chat_commands = {}
+
+        chat_classes = PluginManager("ChatPlugin", None, "smserver.chat_commands")
+
+        chat_classes.extend(PluginManager(
+            "ChatPlugin",
+            self.config.plugins,
+            "smserver.plugins",
+            "plugin"
+        ))
+        chat_classes.init()
+
+        for chat_class in chat_classes:
+            if not chat_class.command:
+                continue
+
+            chat_commands[chat_class.command] = chat_class
+            self.log.debug("Chat command loaded for command %s: %s" % (chat_class.command, chat_class))
+
+        return chat_commands
+
 
     @with_session
     def add_connection(self, session, conn):
@@ -146,7 +181,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
                                           type(controller).__name__, controller.__module__, err)
             session.commit()
 
-        for app in self.plugins.values():
+        for app in self.plugins:
             func = getattr(app, "on_%s" % packet.command.name.lower(), None)
             if not func:
                 continue
@@ -161,7 +196,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
     @with_session
     def on_disconnect(self, session, serv):
-        room = serv.room
+        room_id = serv.room
         smthread.StepmaniaServer.on_disconnect(self, serv)
 
         users = self.get_users(serv.users, session)
@@ -173,12 +208,12 @@ class StepmaniaServer(smthread.StepmaniaServer):
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected" % user.name)
 
-        if room:
-            self.send_user_list(session, room)
+        if room_id:
+            room = session.query(models.Room).get(room_id)
+            self.send_user_list(room)
 
-
-    def send_user_list(self, session, room_id):
-        self.sendroom(room_id, models.User.sm_list(session, room_id, self.config.server["max_users"]))
+    def send_user_list(self, room):
+        self.sendroom(room.id, room.nscuul)
 
     def update_schema(self):
         self.log.info("DROP all the database tables")

@@ -165,17 +165,6 @@ class User(schema.Base):
         return 0
 
     @classmethod
-    def sm_list(cls, session, room_id=None, max_users=255):
-        users = cls.onlines(session, room_id)
-
-        return smpacket.SMPacketServerNSCCUUL(
-            max_players=max_users,
-            nb_players=len(users),
-            players=[{"status": u.enum_status.value, "name": u.name}
-                     for u in users]
-            )
-
-    @classmethod
     def disconnect(cls, user, session):
         user.online = False
         user.pos = None

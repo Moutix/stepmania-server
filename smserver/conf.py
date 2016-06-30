@@ -32,8 +32,8 @@ class Conf(dict):
     parser.add_argument('-users', '--server.max_users',
                         dest='server.max_users',
                         type=int,
-                        help="Maximum number of users allow (default: 255)",
-                        default=255)
+                        help="Maximum number of users allow (-1 = infinite) (default: -1)",
+                        default=-1)
 
 
     parser.add_argument('--auth.plugin',
@@ -71,7 +71,9 @@ class Conf(dict):
         self.database = self.get("database", {})
         self.auth = self["auth"]
         self.logger = self.get("logger", {})
-        self.plugins = self.get("plugins", [])
+        self.plugins = self.get("plugins")
+        if not self.plugins:
+            self.plugins = []
 
     def _add_to_conf(self, arg, value, conf=None):
         if not conf:

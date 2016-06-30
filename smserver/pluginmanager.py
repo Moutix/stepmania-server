@@ -85,11 +85,15 @@ class StepmaniaPlugin(object):
 class PluginError(Exception):
     pass
 
-class PluginManager(dict):
+class PluginManager(list):
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
     def __init__(self, plugin_class, paths=None, directory=None, plugin_file=None):
+        if not isinstance(plugin_class, list):
+            plugin_class = [plugin_class]
+
         self.plugin_class = plugin_class
+
         self.plugin_file = plugin_file
         self.directory = directory
         if paths is None:
@@ -107,35 +111,54 @@ class PluginManager(dict):
             yield name
 
     def load(self, force_reload=False):
+        del self[:]
         for path in self.paths:
             fullpath = '.'.join([p for p in (self.directory, path, self.plugin_file) if p is not None])
-            self[path] = self.import_plugin(fullpath,
-                                            plugin_class=self.plugin_class,
-                                            force_reload=force_reload)
+            self.extend(self.import_plugin(fullpath,
+                                           plugin_classes=self.plugin_class,
+                                           force_reload=force_reload))
 
     def init(self, *opt):
-        for key, app in self.items():
-            self[key] = app(*opt)
+        for idx, app in enumerate(self):
+            self[idx] = app(*opt)
 
     @staticmethod
-    def import_plugin(path, plugin_class, force_reload=False, default=None):
-        module = __import__(path, fromlist=[plugin_class])
+    def import_plugin(path, plugin_classes, force_reload=False):
+        if not isinstance(plugin_classes, list):
+            plugin_classes = [plugin_classes]
+
+        module = __import__(path, fromlist=plugin_classes)
         if force_reload:
             reload(module)
 
+        apps = []
         for cls in inspect.getmembers(module, inspect.isclass):
             app = getattr(module, cls[0])
-            if app and (plugin_class in [x.__name__ for x in app.__bases__]):
-                return app
+            if not app:
+                continue
 
-        return default
+            for plugin_class in plugin_classes:
+                if plugin_class in [x.__name__ for x in app.__bases__]:
+                    apps.append(app)
+
+        return apps
+
+    @classmethod
+    def get_plugin(cls, path, plugin_classes, default=None, force_reload=False):
+        apps = cls.import_plugin(path, plugin_classes, force_reload)
+        if not apps:
+            return default
+
+        return apps[0]
 
 
 if __name__ == "__main__":
-    print(PluginManager.import_plugin("auth.database", "AuthPlugin"))
-    plugins = PluginManager("StepmaniaPlugin", ["chat"], "plugins", "plugin")
+    print(PluginManager.get_plugin("auth.database", ["AuthPlugin"]))
+    plugins = PluginManager("StepmaniaPlugin", ["example"], "plugins", "plugin")
     plugins.load()
+    print(plugins)
     plugins.init("a")
     print(plugins)
 
     print(PluginManager("StepmaniaController", None, "smserver.controllers"))
+    print(PluginManager("ChatPlugin", None, "smserver.chat_commands"))

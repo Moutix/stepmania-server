@@ -78,7 +78,7 @@ class Room(schema.Base):
     @property
     def online_users(self):
         return (object_session(self)
-                .query(user.User.id)
+                .query(user.User)
                 .filter_by(online=True, room_id=self.id)
                 .all())
 
@@ -101,7 +101,7 @@ class Room(schema.Base):
 
     @property
     def nsccuul(self):
-        """ Return the NSCCUUP packets listing users in the room """
+        """ Return the NSCCUUL packets listing users in the room """
 
         users = self.online_users
 

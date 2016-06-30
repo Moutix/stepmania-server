@@ -213,7 +213,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.send_user_list(room)
 
     def send_user_list(self, room):
-        self.sendroom(room.id, room.nscuul)
+        self.sendroom(room.id, room.nsccuul)
 
     def update_schema(self):
         self.log.info("DROP all the database tables")

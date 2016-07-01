@@ -17,6 +17,7 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 .PHONY: help
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "  apidoc     to make the autogenerate rst file"
 	@echo "  html       to make standalone HTML files"
 	@echo "  dirhtml    to make HTML files named index.html in directories"
 	@echo "  singlehtml to make a single large HTML file"
@@ -48,9 +49,13 @@ help:
 clean:
 	rm -rf $(BUILDDIR)/*
 
+.PHONY: apidoc
+apidoc:
+	sphinx-apidoc ../smserver -o .
+
+
 .PHONY: html
 html:
-	sphinx-apidoc ../smserver -o .
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

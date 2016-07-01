@@ -11,7 +11,7 @@
     ``
     ChatHelloWorld(ChatPlugin):
         helper = "Display Hello World"
-        cimmand
+        command = "hello"
 
         def __call__(self, serv, message):
             serv.send_message("Hello world", to="me")

@@ -7,7 +7,6 @@ import enum
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func
 from sqlalchemy.orm import relationship, reconstructor, object_session
 
-from smserver.smutils import smpacket
 from smserver.models import schema
 from smserver.models.privilege import Privilege
 from smserver import ability

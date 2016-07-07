@@ -14,7 +14,7 @@ class EnterRoomController(StepmaniaController):
 
     def handle(self):
         if self.packet["enter"] == 0:
-            self.send(models.Room.smo_list(self.session))
+            self.send(models.Room.smo_list(self.session, self.active_users))
             self.conn.room = None
             for user in self.active_users:
                 user.room = None

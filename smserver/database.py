@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
+from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from contextlib import contextmanager
 
 from smserver.models import schema
 
@@ -64,4 +64,10 @@ class DataBase(object):
     def recreate_tables(self):
         schema.Base.metadata.drop_all(self.engine)
         schema.Base.metadata.create_all(self.engine)
+
+    @classmethod
+    def test_db(cls):
+        db = cls()
+        db.create_tables()
+        return db
 

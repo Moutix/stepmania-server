@@ -9,7 +9,7 @@ from sqlalchemy import func, or_, and_, desc
 from sqlalchemy.orm import reconstructor, relationship, object_session
 
 from smserver.smutils import smpacket
-from smserver.models import schema, game, user
+from smserver.models import schema, game, user, privilege
 
 __all__ = ['Room']
 
@@ -23,6 +23,7 @@ class Room(schema.Base):
     description    = Column(Text, default="")
     static         = Column(Boolean, default=False)
     ingame         = Column(Boolean, default=False)
+    hidden         = Column(Boolean, default=False)
 
     status         = Column(Integer, default=0)
     type           = Column(Integer, default=1)
@@ -113,16 +114,19 @@ class Room(schema.Base):
             )
 
     @staticmethod
-    def _list_smopacket(rooms):
+    def list_to_smopacket(rooms):
+        """ Take a list of rooms and return the formatted SMO packet"""
+
         packet = smpacket.SMOPacketServerRoomUpdate(
             type=1,
-            nb_rooms=len(rooms),
+            nb_rooms=0,
             rooms=[],
             room_status=[],
             room_flags=[]
         )
 
         for room in rooms:
+            packet["nb_rooms"] += 1
             packet["rooms"].append({
                 "title": room.name,
                 "description": room.description
@@ -133,16 +137,55 @@ class Room(schema.Base):
         return smpacket.SMPacketServerNSSMONL(packet=packet)
 
     @classmethod
-    def smo_list(cls, session):
+    def smo_list(cls, session, users=None, min_level=2):
         """
             Return the list of rooms already formatted in a SMO packet
 
             Send the list of room with:
-            serv.send(models.Room.smo_list(session))
+
+            ```serv.send(models.Room.smo_list(session))```
         """
 
-        rooms = session.query(Room).all()
-        return cls._list_smopacket(rooms)
+        return cls.list_to_smopacket(cls.available_rooms(session, users, min_level))
+
+    @classmethod
+    def available_rooms(cls, session, users=None, min_level=2):
+        """
+            Get the available rooms for the given user(s).
+
+            If no users provided, return all the rooms
+        """
+
+        if not users:
+            return session.query(cls)
+
+        if not isinstance(users, list):
+            users = [users]
+
+        print(users)
+
+        if max(users, key=lambda u: u.rank).rank >= min_level:
+            return session.query(cls)
+
+        query_privileges = []
+        for usr in users:
+            query_privileges.append(
+                and_(
+                    privilege.Privilege.user_id == usr.id,
+                    privilege.Privilege.level >= min_level
+                )
+            )
+
+        return (session
+                .query(cls)
+                .join(privilege.Privilege)
+                .filter(or_(
+                    cls.hidden == False,
+                    and_(
+                        cls.hidden == True,
+                        or_(*query_privileges)
+                    )
+                )))
 
     @classmethod
     def login(cls, name, password, session):
@@ -200,4 +243,3 @@ class Room(schema.Base):
             rooms.append(room)
 
         return rooms
-

@@ -91,5 +91,5 @@ class LoginController(StepmaniaController):
                 ),
             to="me")
 
-        self.send(models.Room.smo_list(self.session))
+        self.send(models.Room.smo_list(self.session, self.active_users))
 

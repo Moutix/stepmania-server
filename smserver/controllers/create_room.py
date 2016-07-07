@@ -41,5 +41,3 @@ class CreateRoomController(StepmaniaController):
             packet=room.to_packet()
         ))
 
-        self.sendall(models.Room.smo_list(self.session))
-

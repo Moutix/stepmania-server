@@ -9,6 +9,7 @@ class Permissions(Enum):
     chat = 1
     change_room_motd = 2
     change_max_users = 5
+    change_room_hidden = 5
     ban_user = 5
     unban_user = 5
     set_op = 5

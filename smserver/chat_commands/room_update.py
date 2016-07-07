@@ -36,3 +36,20 @@ class ChatMOTD(ChatPlugin):
         serv.session.commit()
         serv.send_message("Room MOTD set to: %s" % message)
 
+class ChatRoomHidden(ChatPlugin):
+    command = "hide"
+    helper = "Show/Hide the room"
+    room = True
+    permission = ability.Permissions.change_room_hidden
+
+    def __call__(self, serv, message):
+        if serv.room.hidden:
+            serv.room.hidden = False
+            msg = "The room is no more hidden"
+        else:
+            serv.room.hidden = True
+            msg = "The room is no more visible"
+
+        serv.session.commit()
+        serv.send_message(msg)
+

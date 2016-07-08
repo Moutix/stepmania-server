@@ -50,17 +50,19 @@ class Conf(dict):
                         action='store_false',
                         help="Don't allow user creation on login")
 
-    parser.add_argument('-c', '--config',
-                        dest='config',
-                        help="Server's configuration file (default: /etc/smserver/conf.yml)",
-                        default="/etc/smserver/conf.yml")
-
     parser.add_argument('--update_schema',
                         dest='database.update_schema',
                         action='store_true',
                         help="Drop all the db tables and recreate them")
 
     def __init__(self, *args):
+        self.parser.add_argument(
+            '-c', '--config',
+            dest='config',
+            help="Server's configuration file (default: %s)" % self._default_conf(),
+            default=self._default_conf()
+        )
+
         dict.__init__(self)
         self._args = self.parser.parse_args(args)
 
@@ -104,6 +106,23 @@ class Conf(dict):
             return path + ".orig"
 
         return cls._fallback_conf
+
+    @staticmethod
+    def _in_py2exe():
+        return hasattr(sys, "frozen")
+
+    @classmethod
+    def _default_conf(cls):
+        if os.path.splitdrive(sys.executable)[0] == "":
+            return "/etc/smserver/conf.yml"
+
+        if cls._in_py2exe():
+            return os.path.join(
+                os.path.dirname(sys.executable),
+                "conf/conf.yml"
+                )
+
+        return "conf.yml"
 
 if __name__ == "__main__":
     print(Conf(*sys.argv[1:]))

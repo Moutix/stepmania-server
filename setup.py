@@ -7,15 +7,20 @@ import sys
 import glob
 
 from setuptools import setup, find_packages
+try:
+    import py2exe
+except ImportError:
+    pass
 
 import smserver
 
 for filename in glob.glob("cfg/*.yml*"):
     shutil.copy(filename, "smserver/_fallback_conf")
 
-conf_dir = "etc/smserver"
 if os.path.splitdrive(sys.executable)[0] == "":
-    conf_dir = "/%s" % conf_dir
+    conf_dir = "/etc/smserver" % conf_dir
+else:
+    conf_dir = "conf"
 
 setup(
     name='smserver',
@@ -60,6 +65,15 @@ setup(
     ],
 
     scripts=['scripts/smserver'],
+
+    console=['scripts/smserver'],
+
+    options={
+        "py2exe": {
+            'packages': ['smserver'],
+            "bundle_files": 2,
+        }
+    },
 
     license="MSI",
 

@@ -32,13 +32,12 @@ setup(
 
     classifiers=[
         'Programming Language :: Python',
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
         'Topic :: Games/Entertainment',
         'Topic :: Games/Entertainment :: Arcade',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',

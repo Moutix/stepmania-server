@@ -4,9 +4,13 @@
 from io import open
 import argparse
 import sys
+import os
 import yaml
 
 class Conf(dict):
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    _fallback_conf = os.path.join(__location__, "_fallback_conf/conf.yml.orig")
+
     parser = argparse.ArgumentParser(description='Stepmania configuration')
     parser.add_argument('-name', '--server.name',
                         dest='server.name',
@@ -35,7 +39,6 @@ class Conf(dict):
                         help="Maximum number of users allow (-1 = infinite) (default: -1)",
                         default=-1)
 
-
     parser.add_argument('--auth.plugin',
                         dest='auth.plugin',
                         type=str,
@@ -61,7 +64,7 @@ class Conf(dict):
         dict.__init__(self)
         self._args = self.parser.parse_args(args)
 
-        with open(self._args.config, 'r', encoding='utf-8') as stream:
+        with open(self._find_configuration_file(self._args.config), 'r', encoding='utf-8') as stream:
             self.update(yaml.load(stream), allow_unicode=True)
 
         for key, value in vars(self._args).items():
@@ -91,6 +94,16 @@ class Conf(dict):
                 conf[option] = {}
 
             conf = conf[option]
+
+    @classmethod
+    def _find_configuration_file(cls, path):
+        if os.path.isfile(path):
+            return path
+
+        if os.path.isfile(path + ".orig"):
+            return path + ".orig"
+
+        return cls._fallback_conf
 
 if __name__ == "__main__":
     print(Conf(*sys.argv[1:]))

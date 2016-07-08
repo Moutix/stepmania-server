@@ -1,3 +1,5 @@
 include *.md
-include scripts/smserver
-include cfg/*.yml
+include scripts/*
+include cfg/*.yml*
+include smserver/_fallback_conf/*.yml*
+

@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import shutil
+import os
+import sys
 import glob
 
 from setuptools import setup, find_packages
@@ -10,6 +12,10 @@ import smserver
 
 for filename in glob.glob("cfg/*.yml*"):
     shutil.copy(filename, "smserver/_fallback_conf")
+
+conf_dir = "etc/smserver"
+if os.path.splitdrive(sys.executable)[0] == "":
+    conf_dir = "/%s" % conf_dir
 
 setup(
     name='smserver',
@@ -57,5 +63,5 @@ setup(
 
     license="MSI",
 
-    data_files=[('/etc/smserver', ['cfg/conf.yml.orig'])],
+    data_files=[(conf_dir, ['cfg/conf.yml.orig'])],
 )

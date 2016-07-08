@@ -38,10 +38,13 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
+    extras_require={
+        ':python_version=="3.3"': ['asyncio'],
+    },
+
     install_requires=[
         'pyyaml',
         'sqlalchemy',
-        'asyncio',
         'websockets',
     ],
 

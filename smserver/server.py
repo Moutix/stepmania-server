@@ -81,7 +81,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.log.info("Start server")
 
         if config.server.get("type") not in self.SERVER_TYPE:
-            server_type = "classic"
+            server_type = "async"
         else:
             server_type = config.server["type"]
 

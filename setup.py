@@ -16,7 +16,7 @@ setup(
 
     author_email="selim.menouar@rez-gif.supelec.fr",
 
-    description="Stepmania server implementation",
+    description="An implementation of a Stepmania server",
 
     long_description=open('README.md').read(),
 

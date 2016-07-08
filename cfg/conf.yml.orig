@@ -21,7 +21,7 @@ database:
     type: "sqlite"
     user:
     password:
-    database: "/tmp/stepmania.db"
+    database: "stepmania.db"
     host:
     port:
     driver:
@@ -56,9 +56,9 @@ score:
 logger:
     stderr:
         level: "info"
-    file:
-        level: "info"
-        file: "/tmp/stepmania.log"
+#    file:
+#        level: "info"
+#        file: "/tmp/stepmania.log"
 
 rooms:
 #    - name: room

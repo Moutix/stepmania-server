@@ -18,7 +18,7 @@ for filename in glob.glob("cfg/*.yml*"):
     shutil.copy(filename, "smserver/_fallback_conf")
 
 if os.path.splitdrive(sys.executable)[0] == "":
-    conf_dir = "/etc/smserver" % conf_dir
+    conf_dir = "/etc/smserver"
 else:
     conf_dir = "conf"
 

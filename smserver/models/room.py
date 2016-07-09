@@ -162,8 +162,6 @@ class Room(schema.Base):
         if not isinstance(users, list):
             users = [users]
 
-        print(users)
-
         if max(users, key=lambda u: u.rank).rank >= min_level:
             return session.query(cls)
 

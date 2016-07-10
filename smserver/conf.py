@@ -80,6 +80,10 @@ class Conf(dict):
         if not self.plugins:
             self.plugins = []
 
+        self.additional_servers = self.get("additional_servers")
+        if not self.additional_servers:
+            self.additional_servers = []
+
     def _add_to_conf(self, arg, value, conf=None):
         if not conf:
             conf = self

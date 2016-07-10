@@ -6,33 +6,49 @@
 
     :Example:
 
-    Here's a simple ChatPlugin which will send a HelloWorld on use
+    Here's a simple ChatPlugin which will send a HelloWorld on use::
 
-    ``
-    ChatHelloWorld(ChatPlugin):
-        helper = "Display Hello World"
-        command = "hello"
+        class ChatHelloWorld(ChatPlugin):
+            helper = "Display Hello World"
+            command = "hello"
 
-        def __call__(self, serv, message):
-            serv.send_message("Hello world", to="me")
-    ``
+            def __call__(self, serv, message):
+                serv.send_message("Hello world", to="me")
 """
 
 
 class ChatPlugin(object):
     """
         Inherit from this class to add a command in the chat.
-
-        helper: Text that will be show when calling the help command
-        permission: Permission needed for this command (see ability)
-        room: Specify here if the command need to be execute in a room
-        command: The command to use to call this function
     """
 
     helper = ""
+    """
+        Text that will be show when calling the help command
+
+        :rtype: str
+    """
+
     permission = None
+    """
+        Permission needed for this command (see ability)
+
+        :rtype: smserver.ability.Permissions
+    """
+
     room = False
+    """
+        Specify here if the command need to be execute in a room
+
+        :rtype: bool
+    """
+
     command = None
+    """
+        The command to use to call this function
+
+        :rtype: str
+    """
 
     def can(self, serv):
         """

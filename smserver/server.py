@@ -14,10 +14,11 @@ from smserver.smutils import smthread
 def with_session(func):
     """ Wrap the function with a sqlalchemy session.
 
-    Use:
-    @with_session
-    def func_with_session(self, session):
-        pass
+    Use::
+
+        @with_session
+        def func_with_session(self, session):
+            pass
 
     Only work with instance methods of StepmaniaServer class """
 
@@ -27,10 +28,34 @@ def with_session(func):
     return wrapper
 
 class StepmaniaServer(smthread.StepmaniaServer):
-    """ Main thread. Start a new thread for each new connections"""
+    """
+        It's the main class of the server. It will start a new thread for each
+        configured server.
 
-    def __init__(self, config):
-        """ Take a config object from smserver.conf and configure the server"""
+        To start the server you will generally use::
+
+            from smserver import conf, server
+
+            config = conf.Conf(*sys.argv[1:])
+
+            server.StepmaniaServer(config).start()
+    """
+
+    def __init__(self, config=None):
+        """
+            Take a configuration and initialize the server:
+
+            * Load the database and create the tables if needed
+            * Load the plugins
+            * Load the controllers
+            * Load the chat command available
+            * Initialize the connection handler
+
+            If no configuration are passed, it will use the default one.
+        """
+
+        if not config:
+            config = conf.Conf()
 
         self.config = config
 
@@ -50,7 +75,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         )
 
         if self.config.database["update_schema"]:
-            self.update_schema()
+            self._update_schema()
         else:
             self.db.create_tables()
 
@@ -74,8 +99,8 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.plugins = PluginManager("StepmaniaPlugin", config.plugins, "smserver.plugins", "plugin")
         self.plugins.init(self)
 
-        self.controllers = self.init_controllers()
-        self.chat_commands = self.init_chat_commands()
+        self.controllers = self._init_controllers()
+        self.chat_commands = self._init_chat_commands()
         self.log.debug("Plugins loaded")
 
         self.log.info("Start server")
@@ -100,57 +125,11 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.started_at = datetime.datetime.now()
 
     def start(self):
-        """ Start the main thread and the aynchronous one"""
+        """ Start all the threads """
 
         self.watcher.start()
 
         smthread.StepmaniaServer.start(self)
-
-    def init_controllers(self):
-        controllers = {}
-
-        controller_classes = PluginManager("StepmaniaController", None, "smserver.controllers")
-
-        controller_classes.extend(PluginManager(
-            "StepmaniaController",
-            self.config.plugins,
-            "smserver.plugins",
-            "plugin"
-        ))
-
-        for controller in controller_classes:
-            if not controller.command:
-                continue
-
-            if controller.command not in controllers:
-                controllers[controller.command] = []
-
-            controllers[controller.command].append(controller)
-            self.log.debug("Controller loaded for command %s: %s" % (controller.command, controller))
-
-        return controllers
-
-    def init_chat_commands(self):
-        chat_commands = {}
-
-        chat_classes = PluginManager("ChatPlugin", None, "smserver.chat_commands")
-
-        chat_classes.extend(PluginManager(
-            "ChatPlugin",
-            self.config.plugins,
-            "smserver.plugins",
-            "plugin"
-        ))
-        chat_classes.init()
-
-        for chat_class in chat_classes:
-            if not chat_class.command:
-                continue
-
-            chat_commands[chat_class.command] = chat_class
-            self.log.debug("Chat command loaded for command %s: %s" % (chat_class.command, chat_class))
-
-        return chat_commands
 
 
     @with_session
@@ -167,6 +146,13 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.handle_packet(session, serv, packet)
 
     def handle_packet(self, session, serv, packet):
+        """
+            Handle the given packet for a specific connection.
+
+            It will launch every controllers that fetch the packet requirement
+            and try to run every plugins.
+        """
+
         for controller in self.controllers.get(packet.command, []):
             app = controller(self, serv, packet, session)
 
@@ -196,6 +182,15 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
     @with_session
     def on_disconnect(self, session, serv):
+        """
+            Action to be done when someone is disconected.
+
+            :param session: A database session
+            :param serv: The connection to disconnect
+            :type session: sqlalchemy.orm.session.Session
+            :type serv: smserver.smutils.smconn.StepmaniaConn
+        """
+
         room_id = serv.room
         smthread.StepmaniaServer.on_disconnect(self, serv)
 
@@ -213,17 +208,70 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.send_user_list(room)
 
     def send_user_list(self, room):
+        """
+            Send a NSCUUL packet to update the use list for a given room
+        """
+
         self.sendroom(room.id, room.nsccuul)
 
-    def update_schema(self):
-        self.log.info("DROP all the database tables")
-        self.db.recreate_tables()
-
     def get_users(self, user_ids, session):
+        """ Return a list of user instance from the ids list """
+
         if not user_ids:
             return []
 
         return session.query(models.User).filter(models.User.id.in_(user_ids))
+
+    def _init_controllers(self):
+        controllers = {}
+
+        controller_classes = PluginManager("StepmaniaController", None, "smserver.controllers")
+
+        controller_classes.extend(PluginManager(
+            "StepmaniaController",
+            self.config.plugins,
+            "smserver.plugins",
+            "plugin"
+        ))
+
+        for controller in controller_classes:
+            if not controller.command:
+                continue
+
+            if controller.command not in controllers:
+                controllers[controller.command] = []
+
+            controllers[controller.command].append(controller)
+            self.log.debug("Controller loaded for command %s: %s" % (controller.command, controller))
+
+        return controllers
+
+    def _init_chat_commands(self):
+        chat_commands = {}
+
+        chat_classes = PluginManager("ChatPlugin", None, "smserver.chat_commands")
+
+        chat_classes.extend(PluginManager(
+            "ChatPlugin",
+            self.config.plugins,
+            "smserver.plugins",
+            "plugin"
+        ))
+        chat_classes.init()
+
+        for chat_class in chat_classes:
+            if not chat_class.command:
+                continue
+
+            chat_commands[chat_class.command] = chat_class
+            self.log.debug("Chat command loaded for command %s: %s" % (chat_class.command, chat_class))
+
+        return chat_commands
+
+    def _update_schema(self):
+        self.log.info("DROP all the database tables")
+        self.db.recreate_tables()
+
 
 def main():
     config = conf.Conf(*sys.argv[1:])

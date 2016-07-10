@@ -168,11 +168,12 @@ class SMPayloadTypeINT(SMPayloadTypeAbstract):
             >>> SMPayloadTypeINT.encode(2, size=2)
             b'\\x00\\x02'
 
-            >>> SMPayloadTypeINT.encode(255, size=1)
-            b'\\xff'
+            >>> SMPayloadTypeINT.encode(123456789, size=4)
+            b'\\x07[\\xcd\\x15'
 
-            >>> SMPayloadTypeINT.encode(256, size=1) # Return the max is size exceed
-            b'\\xff'
+            >>> # Return the max is size exceed
+            >>> SMPayloadTypeINT.encode(5165165, size=2)
+            b'\\xff\\xff'
 
         """
 
@@ -182,8 +183,10 @@ class SMPayloadTypeINT(SMPayloadTypeAbstract):
         if not size:
             size = 1
 
-        if data > size * 255:
-            data = 255
+        max_size = 2**(size * 8)
+
+        if data >= max_size:
+            data = max_size - 1
 
         return data.to_bytes(size, byteorder='big')
 
@@ -197,7 +200,8 @@ class SMPayloadTypeINT(SMPayloadTypeAbstract):
             >>> SMPayloadTypeINT.decode(b"\x01remaining_payload", size=1)
             (b'remaining_payload', 1)
 
-            >>> SMPayloadTypeINT.decode(b"\x01", size=50) # Return None if size exceed
+            >>> # Return None if size exceed
+            >>> SMPayloadTypeINT.decode(b"\x01", size=50)
             (b'\\x01', None)
 
         """
@@ -232,6 +236,9 @@ class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
             >>> SMPayloadTypeINTLIST.encode([1], opt=(1, 2)) # zero padding
             b'\\x01\\x00'
 
+            >>> # Size exceed
+            >>> SMPayloadTypeINTLIST.encode([65000, 123456789], opt=(2, 2))
+            b'\\xfd\\xe8\\xff\\xff'
         """
 
 
@@ -244,7 +251,7 @@ class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
         if len(data) < opt[1]:
             data.extend([0 for _ in range(opt[1] - len(data))])
 
-        return b''.join(d.to_bytes(opt[0], byteorder='big') for d in data)
+        return b''.join(SMPayloadTypeINT.encode(d, opt[0]) for d in data)
 
     @staticmethod
     def decode(payload, opt=None):
@@ -262,9 +269,9 @@ class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
             >>> SMPayloadTypeINTLIST.decode(b"\x02\x05remaining_payload", opt=(2, 1))
             (b'remaining_payload', [517])
 
-            >>> SMPayloadTypeINTLIST.decode(b'\x01', opt=(1, 5)) # Return none if size exceed
+            >>> # Return none if size exceed
+            >>> SMPayloadTypeINTLIST.decode(b'\x01', opt=(1, 5))
             (b'\\x01', None)
-
         """
 
         if not opt or len(opt) != 2:
@@ -341,13 +348,16 @@ class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
             >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 2)
             b'string1\\x00string2\\x00'
 
-            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 5) # zero padding
+            >>> # zero padding
+            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 5)
             b'string1\\x00string2\\x00\\x00\\x00\\x00'
 
-            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 1) # force size
+            >>> # force size
+            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"], 1)
             b'string1\\x00'
 
-            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"]) # guess size
+            >>> # guess size
+            >>> SMPayloadTypeNTLIST.encode(["string1", "string2"])
             b'string1\\x00string2\\x00'
 
         """
@@ -503,11 +513,11 @@ class SMPacket(object):
     """
 
     _command_type = SMCommand
-    _command = None
     _payload = []
+    command = None
 
     def __init__(self, **kwargs):
-        self.command = self._command
+        self.command = self.command
         if "_command" in kwargs:
             kwargs.pop("_command")
 
@@ -549,7 +559,7 @@ class SMPacket(object):
             <SMPacketServerNSCCM message="msg">
         """
 
-        klasses = [klass for klass in cls.__subclasses__() if klass._command == command]
+        klasses = [klass for klass in cls.__subclasses__() if klass.command == command]
         if not klasses:
             return None
 
@@ -567,7 +577,7 @@ class SMPacket(object):
             <class 'smpacket.SMPacketServerNSCCM'>
         """
 
-        klasses = [klass for klass in cls.__subclasses__() if klass._command == command]
+        klasses = [klass for klass in cls.__subclasses__() if klass.command == command]
         if not klasses:
             return None
 
@@ -662,7 +672,7 @@ class SMPacket(object):
         """
 
         data = {}
-        data["_command"] = self._command.value
+        data["_command"] = self.command.value
         for opt, value in self.opts.items():
             if issubclass(value.__class__, SMPacket):
                 data[opt] = value.to_json
@@ -842,7 +852,7 @@ class SMOPacketServer(SMPacket):
     _command_type = SMOServerCommand
 
 class SMOPacketClientLogin(SMOPacketClient):
-    _command = SMOClientCommand.LOGIN
+    command = SMOClientCommand.LOGIN
     _payload = [
         (SMPayloadType.INT, "player_number", None),
         (SMPayloadType.INT, "encryption", None),
@@ -851,7 +861,7 @@ class SMOPacketClientLogin(SMOPacketClient):
     ]
 
 class SMOPacketClientEnterRoom(SMOPacketClient):
-    _command = SMOClientCommand.ENTERROOM
+    command = SMOClientCommand.ENTERROOM
     _payload = [
         (SMPayloadType.INT, "enter", None),
         (SMPayloadType.NT, "room", None),
@@ -859,7 +869,7 @@ class SMOPacketClientEnterRoom(SMOPacketClient):
     ]
 
 class SMOPacketClientCreateRoom(SMOPacketClient):
-    _command = SMOClientCommand.CREATEROOM
+    command = SMOClientCommand.CREATEROOM
     _payload = [
         (SMPayloadType.INT, "type", None),
         (SMPayloadType.NT, "title", None),
@@ -868,20 +878,20 @@ class SMOPacketClientCreateRoom(SMOPacketClient):
     ]
 
 class SMOPacketClientRoomInfo(SMOPacketClient):
-    _command = SMOClientCommand.ROOMINFO
+    command = SMOClientCommand.ROOMINFO
     _payload = [
         (SMPayloadType.NT, "room", None)
     ]
 
 class SMOPacketServerLogin(SMOPacketServer):
-    _command = SMOServerCommand.LOGIN
+    command = SMOServerCommand.LOGIN
     _payload = [
         (SMPayloadType.INT, "approval", None),
         (SMPayloadType.NT, "text", None)
     ]
 
 class SMOPacketServerRoomUpdate(SMOPacketServer):
-    _command = SMOServerCommand.ROOMUPDATE
+    command = SMOServerCommand.ROOMUPDATE
     _payload = [
         (SMPayloadType.INT, "type", None),
         (SMPayloadType.MAP, "room_title", ("type", {
@@ -914,13 +924,13 @@ class SMOPacketServerRoomUpdate(SMOPacketServer):
     ]
 
 class SMOPacketServerGeneralInfo(SMOPacketServer):
-    _command = SMOServerCommand.GENERALINFO
+    command = SMOServerCommand.GENERALINFO
     _payload = [
         (SMPayloadType.INT, "format", None),
     ]
 
 class SMOPacketServerRoomInfo(SMOPacketServer):
-    _command = SMOServerCommand.ROOMINFO
+    command = SMOServerCommand.ROOMINFO
     _payload = [
         (SMPayloadType.NT, "song_title", None),
         (SMPayloadType.NT, "song_subtitle", None),
@@ -931,34 +941,93 @@ class SMOPacketServerRoomInfo(SMOPacketServer):
     ]
 
 class SMPacketClientNSCPing(SMPacket):
-    """ This command will cause server to respond with a PingR Command """
+    """
+        Client command 000. (Ping)
 
-    _command = SMClientCommand.NSCPing
+        This command will cause server to respond with a PingR Command
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketClientNSCPing()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x00'
+    """
+
+    command = SMClientCommand.NSCPing
     _payload = []
 
 
 class SMPacketClientNSCPingR(SMPacket):
-    """ This command is used to respond to Ping Command. """
+    """
+        Client command 001. (Ping response)
 
-    _command = SMClientCommand.NSCPingR
+        This command is used to respond to Ping Command.
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketClientNSCPingR()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x01'
+    """
+
+    command = SMClientCommand.NSCPingR
     _payload = []
 
 
 class SMPacketClientNSCHello(SMPacket):
-    """ This is the first packet from a client to server """
+    """
+        Client command 002. (Hello)
 
-    _command = SMClientCommand.NSCHello
+        This is the first packet from a client to server.
+
+        :param int version: Client protocol version
+        :param str name: Name of the stepmania build
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketClientNSCHello(
+        ...     name="stepmania",
+        ...     version=128
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x0c\\x02\\x80stepmania\\x00'
+    """
+
+    command = SMClientCommand.NSCHello
     _payload = [
         (SMPayloadType.INT, "version", None),
         (SMPayloadType.NT, "name", None)
     ]
 
 class SMPacketClientNSCGSR(SMPacket):
-    """ Game Start Request:
-        This command is called once after most loading is done, and again
-        immediately before the sound starts. """
+    """
+        Client command 003 (Game Start Request)
 
-    _command = SMClientCommand.NSCGSR
+        This command is called once after most loading is done, and again
+        immediately before the sound starts.
+
+        The server has to respond with a SMPacketServerNSCGSR, if not the
+        client will freeze.
+
+        :param int first_player_feet: Primary player feet (0 for no player)
+        :param int second_player_feet: Secondary player feet (0 for no player)
+        :param int first_player_difficulty: Primary player difficulty (0=Beginner, 1=easy, etc.)
+        :param int second_player_difficulty: Secondary player difficulty (0=Beginner, 1=easy, etc.)
+        :param int start_position: (0 is pre-sync, 1 is for sync)
+        :param int reserved: ignored
+        :param str song_title: Title of the song to play
+        :param str song_subtitle: Subtitle of the song to play
+        :param str song_artist: Artist of the song to play
+        :param str course_title: Course Title
+        :param str song_options: Song option in string format
+        :param str first_player_options: Primary player's option
+        :param str second_player_options: Secondary player's option
+    """
+
+    command = SMClientCommand.NSCGSR
     _payload = [
         (SMPayloadType.MSN, "first_player_feet", None),
         (SMPayloadType.LSN, "second_player_feet", None),
@@ -977,16 +1046,38 @@ class SMPacketClientNSCGSR(SMPacket):
 
 
 class SMPacketClientNSCGON(SMPacket):
-    """ Game Over Notice:
-        This command is sent when end of game is encounterd """
+    """
+        Client command 004 (Game Over Notice)
 
-    _command = SMClientCommand.NSCGON
+        This command is sent when end of game is encounter.
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketClientNSCGON()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x04'
+    """
+
+    command = SMClientCommand.NSCGON
 
 class SMPacketClientNSCGSU(SMPacket):
-    """ Game Status update:
-        Updates game info for each step """
+    """
+        Client command 005 (Game Status update)
 
-    _command = SMClientCommand.NSCGSU
+        Update game info for each step in the game
+
+        :param int player_id: player # (0 or 1)
+        :param int step_id: (1: hitMine, 2: AvoidMine, ...)
+        :param int grade: Projected Grade (0: AAAA, 1: AAA, ...)
+        :param int reserved: ignored
+        :param int score: Actual score
+        :param int combo: Actual combo
+        :param int health: Actual health
+        :param int offset: Offset from the note (32767=miss)
+    """
+
+    command = SMClientCommand.NSCGSU
     _payload = [
         (SMPayloadType.MSN, "player_id", None),
         (SMPayloadType.LSN, "step_id", None),
@@ -999,10 +1090,29 @@ class SMPacketClientNSCGSU(SMPacket):
     ]
 
 class SMPacketClientNSCSU(SMPacket):
-    """ Style Update:
-    This is sent when a style is chosen. """
+    """
+        Client command 006 (Style Update)
 
-    _command = SMClientCommand.NSCSU
+        This is sent when a profile is choosed. It also indicates the number
+        of players in the local client. (1 or 2)
+
+        :param int nb_players: Number of players in the client (1 or 2)
+        :param int player_id: Player ID (0 or 1)
+        :param str player_name: Player name
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketClientNSCSU(
+        ...     nb_players=2,
+        ...     player_id=0,
+        ...     player_name="profile1",
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x0c\\x06\\x02\\x00profile1\\x00'
+    """
+
+    command = SMClientCommand.NSCSU
     _payload = [
         (SMPayloadType.INT, "nb_players", None),
         (SMPayloadType.INT, "player_id", None),
@@ -1010,19 +1120,52 @@ class SMPacketClientNSCSU(SMPacket):
     ]
 
 class SMPacketClientNSCCM(SMPacket):
-    """ Chat Message
-    The user typed a message for general chat. """
+    """
+        Client command 007 (Chat Message)
 
-    _command = SMClientCommand.NSCCM
+        The user typed a message for general chat.
+
+        :param str message: The message sent by the client.
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketClientNSCCM(message="Client message")
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x10\\x07Client message\\x00'
+    """
+
+    command = SMClientCommand.NSCCM
     _payload = [
         (SMPayloadType.NT, "message", None),
     ]
 
 class SMPacketClientNSCRSG(SMPacket):
-    """ Request Start Game and Tell server existance/non existance of song:
-        The user selected a song on a Net-enabled selection """
+    """
+        Client command 008 (Request Start Game)
 
-    _command = SMClientCommand.NSCRSG
+        Request Start Game and Tell server existance/non existance of song:
+        The user selected a song on a Net-enabled selection
+
+        :param int usage: Usage for this message
+        :param str song_title: Song title
+        :param str song_subtitle: Song artist
+        :param str song_artist: Song subtitle
+
+        :Example:
+
+        >>> # Client select the song ('Title', by 'Artist').
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketClientNSCRSG(
+        ...     usage=2,
+        ...     song_title="Title",
+        ...     song_artist="Artist",
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x10\\x08\\x02Title\\x00Artist\\x00\\x00'
+    """
+
+    command = SMClientCommand.NSCRSG
     _payload = [
         (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),
@@ -1032,21 +1175,59 @@ class SMPacketClientNSCRSG(SMPacket):
 
 
 class SMPacketClientNSCCUUL(SMPacket):
-    """ Reserved """
-    _command = SMClientCommand.NSCCUUL
+    """
+        Client command 009 (reserved)
+    """
+
+    command = SMClientCommand.NSCCUUL
 
 class SMPacketClientNSSCSMS(SMPacket):
-    """ User entered/exited Network Music Selection Screen """
+    """
+        Client command 010 (User status)
 
-    _command = SMClientCommand.NSSCSMS
+        Indicate where the user is
+
+        :param int action: Int enum indicating where the user is
+
+        Action available:
+
+        * 0: exited ScreenNetSelectMusic
+        * 1: entered ScreenNetSelectMusic
+        * 2: Not Sent
+        * 3: entered options screen
+        * 4: exited the evaluation screen
+        * 5: entered evaluation screen
+        * 6: exited ScreenNetRoom
+        * 7: entered ScreenNetRoom
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+
+        >>> # Client enter in room selection
+        >>> packet = smpacket.SMPacketClientNSSCSMS(
+        ...     action=7,
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x02\\n\\x07'
+   """
+
+    command = SMClientCommand.NSSCSMS
     _payload = [
         (SMPayloadType.INT, "action", None),
     ]
 
 class SMPacketClientNSCUOpts(SMPacket):
-    """ User has changed player options """
+    """
+        Client command 011 (User options)
 
-    _command = SMClientCommand.NSCUOpts
+        User has changed player's options
+
+        :param str player_0: Player 0 options
+        :param str player_1: Player 1 options
+    """
+
+    command = SMClientCommand.NSCUOpts
     _payload = [
         (SMPayloadType.NT, "player_0", None),
         (SMPayloadType.NT, "player_1", None),
@@ -1054,47 +1235,102 @@ class SMPacketClientNSCUOpts(SMPacket):
 
 
 class SMPacketClientNSSMONL(SMPacket):
-    """ SMOnline Packet.
-    The SMLan packet 12 is a wrapper for the SMOnline packet. """
+    """
+        Client command 012 (SMOnline Packet)
 
-    _command = SMClientCommand.NSSMONL
+        The SMLan packet 12 is a wrapper for the SMOnline packet.
+
+        :param packet: The SMOPacket to include
+        :type packet: SMOPacketClient
+    """
+
+    command = SMClientCommand.NSSMONL
     _payload = [
         (SMPayloadType.PACKET, "packet", SMOPacketClient)
     ]
 
 class SMPacketClientNSCFormatted(SMPacket):
-    """ Reserved """
+    """
+        Client command 013 (reserved)
+    """
 
-    _command = SMClientCommand.NSCFormatted
+    command = SMClientCommand.NSCFormatted
 
 class SMPacketClientNSCAttack(SMPacket):
-    """ Reserved """
+    """
+        Client command 014 (reserved)
+    """
 
-    _command = SMClientCommand.NSCAttack
+    command = SMClientCommand.NSCAttack
 
 class SMPacketClientXMLPacket(SMPacket):
-    """ XMLPacket
-    This packet contains data in XML format. """
+    """
+        Client command 15 (XMLPacket)
 
-    _command = SMClientCommand.XMLPacket
+        This packet contains data in XML format.
+    """
+
+    command = SMClientCommand.XMLPacket
     _payload = [
         (SMPayloadType.NT, "xml", None),
     ]
 
 class SMPacketServerNSCPing(SMPacket):
-    """ This command will cause server to respond with a PingR Command """
+    """
+        Server command 128 (Ping)
 
-    _command = SMServerCommand.NSCPing
+        This command will cause client to respond with a PingR command
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCPing()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x80'
+    """
+
+    command = SMServerCommand.NSCPing
 
 class SMPacketServerNSCPingR(SMPacket):
-    """ This command is used to respond to a no operation."""
+    """
+        Server command 129 (PingR)
 
-    _command = SMServerCommand.NSCPingR
+        This command is used to respond to a Ping command.
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCPingR()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x81'
+    """
+
+    command = SMServerCommand.NSCPingR
 
 class SMPacketServerNSCHello(SMPacket):
-    """ This introduces the server. """
+    """
+        Server command 130 (Hello)
 
-    _command = SMServerCommand.NSCHello
+        This command introduces the server. (In response of Client Hello
+        command)
+
+        :param str version: The server protocol version (always 128)
+        :param str name: Name of the server
+        :param int key: Random key, used for hash password
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCHello(
+        ...     version=128,
+        ...     name="MyServer",
+        ...     key=999999999
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x0f\\x82\\x80MyServer\\x00;\\x9a\\xc9\\xff'
+    """
+
+    command = SMServerCommand.NSCHello
     _payload = [
         (SMPayloadType.INT, "version", None),
         (SMPayloadType.NT, "name", None),
@@ -1102,17 +1338,45 @@ class SMPacketServerNSCHello(SMPacket):
     ]
 
 class SMPacketServerNSCGSR(SMPacket):
-    """ Allow start:
-    This will cause the client to start the game."""
+    """
+        Server command 131 (Allow Start)
 
-    _command = SMServerCommand.NSCGSR
+        This will cause the client to start the game
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCGSR()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x83'
+    """
+
+    command = SMServerCommand.NSCGSR
 
 class SMPacketServerNSCGON(SMPacket):
-    """ Game over stats
-    This packet is send in response to the game over packet
-    it contains information regarding how well each player did. """
+    """
+        Server command 132 (Game over stats)
 
-    _command = SMServerCommand.NSCGON
+        This packet is send in response to the game over packet. It
+        contains information regarding how well each player did.
+
+        :param int nb_players: NB of players stats in this packet (size of the next list)
+        :param list ids: Player's ID (calculate from the SMPacketServerNSCUUL)
+        :param list score: Player's score
+        :param list grade: Player's grade
+        :param list difficulty: Player's difficulty
+        :param list flawless: NB of flawless note
+        :param list perfect: NB of perfect note
+        :param list great: NB of great note
+        :param list good: NB of good note
+        :param list bad: NB of bad note
+        :param list miss: NB of miss note
+        :param list held: NB of held note
+        :param list max_combo: Player's max combo
+        :param list options: Player's options
+    """
+
+    command = SMServerCommand.NSCGON
     _payload = [
         (SMPayloadType.INT, "nb_players", 1),
         (SMPayloadType.INTLIST, "ids", (1, "nb_players")),
@@ -1131,10 +1395,28 @@ class SMPacketServerNSCGON(SMPacket):
     ]
 
 class SMPacketServerNSCGSU(SMPacket):
-    """ Scoreboard update
-    This will update the client's scoreboard. """
+    """
+        Server command 133 (Scoreboard update)
 
-    _command = SMServerCommand.NSCGSU
+        This will update the client's scoreboard.
+
+        :param int section: Which section to update (0: names, 1:combos, 2: grades)
+        :param int nb_players: Nb of plyaers in this packet
+        :param list options: Int list contining names, combos or grades
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCGSU(
+        ...     section=1, # Update the actual combo
+        ...     nb_players=2, # 2 users in this packet
+        ...     options=[12, 5] # List containing the combos
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x07\\x85\\x01\\x02\\x00\\x0c\\x00\\x05'
+    """
+
+    command = SMServerCommand.NSCGSU
     _payload = [
         (SMPayloadType.INT, "section", 1),
         (SMPayloadType.INT, "nb_players", 1),
@@ -1146,29 +1428,80 @@ class SMPacketServerNSCGSU(SMPacket):
     ]
 
 class SMPacketServerNSCSU(SMPacket):
-    """ System Message
-    Send system message to user """
+    """
+        Server command 134 (System Message)
 
-    _command = SMServerCommand.NSCSU
+        Send a system message to user
+
+        :param str message: The message to send
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCSU(message="System message")
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x10\\x86System message\\x00'
+    """
+
+    command = SMServerCommand.NSCSU
     _payload = [
         (SMPayloadType.NT, "message", None)
     ]
 
 class SMPacketServerNSCCM(SMPacket):
-    """ Chat Message
-    Add a chat message to the chat window on some StepMania screens. """
+    """
+        Server command 135 (Chat Message)
 
-    _command = SMServerCommand.NSCCM
+        Add a chat message to the chat window on some StepMania screens.
+
+        :param str message: The message to add
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCSU(message="Client message")
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x10\\x86Client message\\x00'
+    """
+
+    command = SMServerCommand.NSCCM
     _payload = [
         (SMPayloadType.NT, "message", None)
     ]
 
 
 class SMPacketServerNSCRSG(SMPacket):
-    """ Tell client to start song/ask if client has song
-    The user selected a song on a Net-enabled selection """
+    """
+        Server command 136 (Request Start Game)
 
-    _command = SMServerCommand.NSCRSG
+        Tell client to start song/ask if client has song
+
+        :param int usage: Usage of this message
+        :param str song_title: Song title
+        :param str song_artist: Song artist
+        :param str song_subtitle: Song subtitle
+
+        Usage available:
+
+        * 0: See if client has song
+        * 1: See if client has song, if so, scroll to song
+        * 2: See if client has song, if so, scroll to song, and play that song
+        * 3: Blindly start song
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCRSG(
+        ...     usage=0, # Check song presence
+        ...     song_title="title",
+        ...     song_artist="artist",
+        ...     song_subtitle="subtitle",
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x18\\x88\\x00title\\x00artist\\x00subtitle\\x00'
+    """
+
+    command = SMServerCommand.NSCRSG
     _payload = [
         (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),
@@ -1178,10 +1511,17 @@ class SMPacketServerNSCRSG(SMPacket):
 
 
 class SMPacketServerNSCCUUL(SMPacket):
-    """ Update user list
-    This sends all the users currently connected """
+    """
+        Server command 137 (Update user list)
 
-    _command = SMServerCommand.NSCCUUL
+        This sends all the users currently connected
+
+        :param int max_players: NB max of players (max 255)
+        :param int nb_players: NB of player's in this packet
+        :param list players: List containing status and name for each user
+    """
+
+    command = SMServerCommand.NSCCUUL
     _payload = [
         (SMPayloadType.INT, "max_players", 1),
         (SMPayloadType.INT, "nb_players", 1),
@@ -1193,9 +1533,16 @@ class SMPacketServerNSCCUUL(SMPacket):
     ]
 
 class SMPacketServerNSSCSMS(SMPacket):
-    """ Force change to Networking select music screen. """
+    """
+        Server command 138
 
-    _command = SMServerCommand.NSSCSMS
+        Force change to Networking select music screen.
+
+        :param str gametype: Set specified gametype
+        :param str style: Set specified style
+    """
+
+    command = SMServerCommand.NSSCSMS
     _payload = [
         (SMPayloadType.NT, "gametype", None),
         (SMPayloadType.NT, "style", None),
@@ -1203,23 +1550,39 @@ class SMPacketServerNSSCSMS(SMPacket):
 
 
 class SMPacketServerNSCUOpts(SMPacket):
-    """ Reserved """
-    _command = SMServerCommand.NSCUOpts
+    """
+        Server command 139 (reserved)
+    """
+
+    command = SMServerCommand.NSCUOpts
 
 class SMPacketServerNSSMONL(SMPacket):
-    """ SMOnline Packet
-    The SMLan packet 12 is a wrapper for the SMOnline packet. """
+    """
+        Server command 140 (SMOnline Packet)
 
-    _command = SMServerCommand.NSSMONL
+        The SMLan packet 140 is a wrapper for the SMOnline packet.
+
+        :param packet: The SMOPacket to include
+        :type packet: SMOPacketServer
+    """
+
+    command = SMServerCommand.NSSMONL
     _payload = [
         (SMPayloadType.PACKET, "packet", SMOPacketServer)
     ]
 
 class SMPacketServerNSCFormatted(SMPacket):
-    """ Formatted information packet
-    Send formatted information regarding the server back to the player."""
+    """
+        Server command 141 (Formatted information packet)
 
-    _command = SMServerCommand.NSCFormatted
+        Send formatted information regarding the server back to the player.
+
+        :param str server_name: Server name
+        :param int server_port: Port the server is listening on
+        :param int nb_players: Number of players connected
+    """
+
+    command = SMServerCommand.NSCFormatted
     _payload = [
         (SMPayloadType.NT, "server_name", None),
         (SMPayloadType.INT, "server_port", 2),
@@ -1228,9 +1591,15 @@ class SMPacketServerNSCFormatted(SMPacket):
 
 
 class SMPacketServerNSCAttack(SMPacket):
-    """ Attack Client """
+    """
+        Server command 142 (Attack Client)
 
-    _command = SMServerCommand.NSCAttack
+        :param int player: Player number (0 or 1)
+        :param int time: Duration of the attack (in ms)
+        :param str message: Text describing modifiers
+    """
+
+    command = SMServerCommand.NSCAttack
     _payload = [
         (SMPayloadType.INT, "player", 1),
         (SMPayloadType.INT, "time", 4),
@@ -1239,9 +1608,13 @@ class SMPacketServerNSCAttack(SMPacket):
 
 
 class SMPacketServerXMLPacket(SMPacket):
-    """ XML Reply """
+    """
+        Server command 143 (XMLPacket)
 
-    _command = SMServerCommand.XMLPacket
+        This packet contains data in XML format.
+    """
+
+    command = SMServerCommand.XMLPacket
     _payload = [
         (SMPayloadType.NT, "xml", None),
     ]

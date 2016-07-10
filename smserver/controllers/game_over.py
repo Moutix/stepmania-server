@@ -17,6 +17,9 @@ class GameOverController(StepmaniaController):
         if not self.room:
             return
 
+        if "start_at" not in self.conn.songstats:
+            return
+
         song_duration = datetime.datetime.now() - self.conn.songstats["start_at"]
 
         for user in self.active_users:

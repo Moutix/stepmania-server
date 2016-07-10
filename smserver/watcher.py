@@ -5,6 +5,7 @@ from threading import Thread, Lock
 import time
 import datetime
 import itertools
+import socket
 
 from smserver import models
 from smserver.smutils import smpacket
@@ -32,12 +33,18 @@ class StepmaniaWatcher(Thread):
     """ Secondary thread, hold by the main server.
     Call periodically each function with a 'periodicmethod decorator' """
 
+    UDP_PORT = 8765
+    UDP_IP = "255.255.255.255"
+
     def __init__(self, server):
         Thread.__init__(self)
 
         self.server = server
         self.fps = self.server.config.server.get("fps", 1)
         self.mutex = Lock()
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     def run(self):
         self.server.log.debug("Watcher start")
@@ -57,6 +64,19 @@ class StepmaniaWatcher(Thread):
                     session.commit()
 
             time.sleep(self.fps)
+
+    @periodicmethod(5)
+    def send_udp(self, session):
+        packet = smpacket.SMPacketServerNSCFormatted(
+            server_name=self.server.config.server["name"],
+            server_port=self.server.config.server["port"],
+            nb_players=models.User.nb_onlines(session)
+        )
+
+        print(packet.binary)
+
+        self._sock.sendto(packet.binary, (self.UDP_IP, self.UDP_PORT))
+
 
     @periodicmethod(1)
     def send_ping(self, session):

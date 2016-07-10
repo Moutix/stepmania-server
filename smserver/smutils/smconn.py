@@ -29,8 +29,6 @@ class StepmaniaConn(object):
         self.stepmania_name = None
         self._serv = serv
 
-        self.logger.info("New connection: %s on port %s" % (ip, port))
-
     def run(self):
         for data in self.received_data():
             if data is None:
@@ -52,7 +50,7 @@ class StepmaniaConn(object):
         self.logger.debug("Packet received from %s: %s" % (self.ip, packet))
 
         if self.ALLOWED_PACKET and packet.command not in self.ALLOWED_PACKET:
-            self.logger.info("packet %s refused from %s" % (data, self.ip))
+            self.logger.debug("packet %s ignored from %s" % (data, self.ip))
             return None
 
         if packet.command == smpacket.SMClientCommand.NSCPingR:

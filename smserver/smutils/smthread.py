@@ -3,6 +3,7 @@
 
 import sys
 import datetime
+import logging
 from threading import Lock
 
 from smserver.smutils import smpacket
@@ -12,6 +13,8 @@ if sys.version_info[1] > 2:
     from smserver.smutils.smconnections import asynctcpserver, websocket
 
 class StepmaniaServer(object):
+    _logger = logging.getLogger('stepmania')
+
     SERVER_TYPE = {
         "classic": smtcpsocket.SocketServer,
         "udp": udpsocket.UDPServer,
@@ -39,6 +42,8 @@ class StepmaniaServer(object):
             return self._connections
 
     def add_connection(self, conn):
+        self._logger.info("New connection: %s on port %s", conn.ip, conn.port)
+
         with self.mutex:
             self._connections.append(conn)
 

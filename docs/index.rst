@@ -66,7 +66,7 @@ To launch the server just type:
 
     $ smserver
 
-For advanced option/configuration, type --help or see advanced configuration...
+For advanced option/configuration, type ``--help`` or see :doc:`configuration`
 
 Source code
 -----------
@@ -79,14 +79,15 @@ License
 
 This software is licensed under the MIT License. See the LICENSE file in the top distribution directory for the full license text.
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
 
    configuration
-   license
    protocol
+   license
 
 Indices and tables
 ==================

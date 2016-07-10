@@ -10,7 +10,7 @@ The location of this file can be modified by using **config** option:
 
 .. code-block:: console
 
-    smserver --config "/Configuration/file/location"
+    $ smserver --config "/Configuration/file/location"
 
 
 You can also force some configuration parameters by passing argument on smserver.
@@ -19,27 +19,27 @@ EG.
 
 .. code-block:: console
 
-    smserver -name "Server's Name"
+    $ smserver -name "Server's Name"
 
 This command will force the server.name to be "Server's Name"
 
 Command line only
 -----------------
 
-All the command line option can be view by using --help.
+All the command line option can be view by using ``--help``.
 
 .. code-block:: console
 
-    smserver --help
+    $ smserver --help
 
 Some option can only be passed via command line.
 
 
-* `-c` or `--config`
+* ``-c`` or ``--config``
 
 Specify the configuration file location.
 
-* `--update_schema`:
+* ``--update_schema``
 
 Passing this command to smserver will drop all the db tables and recreate them. Use it only if you now what you're doing. You will lost all you're data.
 
@@ -88,7 +88,7 @@ Database section
 * **port**: Port
 * **driver**: Driver to use (optional).
 
-See `sqlalchemy manuel <http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls>` for more information about database configuration
+See `sqlalchemy manuel <http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls>`_ for more information about database configuration
 
 Example for mysql:
 

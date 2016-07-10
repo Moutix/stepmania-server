@@ -1268,6 +1268,8 @@ class SMPacketClientXMLPacket(SMPacket):
         Client command 15 (XMLPacket)
 
         This packet contains data in XML format.
+
+        :param str xml: XML string
     """
 
     command = SMClientCommand.XMLPacket
@@ -1612,6 +1614,8 @@ class SMPacketServerXMLPacket(SMPacket):
         Server command 143 (XMLPacket)
 
         This packet contains data in XML format.
+
+        :param str xml: XML string
     """
 
     command = SMServerCommand.XMLPacket

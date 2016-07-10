@@ -73,10 +73,7 @@ class StepmaniaWatcher(Thread):
             nb_players=models.User.nb_onlines(session)
         )
 
-        print(packet.binary)
-
         self._sock.sendto(packet.binary, (self.UDP_IP, self.UDP_PORT))
-
 
     @periodicmethod(1)
     def send_ping(self, session):

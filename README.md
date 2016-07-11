@@ -2,6 +2,8 @@
 
 Stepmania server in python3. Feel free to try it and ask for features!
 
+[![ReadTheDocs](https://readthedocs.org/projects/pip/badge/?version=latest)](https://stepmania-server.readthedocs.io/)
+
 ## Requirement
 
 The StepmaniaServer is written in python3. (>= 3.3)

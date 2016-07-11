@@ -446,7 +446,7 @@ Payload:
 See :class:`smserver.smutils.smpacket.SMPacketServerNSCGSU`
 
 134: System Message
-*****************
+*******************
 
 Send a system message to user
 

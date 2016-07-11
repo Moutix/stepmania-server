@@ -6,6 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+WINZIP        = win-smserver.zip
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -18,6 +19,7 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  apidoc     to make the autogenerate rst file"
+	@echo "  winexe     to make the autogenerate rst file"
 	@echo "  html       to make standalone HTML files"
 	@echo "  dirhtml    to make HTML files named index.html in directories"
 	@echo "  singlehtml to make a single large HTML file"
@@ -53,6 +55,10 @@ clean:
 apidoc:
 	sphinx-apidoc ../smserver -o .
 
+.PHONY: winexe
+winexe:
+	rm $(WINZIP)
+	zip -9 -j -r $(WINZIP) ../windows/*
 
 .PHONY: html
 html:

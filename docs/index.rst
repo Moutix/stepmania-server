@@ -35,6 +35,10 @@ or
 
     $ pip install smserver
 
+For Windows:
+
+* :download:`win-smserver.zip`
+
 Configuration
 -------------
 

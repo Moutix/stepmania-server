@@ -17,9 +17,22 @@ import smserver
 for filename in glob.glob("cfg/*.yml*"):
     shutil.copy(filename, "smserver/_fallback_conf")
 
-if os.path.splitdrive(sys.executable)[0] == "":
+conf_dir = None
+
+if os.path.splitdrive(sys.executable)[0] != "":
+    conf_dir = "conf"
+
+if not conf_dir and os.path.isdir("/etc/smserver"):
     conf_dir = "/etc/smserver"
-else:
+
+if not conf_dir:
+    try:
+        os.mkdir("/etc/smserver")
+        conf_dir = "/etc/smserver"
+    except:
+        pass
+
+if not conf_dir:
     conf_dir = "conf"
 
 setup(

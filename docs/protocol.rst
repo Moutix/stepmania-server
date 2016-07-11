@@ -489,8 +489,7 @@ Payload:
 |       |                                                                     |
 |       | - 0: see if client has song                                         |
 |       | - 1: see if client has song, if so, scroll to song                  |
-|       | - 2: See if client has song, if so, scroll to song, and play that   |
-|       | song                                                                |
+|       | - 2: See if client has song, if so, scroll to song, and play it     |
 |       | - 3: Blindly start song                                             |
 +-------+---------------------------------------------------------------------+
 | NT    | Song Title    (As gotten by GetTranslitMainTitle)                   |

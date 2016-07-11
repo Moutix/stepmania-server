@@ -54,8 +54,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'SMServer'
-copyright = '2016, Sélim Menouar'
-author = 'Sélim Menouar'
+copyright = '2016, Selim Menouar'
+author = 'Selim Menouar'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

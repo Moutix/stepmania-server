@@ -57,12 +57,12 @@ EG for mysql:
 
     database:
         type: "mysql"
-        user: stepmania
-        password: *******
-        database: stepmania
-        host: localhost
+        user: "stepmania"
+        password: "*******"
+        database: "stepmania"
+        host: "localhost"
         port:
-        driver: pymysql
+        driver: "pymysql"
 
 To launch the server just type:
 
@@ -91,6 +91,7 @@ Contents
 
    configuration
    protocol
+   modules
    license
 
 Indices and tables

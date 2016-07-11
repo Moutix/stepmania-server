@@ -68,7 +68,7 @@ setup(
     ],
 
     extras_require={
-        ':python_version=="3.3"': ['asyncio'],
+        ':python_version=="3.3"': ['asyncio', 'enum34'],
     },
 
     install_requires=[

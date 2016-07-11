@@ -8,7 +8,7 @@
     Provide easy utilisation of the stepmania protocol.
 
     :Example:
-    >>> from smpacket import *
+    >>> from smserver.smutils.smpacket import *
 
     >>> # Create a new packet instance
     >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="test")
@@ -554,7 +554,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> print(SMPacket.new(SMServerCommand.NSCCM, message="msg"))
             <SMPacketServerNSCCM message="msg">
         """
@@ -572,9 +572,9 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> print(SMPacket.get_class(SMServerCommand.NSCCM))
-            <class 'smpacket.SMPacketServerNSCCM'>
+            <class 'smserver.smutils.smpacket.SMPacketServerNSCCM'>
         """
 
         klasses = [klass for klass in cls.__subclasses__() if klass.command == command]
@@ -590,7 +590,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
             >>> print(packet.binarycommand)
             b'\\x87'
@@ -605,7 +605,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
             >>> print(packet.binarysize)
             b'\\x00\\x00\\x00\\x05'
@@ -620,7 +620,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
             >>> print(packet.data)
             b'\\x87msg\\x00'
@@ -635,7 +635,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
             >>> print(packet.binary)
             b'\\x00\\x00\\x00\\x05\\x87msg\\x00'
@@ -650,7 +650,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> packet = SMPacket.new(SMServerCommand.NSCCM, message="msg")
             >>> print(packet.payload)
             b'msg\\x00'
@@ -665,7 +665,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> packet = SMPacket.new(SMServerCommand.NSCPing)
             >>> print(packet.to_json)
             {"_command": 128}
@@ -689,7 +689,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> payload_data = b'msg\\x00'
             >>> print(SMPacketServerNSCCM.from_payload(payload_data))
             <SMPacketServerNSCCM message="msg">
@@ -704,7 +704,7 @@ class SMPacket(object):
 
             :Example:
 
-            >>> from smpacket import *
+            >>> from smserver.smutils.smpacket import *
             >>> json_data = '{"message": "msg"}'
             >>> print(SMPacketServerNSCCM.from_json(json_data))
             <SMPacketServerNSCCM message="msg">

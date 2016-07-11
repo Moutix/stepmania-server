@@ -57,8 +57,8 @@ apidoc:
 
 .PHONY: winexe
 winexe:
-	rm $(WINZIP)
-	zip -9 -j -r $(WINZIP) ../windows/*
+	rm -f $(WINZIP)
+	cd ../windows && zip -9 -r $(WINZIP) . && mv $(WINZIP) ../docs
 
 .PHONY: html
 html:

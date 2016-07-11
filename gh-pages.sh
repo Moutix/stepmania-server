@@ -4,7 +4,7 @@ set -e
 
 cd docs && make apidoc && cd ..
 git checkout gh-pages
-rm -rf _build _sources _static
+rm -rf _build _sources _static _download
 git checkout master docs
 git reset HEAD
 cd docs && make html && cd ..

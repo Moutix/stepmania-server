@@ -27,11 +27,11 @@
     >>> packet = SMPacket.new(SMServerCommand.NSCPing)
 
     >>> # JSON encode your packet
-    >>> packet.to_json
+    >>> packet.json
     '{"_command": 128}'
 
     >>> # Decode JSON data
-    >>> packet2 = SMPacket.from_("json", packet.to_json)
+    >>> packet2 = SMPacket.from_("json", packet.json)
     >>> print(packet2)
     <SMPacketServerNSCPing >
 
@@ -659,7 +659,7 @@ class SMPacket(object):
         return self.encode(self.opts, self._payload)
 
     @property
-    def to_json(self):
+    def json(self):
         """
             Return the JSON encoded packet
 
@@ -667,7 +667,7 @@ class SMPacket(object):
 
             >>> from smserver.smutils.smpacket import *
             >>> packet = SMPacket.new(SMServerCommand.NSCPing)
-            >>> print(packet.to_json)
+            >>> print(packet.json)
             {"_command": 128}
         """
 
@@ -675,7 +675,7 @@ class SMPacket(object):
         data["_command"] = self.command.value
         for opt, value in self.opts.items():
             if issubclass(value.__class__, SMPacket):
-                data[opt] = value.to_json
+                data[opt] = value.json
                 continue
 
             data[opt] = value
@@ -718,7 +718,7 @@ class SMPacket(object):
         """
 
         return {
-            "json": self.to_json,
+            "json": self.json,
             "binary": self.binary
         }[encoding]
 

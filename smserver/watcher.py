@@ -46,6 +46,13 @@ class StepmaniaWatcher(Thread):
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
+    def force_run(self):
+        with self.server.db.session_scope() as session:
+            for func, _ in periodicmethod.functions:
+                func(self, session)
+
+                session.commit()
+
     def run(self):
         self.server.log.debug("Watcher start")
         func_map = {func: 0 for func, _ in periodicmethod.functions}

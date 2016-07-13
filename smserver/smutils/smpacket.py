@@ -132,6 +132,8 @@ class SMPayloadTypeAbstract(object):
         Parent class for declaring new type of data.
     """
 
+    DEFAULT = None
+
     @staticmethod
     def encode(data, opt=None):
         """
@@ -157,6 +159,8 @@ class SMPayloadTypeINT(SMPayloadTypeAbstract):
     """
         INT data encode in x bytes.
     """
+
+    DEFAULT = 0
 
     @staticmethod
     def encode(data, size=1):
@@ -219,6 +223,7 @@ class SMPayloadTypeINTLIST(SMPayloadTypeAbstract):
         List of integer
     """
 
+    DEFAULT = []
 
     @staticmethod
     def encode(data, opt=None):
@@ -288,6 +293,8 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
         Null terminated string.
     """
 
+    DEFAULT = ""
+
     @staticmethod
     def encode(data, opt=None):
         """
@@ -300,7 +307,6 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
 
             >>> SMPayloadTypeNT.encode("unicode_string")
             b'unicode_string\\x00'
-
         """
 
         if not data:
@@ -334,6 +340,8 @@ class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
     """
         List of null terminated string
     """
+
+    DEFAULT = []
 
     @staticmethod
     def encode(data, size=None):
@@ -415,6 +423,8 @@ class SMPayloadTypeLIST(SMPayloadTypeAbstract):
         Generic type for declaring list of other type
     """
 
+    DEFAULT = []
+
     @staticmethod
     def encode(data, opt=None):
         if not data:
@@ -445,6 +455,8 @@ class SMPayloadTypeMAP(SMPayloadTypeAbstract):
         Generic type for declaring encoding which depends on precedent values.
     """
 
+    DEFAULT = {}
+
     @staticmethod
     def encode(data, opt=None):
         if not opt:
@@ -471,7 +483,6 @@ class SMPayloadTypePacket(SMPayloadTypeAbstract):
     """
         Type for encoding packet in packet
     """
-
 
     @staticmethod
     def encode(data, opt=None):
@@ -810,13 +821,19 @@ class SMPacket(object):
         opts = json.loads(payload)
 
         for size, name, opt in payload_option:
-            if size != SMPayloadType.PACKET:
-                continue
+            if size == SMPayloadType.PACKET:
+                if not opt:
+                    opt = SMPacket
 
-            if not opt:
-                opt = SMPacket
+                opts[name] = opt.parse_json(opts[name])
 
-            opts[name] = opt.parse_json(opts[name])
+            if isinstance(size.value, int):
+                default = 0
+            else:
+                default = size.value.DEFAULT
+
+            if name not in opts:
+                opts[name] = default
 
         return opts
 

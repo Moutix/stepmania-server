@@ -96,9 +96,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.log.debug("Load Plugins")
 
-        self.plugins = PluginManager("StepmaniaPlugin", config.plugins, "smserver.plugins", "plugin")
-        self.plugins.init(self)
-
+        self.plugins = self._init_plugins()
         self.controllers = self._init_controllers()
         self.chat_commands = self._init_chat_commands()
         self.log.debug("Plugins loaded")
@@ -268,6 +266,12 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.log.debug("Chat command loaded for command %s: %s" % (chat_class.command, chat_class))
 
         return chat_commands
+
+    def _init_plugins(self):
+        plugins = PluginManager("StepmaniaPlugin", self.config.plugins.keys(), "smserver.plugins", "plugin")
+        plugins.init(self)
+
+        return plugins
 
     def _update_schema(self):
         self.log.info("DROP all the database tables")

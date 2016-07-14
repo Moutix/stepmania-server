@@ -79,7 +79,7 @@ class Conf(dict):
         self.score = self.get("score", {})
         self.plugins = self.get("plugins")
         if not self.plugins:
-            self.plugins = []
+            self.plugins = {}
 
         self.additional_servers = self.get("additional_servers")
         if not self.additional_servers:

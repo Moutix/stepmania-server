@@ -100,8 +100,6 @@ class HardcorePlugin(pluginmanager.StepmaniaPlugin):
         with serv.mutex:
             serv.songstats[player_id]["attack_metter"] += self.conf_weight.get(step, 0)
 
-        print(serv.songstats[player_id]["attack_metter"])
-
     def send_attack(self, serv, player_id, session):
         """
             Send an attack to every players except the current one

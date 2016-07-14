@@ -76,6 +76,7 @@ class Conf(dict):
         self.database = self.get("database", {})
         self.auth = self["auth"]
         self.logger = self.get("logger", {})
+        self.score = self.get("score", {})
         self.plugins = self.get("plugins")
         if not self.plugins:
             self.plugins = []

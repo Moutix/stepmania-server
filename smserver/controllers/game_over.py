@@ -26,7 +26,7 @@ class GameOverController(StepmaniaController):
             with self.conn.mutex:
                 songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration)
 
-            xp = songstat.calc_xp(self.server.config.get("xpWeight"))
+            xp = songstat.calc_xp(self.server.config.score.get("xpWeight"))
             user.xp += xp
 
             self.send_message("New result: %s" % songstat.pretty_result(room_id=self.room.id, color=True))
@@ -74,7 +74,7 @@ class GameOverController(StepmaniaController):
                     getattr(songstat, models.SongStat.stepid[value["stepid"]]) + 1
                    )
 
-        songstat.percentage = songstat.calc_percentage(self.server.config.get("percentWeight"))
+        songstat.percentage = songstat.calc_percentage(self.server.config.score.get("percentWeight"))
         songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
 
         self.session.add(songstat)

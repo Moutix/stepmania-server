@@ -108,7 +108,7 @@ class StepmaniaController(object):
         """
 
         if not self._users:
-            self._users = self.server.get_users(self.conn.users, self.session)
+            self._users = models.User.get_from_ids(self.conn.users, self.session)
 
         return self._users
 
@@ -237,16 +237,14 @@ class StepmaniaController(object):
 
         self.server.sendroom(room, packet)
 
-    def sendplayers(self, room_id, song_id, packet):
+    def sendplayers(self, room_id, packet):
         """
             Send the specified packet to all the players in the specified room
-            which currently played the specified song
+            which have send an NSCGSR packet
 
             :param room_id: The ID of the room
-            :param song_id: The ID of the active song
             :param packet: The packet to send
             :type room_id: int
-            :type song_id: int
             :type packet: smserver.smutils.smpacket.SMPacket
             :return: nothing
         """

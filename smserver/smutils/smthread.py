@@ -82,8 +82,8 @@ class StepmaniaServer(object):
         for conn in self.room_connections(room_id):
             conn.send(packet)
 
-    def sendplayers(self, room_id, song_id, packet):
-        for conn in self.player_connections(room_id, song_id):
+    def sendplayers(self, room_id, packet):
+        for conn in self.ingame_connections(room_id):
             conn.send(packet)
 
     def on_disconnect(self, serv):

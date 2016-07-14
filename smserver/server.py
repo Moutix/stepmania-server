@@ -193,7 +193,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         room_id = serv.room
         smthread.StepmaniaServer.on_disconnect(self, serv)
 
-        users = self.get_users(serv.users, session)
+        users = models.User.get_from_ids(serv.users, session)
         if not users:
             self.log.info("Player %s disconnected" % serv.ip)
             return
@@ -212,14 +212,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
         """
 
         self.sendroom(room.id, room.nsccuul)
-
-    def get_users(self, user_ids, session):
-        """ Return a list of user instance from the ids list """
-
-        if not user_ids:
-            return []
-
-        return session.query(models.User).filter(models.User.id.in_(user_ids))
 
     def _init_controllers(self):
         controllers = {}

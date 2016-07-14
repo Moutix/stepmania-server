@@ -117,7 +117,7 @@ class StepmaniaWatcher(Thread):
         scores = []
         for conn in self.server.room_connections(room.id):
             with conn.mutex:
-                for user in self.server.get_users(conn.users, session):
+                for user in models.User.get_from_ids(conn.users, session):
                     if not user.online:
                         continue
 

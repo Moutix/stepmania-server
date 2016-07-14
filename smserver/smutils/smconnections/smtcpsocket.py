@@ -4,7 +4,7 @@
 import socket
 from threading import Thread
 
-from smserver.smutils import smconn, smpacket
+from smserver.smutils import smconn
 
 class SocketConn(smconn.StepmaniaConn, Thread):
     ENCODING = "binary"
@@ -67,23 +67,34 @@ class SocketConn(smconn.StepmaniaConn, Thread):
         self._conn.close()
         smconn.StepmaniaConn.close(self)
 
-class SocketServer(Thread):
+class SocketServer(smconn.SMThread):
     def __init__(self, server, ip, port):
-        Thread.__init__(self)
+        smconn.SMThread.__init__(self, server, ip, port)
 
-        self.server = server
-        self.ip = ip
-        self.port = port
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.bind((self.ip, self.port))
         self._socket.listen(5)
+        self._continue = True
+        self._connections = []
 
     def run(self):
-        while 1:
-            conn, addr = self._socket.accept()
+        while self._continue:
+            try:
+                conn, addr = self._socket.accept()
+            except socket.error:
+                self._socket.close()
+                break
+
             ip, port = addr
             thread = SocketConn(self.server, ip, port, conn)
             self.server.add_connection(thread)
             thread.start()
+
+        smconn.SMThread.run(self)
+
+    def stop(self):
+        smconn.SMThread.stop(self)
+        self._continue = False
+        self._socket.shutdown(socket.SHUT_RDWR)
 

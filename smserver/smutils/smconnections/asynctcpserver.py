@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-from threading import Thread
+import socket
+
 import asyncio
 import asyncio.streams
 
-from smserver.smutils import smconn, smpacket
+from smserver.smutils import smconn
 
 class AsyncSocketClient(smconn.StepmaniaConn):
     ENCODING = "binary"
@@ -65,16 +66,12 @@ class AsyncSocketClient(smconn.StepmaniaConn):
         self._serv.on_disconnect(self)
         self.writer.close()
 
-class AsyncSocketServer(Thread):
+class AsyncSocketServer(smconn.SMThread):
     def __init__(self, server, ip, port):
-        Thread.__init__(self)
+        smconn.SMThread.__init__(self, server, ip, port)
 
         self.loop = asyncio.new_event_loop()
-
         self._serv = None
-        self.server = server
-        self.ip = ip
-        self.port = port
         self.clients = {}
 
     def _accept_client(self, client_reader, client_writer):
@@ -99,11 +96,19 @@ class AsyncSocketServer(Thread):
                                          self.ip, self.port,
                                          loop=self.loop))
         self.loop.run_forever()
-
+        self.loop.close()
+        smconn.SMThread.run(self)
 
     def stop(self):
-        if self._serv is not None:
-            self._serv.close()
-            self.loop.run_until_complete(self._serv.wait_closed())
-            self._serv = None
+        smconn.SMThread.stop(self)
+
+        if self._serv is None:
+            return
+
+        if self._serv.sockets:
+            for sock in self._serv.sockets:
+                sock.shutdown(socket.SHUT_RDWR)
+
+        self.loop.stop()
+        self._serv.close()
 

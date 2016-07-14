@@ -7,8 +7,12 @@ from smserver import conf, server
 
 def main():
     config = conf.Conf(*sys.argv[1:])
-    server.StepmaniaServer(config).start()
-
+    serv = server.StepmaniaServer(config)
+    try:
+        serv.start()
+    except (KeyboardInterrupt, SystemExit):
+        serv.stop()
+        sys.exit()
 
 if __name__ == "__main__":
     main()

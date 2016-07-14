@@ -3,7 +3,7 @@
 
 import datetime
 import logging
-from threading import Lock
+from threading import Lock, Thread
 from smserver.smutils import smpacket
 
 class StepmaniaConn(object):
@@ -67,4 +67,20 @@ class StepmaniaConn(object):
 
     def close(self):
         self._serv.on_disconnect(self)
+
+class SMThread(Thread):
+    logger = logging.getLogger('stepmania')
+
+    def __init__(self, server, ip, port):
+        Thread.__init__(self)
+        self.daemon = True
+        self.server = server
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        self.logger.info("Successfully close thread: %s", self)
+
+    def stop(self):
+        self.logger.debug("Closing thread: %s", self)
 

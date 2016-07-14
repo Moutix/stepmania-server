@@ -45,6 +45,7 @@ class StepmaniaWatcher(Thread):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self._continue = True
 
     def force_run(self):
         with self.server.db.session_scope() as session:
@@ -57,7 +58,7 @@ class StepmaniaWatcher(Thread):
         self.server.log.debug("Watcher start")
         func_map = {func: 0 for func, _ in periodicmethod.functions}
 
-        while True:
+        while self._continue:
             with self.server.db.session_scope() as session:
                 for func, period in periodicmethod.functions:
                     func_map[func] += 1
@@ -71,6 +72,14 @@ class StepmaniaWatcher(Thread):
                     session.commit()
 
             time.sleep(self.fps)
+
+        self.server.log.info("Successfully close thread: %s", self)
+
+    def stop(self):
+        """ End the loop """
+
+        self.server.log.debug("Closing thread: %s", self)
+        self._continue = False
 
     @periodicmethod(5)
     def send_udp(self, session):

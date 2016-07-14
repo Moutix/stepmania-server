@@ -127,9 +127,24 @@ class StepmaniaServer(smthread.StepmaniaServer):
         """ Start all the threads """
 
         self.watcher.start()
-
         smthread.StepmaniaServer.start(self)
 
+    def stop(self):
+        """ Close all the threads """
+
+        self.log.info("Disconnect all client...")
+        for connection in self.connections:
+            connection.close()
+
+        self.log.info("Closing all the threads...")
+
+        self.watcher.stop()
+        for server in self._servers:
+            server.stop()
+
+        self.watcher.join()
+        for server in self._servers:
+            server.join()
 
     @with_session
     def add_connection(self, session, conn):

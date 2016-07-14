@@ -26,21 +26,31 @@ class SocketConn(smconn.StepmaniaConn, Thread):
         pass
 
 
-class UDPServer(Thread):
+class UDPServer(smconn.SMThread):
     def __init__(self, server, ip, port):
-        Thread.__init__(self)
+        smconn.SMThread.__init__(self, server, ip, port)
 
-        self.server = server
-        self.ip = ip
-        self.port = port
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.bind((self.ip, self.port))
+        self._socket.settimeout(0.5)
+        self._continue = True
 
     def run(self):
-        while 1:
-            data, addr = self._socket.recvfrom(8192)
+        while self._continue:
+            try:
+                data, addr = self._socket.recvfrom(8192)
+            except socket.timeout:
+                continue
+
             ip, port = addr
 
-            SocketConn(self.server, ip, port, data).run()
+            SocketConn(self.server, ip, port, data).start()
+
+        self._socket.close()
+        smconn.SMThread.run(self)
+
+    def stop(self):
+        smconn.SMThread.stop(self)
+        self._continue = False
 

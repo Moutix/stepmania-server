@@ -8,7 +8,7 @@ class ChatMaxUsers(ChatPlugin):
     command = "maxusers"
     helper = "Set nb_max of users (0 to 255)."
     room = True
-    permission = ability.Permissions.change_max_users
+    permission = ability.Permissions.change_room_settings
 
     def __call__(self, serv, message):
         try:
@@ -29,7 +29,7 @@ class ChatMOTD(ChatPlugin):
     command = "motd"
     helper = "Update room MOTD"
     room = True
-    permission = ability.Permissions.change_room_motd
+    permission = ability.Permissions.change_room_settings
 
     def __call__(self, serv, message):
         serv.room.motd = message
@@ -40,7 +40,7 @@ class ChatRoomHidden(ChatPlugin):
     command = "hide"
     helper = "Show/Hide the room"
     room = True
-    permission = ability.Permissions.change_room_hidden
+    permission = ability.Permissions.change_room_settings
 
     def __call__(self, serv, message):
         if serv.room.hidden:

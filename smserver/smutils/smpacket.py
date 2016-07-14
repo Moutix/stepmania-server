@@ -1615,14 +1615,42 @@ class SMPacketServerNSCAttack(SMPacket):
 
         :param int player: Player number (0 or 1)
         :param int time: Duration of the attack (in ms)
-        :param str message: Text describing modifiers
+        :param attack: Text describing modifiers
+        :type attack: str or smserver.smutils.smattack.SMAttack
+
+        List of attack available are in smattack module.
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket, smattack
+        >>> packet = smpacket.SMPacketServerNSCAttack(
+        ...     player=0, # Send the attack to the player 0
+        ...     time=1000, # The attack will last 1 second
+        ...     attack='drunk', #Send a drunk attack
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x0c\\x8e\\x00\\x00\\x00\\x03\\xe8drunk\\x00'
+
+        >>> packet = smpacket.SMPacketServerNSCAttack(
+        ...     player=0,
+        ...     time=1000,
+        ...     attack=smattack.SMAttack.Drunk, # Use an Enum value
+        ... )
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x0c\\x8e\\x00\\x00\\x00\\x03\\xe8drunk\\x00'
     """
+
+    def __init__(self, player=0, time=1000, attack=None):
+        if not isinstance(attack, str):
+            attack = attack.value
+
+        SMPacket.__init__(self, player=player, time=time, attack=attack)
 
     command = SMServerCommand.NSCAttack
     _payload = [
         (SMPayloadType.INT, "player", 1),
         (SMPayloadType.INT, "time", 4),
-        (SMPayloadType.NT, "message", None),
+        (SMPayloadType.NT, "attack", None),
     ]
 
 

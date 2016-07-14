@@ -3,5 +3,5 @@
 
 """ Stepmania Server implementation """
 
-__version__ = "1.0.0.beta1"
+__version__ = "1.0.0.rc1"
 

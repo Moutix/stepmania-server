@@ -29,7 +29,7 @@ class ClientTestJSON(websocket.WebSocketClient):
 class ServerTest(server.StepmaniaServer):
     pass
 
-config = conf.Conf("--update_schema")
+config = conf.Conf("--update_schema", "-c", "")
 
 server_test = ServerTest(config)
 

@@ -68,5 +68,7 @@ auth:
     autocreate: True
 
 plugins:
-#    - "chat"
+    hardcore:
+        max_metter: 100
+        attack_duration: 3000
 

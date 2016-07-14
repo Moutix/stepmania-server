@@ -25,6 +25,8 @@ class Room(schema.Base):
     ingame         = Column(Boolean, default=False)
     hidden         = Column(Boolean, default=False)
 
+    mode           = Column(String(255))
+
     status         = Column(Integer, default=0)
     type           = Column(Integer, default=1)
     max_users      = Column(Integer, default=255)

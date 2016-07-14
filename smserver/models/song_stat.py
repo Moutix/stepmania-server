@@ -92,7 +92,7 @@ class SongStat(schema.Base):
     @property
     def lit_difficulty(self):
         if self.difficulty is None:
-            return None
+            return "Unknown"
 
         return self.DIFFICULTIES.get(self.difficulty, str(self.difficulty))
 
@@ -102,8 +102,8 @@ class SongStat(schema.Base):
 
     @property
     def lit_grade(self):
-        if not self.grade:
-            return self.grade
+        if self.grade is None:
+            return "Unknown"
 
         return self.GRADES.get(self.grade, self.grade)
 

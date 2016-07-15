@@ -2,12 +2,16 @@
 # -*- coding: utf8 -*-
 
 import sys
+import signal
 
 from smserver import conf, server
 
 def main():
     config = conf.Conf(*sys.argv[1:])
     serv = server.StepmaniaServer(config)
+
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit())
+
     try:
         serv.start()
     except (KeyboardInterrupt, SystemExit):

@@ -29,6 +29,15 @@ class StepmaniaServer(object):
         for ip, port, server_type in servers:
             self._servers.append(self.SERVER_TYPE[server_type](self, ip, port))
 
+    def is_alive(self):
+        """ Check if all the thread are still alive """
+
+        for server in self._servers:
+            if not server.is_alive():
+                return False
+
+        return True
+
     def start(self):
         for server in self._servers:
             server.start()

@@ -8,7 +8,7 @@ from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
 from smserver.database import DataBase
 from smserver.watcher import StepmaniaWatcher
-from smserver import conf, logger, models
+from smserver import conf, logger, models, sdnotify
 from smserver.smutils import smthread
 
 def with_session(func):
@@ -54,16 +54,22 @@ class StepmaniaServer(smthread.StepmaniaServer):
             If no configuration are passed, it will use the default one.
         """
 
+        self.sd_notify = sdnotify.SDNotify()
+
         if not config:
             config = conf.Conf()
 
         self.config = config
 
         self.log = logger.Logger(config.logger).logger
+        self.log.debug(self.sd_notify)
 
         self.log.debug("Configuration loaded")
+        self.log.debug(self.sd_notify.available)
 
         self.log.debug("Init database")
+        self.sd_notify.status("Init database")
+
         self.db = DataBase(
             type=config.database.get("type", 'sqlite'),
             database=config.database.get("database"),
@@ -89,19 +95,22 @@ class StepmaniaServer(smthread.StepmaniaServer):
                 for ip in self.config.get("ban_ips", []):
                     models.Ban.ban(session, ip, fixed=True)
 
+        self.log.debug("Load plugins...")
+        self.sd_notify.status("Load plugins...")
+
         self.auth = PluginManager.get_plugin(
             'smserver.auth.%s' % config.auth["plugin"],
             "AuthPlugin",
             default=AuthPlugin)(self, config.auth["autocreate"])
 
-        self.log.debug("Load Plugins")
 
         self.plugins = self._init_plugins()
         self.controllers = self._init_controllers()
         self.chat_commands = self._init_chat_commands()
         self.log.debug("Plugins loaded")
 
-        self.log.info("Start server")
+        self.log.info("Init server listenner...")
+        self.sd_notify.status("Start server listenner...")
 
         if config.server.get("type") not in self.SERVER_TYPE:
             server_type = "async"
@@ -127,10 +136,16 @@ class StepmaniaServer(smthread.StepmaniaServer):
         """ Start all the threads """
 
         self.watcher.start()
+        self.sd_notify.ready()
+        self.sd_notify.status("Running")
+
         smthread.StepmaniaServer.start(self)
 
     def stop(self):
         """ Close all the threads """
+
+        self.sd_notify.stopping()
+        self.sd_notify.status("Stopping...")
 
         self.log.info("Disconnect all client...")
         for connection in self.connections:

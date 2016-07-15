@@ -82,6 +82,15 @@ class StepmaniaWatcher(Thread):
         self._continue = False
 
     @periodicmethod(5)
+    def sdnotify_watchdog(self, _):
+        """ Notify systemd that the service is still running """
+
+        if not self.server.is_alive():
+            return
+
+        self.server.sd_notify.watchdog()
+
+    @periodicmethod(5)
     def send_udp(self, session):
         packet = smpacket.SMPacketServerNSCFormatted(
             server_name=self.server.config.server["name"],

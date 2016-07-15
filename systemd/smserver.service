@@ -3,7 +3,13 @@ Description=Stepmania Server
 After=network.target
 
 [Service]
-Type=simple
+Type=notify
 ExecStart=/usr/local/bin/smserver
 User=smserver
+TimeoutStopSec=3
+Restart=on-watchdog
 
+WatchdogSec=60
+
+[Install]
+Alias=smserver

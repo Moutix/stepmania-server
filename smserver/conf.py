@@ -60,7 +60,6 @@ class Conf(dict):
                         help="Drop all the db tables and recreate them")
 
     def __init__(self, *args):
-        print(args)
         self._raw_args = args
 
         self.parser.add_argument(

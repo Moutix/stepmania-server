@@ -91,7 +91,7 @@ class SDNotify(object):
             ready notification when it completed reloading its configuration.
         """
 
-        self.notify("STOPPING=1")
+        self.notify("RELOADING=1")
 
     def watchdog(self):
         """

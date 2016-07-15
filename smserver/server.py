@@ -161,6 +161,26 @@ class StepmaniaServer(smthread.StepmaniaServer):
         for server in self._servers:
             server.join()
 
+    def reload(self):
+        """ Relaod configuration files """
+
+        self.sd_notify.reloading()
+
+        self.sd_notify.status("Reloading")
+        self.log.info("Reload configuration file")
+
+        self.config.reload()
+
+        self.log.info("Reload plugins")
+        self.plugins = self._init_plugins()
+        self.controllers = self._init_controllers()
+        self.chat_commands = self._init_chat_commands()
+
+        self.log.info("Plugins reloaded")
+
+        self.sd_notify.status("Running")
+        self.sd_notify.ready()
+
     @with_session
     def add_connection(self, session, conn):
         if models.Ban.is_ban(session, conn.ip):

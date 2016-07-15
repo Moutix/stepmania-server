@@ -11,6 +11,7 @@ def main():
     serv = server.StepmaniaServer(config)
 
     signal.signal(signal.SIGTERM, lambda *_: sys.exit())
+    signal.signal(signal.SIGHUP, lambda *_: serv.reload())
 
     try:
         serv.start()

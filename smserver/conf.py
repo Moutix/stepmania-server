@@ -11,7 +11,11 @@ class Conf(dict):
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
     _fallback_conf = os.path.join(__location__, "_fallback_conf/conf.yml.orig")
 
-    parser = argparse.ArgumentParser(description='Stepmania configuration')
+    parser = argparse.ArgumentParser(
+        description='Stepmania configuration',
+        conflict_handler='resolve'
+    )
+
     parser.add_argument('-name', '--server.name',
                         dest='server.name',
                         help="Server's name",
@@ -56,6 +60,9 @@ class Conf(dict):
                         help="Drop all the db tables and recreate them")
 
     def __init__(self, *args):
+        print(args)
+        self._raw_args = args
+
         self.parser.add_argument(
             '-c', '--config',
             dest='config',
@@ -66,7 +73,9 @@ class Conf(dict):
         dict.__init__(self)
         self._args = self.parser.parse_args(args)
 
-        with open(self._find_configuration_file(self._args.config), 'r', encoding='utf-8') as stream:
+        self.configuration_file = self._find_configuration_file(self._args.config)
+
+        with open(self.configuration_file, 'r', encoding='utf-8') as stream:
             self.update(yaml.load(stream), allow_unicode=True)
 
         for key, value in vars(self._args).items():
@@ -84,6 +93,11 @@ class Conf(dict):
         self.additional_servers = self.get("additional_servers")
         if not self.additional_servers:
             self.additional_servers = []
+
+    def reload(self):
+        """ Reload the configuration file """
+
+        self.__init__(*self._raw_args)
 
     def _add_to_conf(self, arg, value, conf=None):
         if not conf:
@@ -130,4 +144,7 @@ class Conf(dict):
         return "conf.yml"
 
 if __name__ == "__main__":
-    print(Conf(*sys.argv[1:]))
+    cfg = Conf(*sys.argv[1:])
+    print(cfg)
+    cfg.reload()
+    print(cfg)

@@ -2,7 +2,7 @@
 
 Stepmania server in python3. Feel free to try it and ask for features!
 
-[![Build Status](https://travis-ci.org/ningirsu/stepmania-server.svg?branch=master)](https://travis-ci.org/ningirsu/stepmania-server) [![ReadTheDocs](https://readthedocs.org/projects/pip/badge/?version=latest)](https://stepmania-server.readthedocs.io/)
+[![Travis build Status](https://travis-ci.org/ningirsu/stepmania-server.svg?branch=master)](https://travis-ci.org/ningirsu/stepmania-server) [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/129lem90wp1eilu6?svg=true)](https://ci.appveyor.com/project/ningirsu/stepmania-server) [![ReadTheDocs](https://readthedocs.org/projects/pip/badge/?version=latest)](https://stepmania-server.readthedocs.io/)
 
 ## Requirement
 

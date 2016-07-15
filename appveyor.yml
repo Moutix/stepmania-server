@@ -61,6 +61,7 @@ install:
 
 build_script:
   # Build the compiled extension
+  - "python setup.py install"
   - "python setup.py py2exe"
 
 test_script:

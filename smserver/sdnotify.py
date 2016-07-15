@@ -22,7 +22,8 @@ class SDNotify(object):
 
     def __init__(self):
         try:
-            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)            except AttributeError:
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        except AttributeError:
             self.available = False
             return
 

@@ -68,13 +68,9 @@ install:
 
 build_script:
   # Build the compiled extension
-  - "%CMD_IN_ENV% python setup.py py2exe"
+  - "python setup.py py2exe"
 
 
 artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
   - path: dist\*
-
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
-#

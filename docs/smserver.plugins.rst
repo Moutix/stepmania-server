@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     smserver.plugins.example
+    smserver.plugins.hardcore
 
 Module contents
 ---------------

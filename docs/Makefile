@@ -53,7 +53,7 @@ clean:
 
 .PHONY: apidoc
 apidoc:
-	sphinx-apidoc ../smserver -o .
+	sphinx-apidoc ../smserver -f -o .
 
 .PHONY: winexe
 winexe:

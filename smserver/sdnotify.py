@@ -8,7 +8,6 @@
 
 import socket
 import os
-import logging
 
 class SDNotify(object):
     """
@@ -17,7 +16,7 @@ class SDNotify(object):
 
         :Example:
 
-        >>> sd_notify = DSNotify()
+        >>> sd_notify = SDNotify()
         >>> sd_notify.ready()
     """
 

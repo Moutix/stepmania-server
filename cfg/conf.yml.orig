@@ -69,6 +69,7 @@ auth:
 
 plugins:
     hardcore:
+        notif_on_attack: False
         max_metter: 100
         attack_duration: 3000
 

@@ -129,7 +129,8 @@ class HardcorePlugin(pluginmanager.StepmaniaPlugin):
                 packet["player"] = player
                 conn.send(packet)
 
-            conn.send(message)
+            if self.config.get("notif_on_attack", False):
+                conn.send(message)
 
 
 class HardcoreStartControllerPlugin(stepmania_controller.StepmaniaController):

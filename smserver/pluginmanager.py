@@ -88,7 +88,7 @@ class PluginError(Exception):
 class PluginManager(list):
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-    def __init__(self, plugin_class, paths=None, directory=None, plugin_file=None):
+    def __init__(self, plugin_class, paths=None, directory=None, plugin_file=None, force_reload=False):
         if not isinstance(plugin_class, list):
             plugin_class = [plugin_class]
 
@@ -103,7 +103,7 @@ class PluginManager(list):
 
         self.paths = paths
 
-        self.load()
+        self.load(force_reload)
 
     def all_paths(self, directory):
         directory_path = os.path.join(self.__location__, "/".join(directory.split(".")[1:]))

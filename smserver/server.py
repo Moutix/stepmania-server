@@ -172,9 +172,9 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.config.reload()
 
         self.log.info("Reload plugins")
-        self.plugins = self._init_plugins()
-        self.controllers = self._init_controllers()
-        self.chat_commands = self._init_chat_commands()
+        self.plugins = self._init_plugins(True)
+        self.controllers = self._init_controllers(True)
+        self.chat_commands = self._init_chat_commands(True)
 
         self.log.info("Plugins reloaded")
 
@@ -263,17 +263,18 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.sendroom(room.id, room.nsccuul)
 
-    def _init_controllers(self):
+    def _init_controllers(self, force_reload=False):
         controllers = {}
 
-        controller_classes = PluginManager("StepmaniaController", None, "smserver.controllers")
+        controller_classes = PluginManager(
+            plugin_class="StepmaniaController",
+            directory="smserver.controllers",
+            force_reload=force_reload
+        )
 
-        controller_classes.extend(PluginManager(
-            "StepmaniaController",
-            self.config.plugins,
-            "smserver.plugins",
-            "plugin"
-        ))
+        controller_classes.extend(
+            self._get_plugins("StepmaniaController", force_reload)
+        )
 
         for controller in controller_classes:
             if not controller.command:
@@ -283,21 +284,23 @@ class StepmaniaServer(smthread.StepmaniaServer):
                 controllers[controller.command] = []
 
             controllers[controller.command].append(controller)
-            self.log.debug("Controller loaded for command %s: %s" % (controller.command, controller))
+            self.log.debug("Controller loaded for command %s: %s", controller.command, controller)
 
         return controllers
 
-    def _init_chat_commands(self):
+    def _init_chat_commands(self, force_reload=False):
         chat_commands = {}
 
-        chat_classes = PluginManager("ChatPlugin", None, "smserver.chat_commands")
+        chat_classes = PluginManager(
+            plugin_class="ChatPlugin",
+            directory="smserver.chat_commands",
+            force_reload=force_reload
+        )
 
-        chat_classes.extend(PluginManager(
-            "ChatPlugin",
-            self.config.plugins,
-            "smserver.plugins",
-            "plugin"
-        ))
+        chat_classes.extend(
+            self._get_plugins("ChatPlugin", force_reload)
+        )
+
         chat_classes.init()
 
         for chat_class in chat_classes:
@@ -305,15 +308,25 @@ class StepmaniaServer(smthread.StepmaniaServer):
                 continue
 
             chat_commands[chat_class.command] = chat_class
-            self.log.debug("Chat command loaded for command %s: %s" % (chat_class.command, chat_class))
+            self.log.debug("Chat command loaded for command %s: %s", chat_class.command, chat_class)
 
         return chat_commands
 
-    def _init_plugins(self):
-        plugins = PluginManager("StepmaniaPlugin", self.config.plugins.keys(), "smserver.plugins", "plugin")
+    def _init_plugins(self, force_reload=False):
+        plugins = self._get_plugins("StepmaniaPlugin", force_reload)
+
         plugins.init(self)
 
         return plugins
+
+    def _get_plugins(self, plugin_class, force_reload=False):
+        return PluginManager(
+            plugin_class=plugin_class,
+            paths=self.config.plugins.keys(),
+            directory="smserver.plugins",
+            plugin_file="plugin",
+            force_reload=force_reload
+        )
 
     def _update_schema(self):
         self.log.info("DROP all the database tables")

@@ -10,8 +10,11 @@ def main():
     config = conf.Conf(*sys.argv[1:])
     serv = server.StepmaniaServer(config)
 
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit())
-    signal.signal(signal.SIGHUP, lambda *_: serv.reload())
+    try:
+        signal.signal(signal.SIGTERM, lambda *_: sys.exit())
+        signal.signal(signal.SIGHUP, lambda *_: serv.reload())
+    except AttributeError:
+        pass
 
     try:
         serv.start()

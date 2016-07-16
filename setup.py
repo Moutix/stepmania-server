@@ -48,7 +48,7 @@ setup(
 
     description="An implementation of a Stepmania server",
 
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
 
     include_package_data=True,
 

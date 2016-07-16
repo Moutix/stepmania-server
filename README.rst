@@ -13,9 +13,9 @@ Stepmania Server
     * - package
       - |version| |supported-versions| |license|
 
-.. |docs| image:: https://readthedocs.org/projects/p
-    :target: https://readthedocs.org/projects/ningirsu/stepmania-server
+.. |docs| image:: https://readthedocs.org/projects/stepmania-server/badge/?version=latest
     :alt: Documentation Status
+    :target: https://stepmania-server.readthedocs.io/
 
 .. |travis| image:: https://travis-ci.org/ningirsu/stepmania-server.svg?branch=master
     :alt: Travis-CI Build Status

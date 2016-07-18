@@ -13,14 +13,16 @@ class StepmaniaConn(object):
 
     def __init__(self, serv, ip, port):
         self.mutex = Lock()
+
         self.ip = ip
         self.port = port
+
         self.users = []
         self.room = None
-        self.logged_users = []
         self.songs = {}
         self.song = None
         self.songstats = {0: {"data": []}, 1: {"data": []}}
+
         self.wait_start = False
         self.ingame = False
 

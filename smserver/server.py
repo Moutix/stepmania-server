@@ -9,7 +9,8 @@ from smserver.authplugin import AuthPlugin
 from smserver.database import DataBase
 from smserver.watcher import StepmaniaWatcher
 from smserver import conf, logger, models, sdnotify
-from smserver.smutils import smthread
+from smserver.chathelper import with_color
+from smserver.smutils import smthread, smpacket
 
 def with_session(func):
     """ Wrap the function with a sqlalchemy session.
@@ -262,6 +263,38 @@ class StepmaniaServer(smthread.StepmaniaServer):
         """
 
         self.sendroom(room.id, room.nsccuul)
+
+    def send_message(self, message, room=None, conn=None, func=None):
+        """
+            Send a chat message (default to all)
+
+            :param str message: The message to send.
+            :param room: If specified send to this room
+            :param conn: If specified send to this connection
+            :param func: If specified use this function to send the message
+            :type room: smserver.models.room.Room
+            :type conn: smserver.smutils.smconn.StepmaniaConn
+        """
+
+
+        packet = smpacket.SMPacketServerNSCCM()
+        packet["message"] = "[%s] " % datetime.datetime.now().strftime("%X")
+
+        if conn:
+            packet["message"] += message
+            conn.send(packet)
+            return
+
+        if not room:
+            packet["message"] += message
+            self.sendall(packet)
+            return
+
+        packet["message"] += "#%s %s" % (with_color(room.name), message)
+        if not func:
+            func = self.sendroom
+
+        func(room.id, packet)
 
     def _init_controllers(self, force_reload=False):
         controllers = {}

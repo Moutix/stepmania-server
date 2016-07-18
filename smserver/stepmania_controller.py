@@ -269,46 +269,32 @@ class StepmaniaController(object):
         """
             Send a chat message
 
-            :param message: The message to send.
-            :param to: Send the message to ? (room, all, me). Default to room
-            :param room_id: A specific room. Default to the room connection.
-            :type message: str
-            :type to: str
-            :type room_id: int
-            :return: nothing
+            :param str message: The message to send.
+            :param str to: Send the message to ? (room, all, me). Default to room
+            :param int room_id: A specific room. Default to the room connection.
         """
 
-        func = {
-            "me": self.send,
-            "all": self.sendall,
-            "room": self.sendroom
-        }.get(to)
-
-        if func == self.sendroom or (not func and self.room) or room_id:
-            room = self.session.query(models.Room).get(room_id) if room_id else self.room
-            message = "[%s] #%s %s" % (datetime.now().strftime("%X"), with_color(room.name), message)
-            packet = smpacket.SMPacketServerNSCCM(message=message)
-            self.sendroom(room.id, packet)
+        if to == "me":
+            self.server.send_message(message, conn=self.conn)
             return
 
-        message = "[%s] %s" % (datetime.now().strftime("%X"), message)
-        packet = smpacket.SMPacketServerNSCCM(message=message)
-
-        if func:
-            func(packet)
+        if to == "all":
+            self.server.send_message(message)
             return
 
-        self.server.sendall(packet)
+        if not room_id:
+            room = self.room
+        else:
+            room = self.session.query(models.Room).get(room_id)
+
+        self.server.send_message(message, room)
 
     def send_user_message(self, message, to=None):
         """
             Same as send_message but prepend the user repr to the message
 
-            :param message: The message to send.
-            :param to: Send the message to ? (room, all, me). Default to room
-            :type message: str
-            :type to: str
-            :return: nothing
+            :param str message: The message to send.
+            :param str to: Send the message to ? (room, all, me). Default to room
         """
 
         self.send_message(

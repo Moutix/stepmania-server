@@ -91,7 +91,7 @@ setup(
 
     zipfile=None,
 
-    license="MSI",
+    license="MIT",
 
     data_files=[(conf_dir, ['cfg/conf.yml.orig'])],
 )

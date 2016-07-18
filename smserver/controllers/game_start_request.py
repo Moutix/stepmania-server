@@ -55,7 +55,7 @@ class StartGameRequestController(StepmaniaController):
 
             self.conn.wait_start = True
 
-        for player in self.server.room_connections(self.room.id):
+        for player in self.server.player_connections(self.room.id):
             with player.mutex:
                 if player.wait_start is False:
                     self.log.debug("Room %s waiting for other player to start the game" % self.room.name)
@@ -65,14 +65,8 @@ class StartGameRequestController(StepmaniaController):
 
     @staticmethod
     def launch_song(room, song, server):
-        session = object_session(room)
         room.active_song = song
         room.ingame = True
-        game = models.Game(room_id=room.id, song_id=song.id)
-
-        session.add(game)
-        session.commit()
-
         server.log.info("Room %s start a new song %s" % (room.name, song.fullname))
         server.send_user_list(room)
 

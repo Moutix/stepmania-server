@@ -65,11 +65,11 @@ class StepmaniaServer(object):
 
             yield conn
 
-    def player_connections(self, room_id, song_id):
-        """ Iterator of all the connections in a given room which have the specified song """
+    def player_connections(self, room_id):
+        """ Iterator of all the connection's player (not spectator) """
 
         for conn in self.room_connections(room_id):
-            if conn.songs.get(song_id) is False:
+            if conn.spectate is True:
                 continue
 
             yield conn
@@ -84,15 +84,52 @@ class StepmaniaServer(object):
             yield conn
 
     def sendall(self, packet):
+        """
+            Send a packet to all the connections in the server
+
+            :param packet: The packet to send
+            :type packet: smserver.smutils.smpacket.SMPacket
+        """
+
         for conn in self._connections:
             conn.send(packet)
 
     def sendroom(self, room_id, packet):
+        """
+            Send a packet to all the connections in the room
+
+            :param int room_id: Room_id where to send the packet
+            :param packet: The packet to send
+            :type packet: smserver.smutils.smpacket.SMPacket
+        """
+
         for conn in self.room_connections(room_id):
             conn.send(packet)
 
-    def sendplayers(self, room_id, packet):
+    def sendingame(self, room_id, packet):
+        """
+            Send a packet to all the connections currently playing in the room
+
+            :param int room_id: Room_id where to send the packet
+            :param packet: The packet to send
+            :type packet: smserver.smutils.smpacket.SMPacket
+        """
+
         for conn in self.ingame_connections(room_id):
+            conn.send(packet)
+
+    def sendplayers(self, room_id, packet):
+        """
+            Send a packet to all the player's connections in the room
+
+            (not to spectator player)
+
+            :param int room_id: Room_id where to send the packet
+            :param packet: The packet to send
+            :type packet: smserver.smutils.smpacket.SMPacket
+        """
+
+        for conn in self.player_connections(room_id):
             conn.send(packet)
 
     def on_disconnect(self, serv):

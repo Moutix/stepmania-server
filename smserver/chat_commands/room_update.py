@@ -53,3 +53,18 @@ class ChatRoomHidden(ChatPlugin):
         serv.session.commit()
         serv.send_message(msg)
 
+class ChatSpectate(ChatPlugin):
+    command = "spectate"
+    helper = "Spectator mode"
+    room = True
+
+    def __call__(self, serv, message):
+        if serv.conn.spectate:
+            msg = "You are no more in spectator mode"
+            serv.conn.spectate = False
+        else:
+            msg = "You are now in spectator mode"
+            serv.conn.spectate = True
+
+        serv.send_message(msg)
+

@@ -237,7 +237,7 @@ class StepmaniaController(object):
 
         self.server.sendroom(room, packet)
 
-    def sendplayers(self, room_id, packet):
+    def sendingame(self, room_id, packet):
         """
             Send the specified packet to all the players in the specified room
             which have send an NSCGSR packet
@@ -249,7 +249,21 @@ class StepmaniaController(object):
             :return: nothing
         """
 
-        self.server.sendroom(room_id, song_id, packet)
+        self.server.sendingame(room_id, packet)
+
+    def sendplayers(self, room_id, packet):
+        """
+            Send the specified packet to all the players in the specified room
+            (Not spectator)
+
+            :param room_id: The ID of the room
+            :param packet: The packet to send
+            :type room_id: int
+            :type packet: smserver.smutils.smpacket.SMPacket
+            :return: nothing
+        """
+
+        self.server.sendplayers(room_id, packet)
 
     def send_message(self, message, to=None, room_id=None):
         """

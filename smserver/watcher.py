@@ -106,7 +106,7 @@ class StepmaniaWatcher(Thread):
 
     @periodicmethod(2)
     def check_end_game(self, session):
-        for room in session.query(models.Room).filter_by(ingame=True):
+        for room in session.query(models.Room).filter_by(status=2):
             if self.room_still_in_game(room):
                 continue
 
@@ -117,14 +117,21 @@ class StepmaniaWatcher(Thread):
             game = room.last_game
             game.end_at = datetime.datetime.now()
             game.active = False
-            self.server.sendroom(room.id, game.scoreboard_packet)
+            self.server.sendplayers(room.id, game.scoreboard_packet)
 
     def room_still_in_game(self, room):
-        for conn in self.server.room_connections(room.id):
+        for conn in self.server.player_connections(room.id):
             if conn.ingame is True:
                 return True
 
-        return False
+        if room.ingame:
+            return False
+
+        # The game is not starded yet, but no NSCGSR have been sent
+        if datetime.datetime.now() - room.last_game.created_at > datetime.timedelta(seconds=3):
+            return False
+
+        return True
 
     @periodicmethod(1)
     def scoreboard_update(self, session):
@@ -133,7 +140,7 @@ class StepmaniaWatcher(Thread):
 
     def send_scoreboard(self, room, session):
         scores = []
-        for conn in self.server.room_connections(room.id):
+        for conn in self.server.ingame_connections(room.id):
             with conn.mutex:
                 for user in models.User.get_from_ids(conn.users, session):
                     if not user.online:
@@ -173,19 +180,21 @@ class StepmaniaWatcher(Thread):
 
         packet["section"] = 0
         packet["options"] = [models.User.user_index(score["user"].id, room.id, session) for score in scores]
-        self.server.sendroom(room.id, packet)
+        self.server.sendingame(room.id, packet)
 
         packet["section"] = 1
         packet["options"] = [score["combo"] for score in scores]
-        self.server.sendroom(room.id, packet)
+        self.server.sendingame(room.id, packet)
 
         packet["section"] = 2
         packet["options"] = [score["grade"] for score in scores]
-        self.server.sendroom(room.id, packet)
+        self.server.sendingame(room.id, packet)
 
     @periodicmethod(1)
     def send_game_start(self, session):
-        conn_in_room = itertools.filterfalse(lambda x: x.room is None, self.server.connections)
+        conn_in_room = itertools.filterfalse(
+            lambda x: x.room is None or x.spectate is True,
+            self.server.connections)
 
         conns = sorted(conn_in_room, key=lambda x: x.room)
         for room_id, room_conns in itertools.groupby(conns, key=lambda x: x.room):

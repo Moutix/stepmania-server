@@ -25,6 +25,7 @@ class StepmaniaConn(object):
 
         self.wait_start = False
         self.ingame = False
+        self.spectate = False
 
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None

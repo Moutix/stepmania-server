@@ -38,7 +38,7 @@ class RequestStartGameController(StepmaniaController):
             self.conn.songs[song.id] = True
 
         if self.conn.song == song.id:
-            self.launch_song(song)
+            self.request_launch_song(song)
             return
 
         self.send_message("%s select %s which have been played %s times.%s" % (
@@ -56,7 +56,7 @@ class RequestStartGameController(StepmaniaController):
             self.conn.song = song.id
             self.conn.songs[song.id] = True
 
-        self.sendroom(self.room.id, smpacket.SMPacketServerNSCRSG(
+        self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
             usage=1,
             song_title=song.title,
             song_subtitle=song.subtitle,
@@ -69,7 +69,7 @@ class RequestStartGameController(StepmaniaController):
 
             return self.conn.songs[song.id]
 
-    def launch_song(self, song):
+    def request_launch_song(self, song):
         if self.room.status == 2 and self.room.active_song_id:
             self.send_message(
                 "Room %s is already playing %s." % (
@@ -80,10 +80,16 @@ class RequestStartGameController(StepmaniaController):
             )
             return
 
+        game = models.Game(room_id=self.room.id, song_id=song.id)
+
+        self.session.add(game)
+        self.session.commit()
+
         self.send_message("New game started: %s" % with_color(song.fullname))
+
         self.room.status = 2
         self.room.active_song = song
-        self.sendroom(self.room.id, smpacket.SMPacketServerNSCRSG(
+        self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
             usage=2,
             song_title=song.title,
             song_subtitle=song.subtitle,

@@ -9,6 +9,7 @@ import socket
 
 from smserver import models
 from smserver.smutils import smpacket
+from smserver.chathelper import with_color
 from smserver.controllers.game_start_request import StartGameRequestController
 
 class PeriodicMethods(object):
@@ -118,6 +119,10 @@ class StepmaniaWatcher(Thread):
             game.end_at = datetime.datetime.now()
             game.active = False
             self.server.sendplayers(room.id, game.scoreboard_packet)
+            self.server.send_message(
+                "Game ended %s" % with_color(room.active_song.fullname),
+                room
+            )
 
     def room_still_in_game(self, room):
         for conn in self.server.player_connections(room.id):

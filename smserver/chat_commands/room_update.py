@@ -61,10 +61,16 @@ class ChatSpectate(ChatPlugin):
     def __call__(self, serv, message):
         if serv.conn.spectate:
             msg = "You are no more in spectator mode"
+            for user in serv.active_users:
+                user.status = 1
+
             serv.conn.spectate = False
         else:
             msg = "You are now in spectator mode"
             serv.conn.spectate = True
+            for user in serv.active_users:
+                user.status = 0
 
         serv.send_message(msg)
+        serv.server.send_user_list(serv.room)
 

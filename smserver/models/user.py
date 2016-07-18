@@ -17,7 +17,7 @@ class AlreadyConnectError(Exception):
     pass
 
 class UserStatus(enum.Enum):
-    unknown         = 0
+    spectator       = 0
     room_selection  = 1
     music_selection = 2
     option          = 3
@@ -197,6 +197,7 @@ class User(schema.Base):
         for user in users:
             user.pos = None
             user.online = False
+            user.status = UserStatus.room_selection.value
             user.room_id = None
 
         session.commit()

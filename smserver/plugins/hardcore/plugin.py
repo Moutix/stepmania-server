@@ -22,7 +22,7 @@ class HardcoreChatPlugin(chatplugin.ChatPlugin):
 
 
     command = "hardcore"
-    helper = "Change toom mode to hardcore"
+    helper = "Change room mode to hardcore"
     room = True
     permission = ability.Permissions.change_room_settings
 
@@ -134,6 +134,10 @@ class HardcorePlugin(pluginmanager.StepmaniaPlugin):
 
 
 class HardcoreStartControllerPlugin(stepmania_controller.StepmaniaController):
+    """
+        Custom controller for Game Start Request packet
+    """
+
     command = smpacket.SMClientCommand.NSCGSR
     require_login = True
 

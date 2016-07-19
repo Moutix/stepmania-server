@@ -12,7 +12,7 @@ class Permissions(Enum):
     unban_user = 5
     set_op = 5
     set_owner = 10
-    set_voice = 1
+    set_voice = 5
 
 class Ability(object):
     @staticmethod

@@ -53,7 +53,7 @@ class EnterRoomController(StepmaniaController):
         precedent_room = self.room
 
         self.conn.room = room.id
-        self._send_room_resume(room)
+        self.send_room_resume(self.server, self.conn, room)
         for user in self.active_users:
             if precedent_room:
                 self.send_message(
@@ -78,16 +78,41 @@ class EnterRoomController(StepmaniaController):
 
         self.server.send_user_list(room)
 
-    def _send_room_resume(self, room):
-        players = room.online_users
+    @staticmethod
+    def send_room_resume(server, conn, room):
+        """
+            Send the room welcome information.
 
-        self.send_message("Welcome to %s room, created at %s" % (with_color(room.name), room.created_at), to="me")
-        self.send_message(
+            :param server: Main server
+            :param conn: Connection target
+            :param room: Room to be resume
+            :type server: smserver.server.StepmaniaServer
+            :type conn: smserver.smutils.smconn.StepmaniaConn
+            :type room: smserver.models.room.Room
+        """
+
+        messages = []
+
+        messages.append(
+            "Room %s (%s), created at %s" % (
+                with_color(room.name),
+                room.mode if room.mode else "normal",
+                room.created_at
+            )
+        )
+
+        messages.append(
             "%s/%s players online. Moderators: %s" % (
                 room.nb_players,
                 room.max_users,
-                ", ".join(with_color(player.fullname(room.id)) for player in players if player.level(room.id) > 2)),
-            to="me")
+                ", ".join(with_color(player.fullname(room.id))
+                          for player in room.moderators)
+            )
+        )
+
         if room.motd:
-            self.send_message(room.motd, to="me")
+            messages.append(room.motd)
+
+        for message in messages:
+            server.send_message(message, conn=conn)
 

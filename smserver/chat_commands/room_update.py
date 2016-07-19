@@ -3,6 +3,7 @@
 
 from smserver import ability
 from smserver.chatplugin import ChatPlugin
+from smserver.controllers.enter_room import EnterRoomController
 
 class ChatMaxUsers(ChatPlugin):
     command = "maxusers"
@@ -73,4 +74,13 @@ class ChatSpectate(ChatPlugin):
 
         serv.send_message(msg)
         serv.server.send_user_list(serv.room)
+
+class ChatRoomInfo(ChatPlugin):
+    command = "info"
+    helper = "Room resume"
+    room = True
+
+    def __call__(self, serv, message):
+        EnterRoomController.send_room_resume(serv.server, serv.conn, serv.room)
+
 

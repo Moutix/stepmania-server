@@ -28,7 +28,7 @@ class HardcoreChatPlugin(chatplugin.ChatPlugin):
 
     def __call__(self, serv, message):
         if serv.room.mode == "hardcore":
-            serv.room.mode = None
+            serv.room.mode = "normal"
             msg = "The room is now in normal mode"
         else:
             serv.room.mode = "hardcore"

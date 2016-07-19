@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#usr/bin/env python3
 # -*- coding: utf8 -*-
 
 import datetime
@@ -25,7 +25,7 @@ class Room(schema.Base):
     ingame         = Column(Boolean, default=False)
     hidden         = Column(Boolean, default=False)
 
-    mode           = Column(String(255))
+    mode           = Column(String(255), default="normal")
 
     status         = Column(Integer, default=0)
     type           = Column(Integer, default=1)
@@ -84,6 +84,20 @@ class Room(schema.Base):
                 .query(user.User)
                 .filter_by(online=True, room_id=self.id)
                 .all())
+
+    @property
+    def moderators(self):
+        """
+            Get all the moderators in this room
+        """
+
+        return (object_session(self)
+                .query(user.User)
+                .join(privilege.Privilege)
+                .filter(
+                    privilege.Privilege.room_id == self.id,
+                    privilege.Privilege.level >= 5
+                ))
 
     @property
     def room_info(self):

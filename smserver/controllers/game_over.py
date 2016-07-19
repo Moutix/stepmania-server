@@ -33,7 +33,7 @@ class GameOverController(StepmaniaController):
 
             self.send_message(
                 "%s gained %s XP!" % (
-                    with_color(user.fullname(user.room_id)),
+                    user.fullname_colored(user.room_id),
                     with_color(xp, "aaaa00")
                     ),
                 to="me")

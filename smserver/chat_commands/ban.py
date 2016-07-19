@@ -19,7 +19,7 @@ class ChatBan(ChatPlugin):
             return
 
         if user.level(serv.conn.room) > serv.level(serv.conn.room):
-            serv.send_message("Not authorize to ban %s" % with_color(user.fullname(serv.conn.room)), to="me")
+            serv.send_message("Not authorize to ban %s" % user.fullname_colored(serv.conn.room), to="me")
             return
 
         models.Ban.ban(serv.session, user_id=user.id, room_id=serv.conn.room)
@@ -27,7 +27,7 @@ class ChatBan(ChatPlugin):
             if user.id in conn.users:
                 conn.room = None
 
-        serv.send_message("User %s has been ban from this room" % with_color(user.fullname(serv.conn.room)))
+        serv.send_message("User %s has been ban from this room" % user.fullname_colored(serv.conn.room))
         user.room = None
         serv.server.send_user_list(serv.room)
 
@@ -44,5 +44,5 @@ class ChatUnBan(ChatPlugin):
             return
 
         models.Ban.unban(serv.session, user_id=user.id, room_id=serv.conn.room)
-        serv.send_message("User %s has been unban from this room" % with_color(user.fullname(serv.conn.room)))
+        serv.send_message("User %s has been unban from this room" % user.fullname_colored(serv.conn.room))
 

@@ -35,7 +35,7 @@ class ChatUserListing(ChatPlugin):
         for user in users:
             serv.send_message(
                 "%s (in %s)" % (
-                    with_color(user.fullname(serv.conn.room)),
+                    user.fullname_colored(serv.conn.room),
                     user.enum_status.name),
                 to="me")
 

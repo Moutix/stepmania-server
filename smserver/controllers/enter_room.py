@@ -35,7 +35,7 @@ class EnterRoomController(StepmaniaController):
         for user in self.active_users:
             if models.Ban.is_ban(self.session, user_id=user.id, room_id=room.id):
                 self.log.info("Ban player %s fail to enter in room %s" % (user.name, room.name))
-                self.send_message("Player %s is ban from this room." % (with_color(user.fullname())), to="me")
+                self.send_message("Player %s is ban from this room." % (user.fullname_colored()), to="me")
                 return
 
         if room.nb_players >= room.max_users:
@@ -58,7 +58,7 @@ class EnterRoomController(StepmaniaController):
             if precedent_room:
                 self.send_message(
                     "Player %s leave the room" % (
-                        with_color(user.fullname(precedent_room.id))
+                        user.fullname_colored(precedent_room.id)
                     ),
                     room_id=precedent_room.id
                 )
@@ -69,7 +69,7 @@ class EnterRoomController(StepmaniaController):
 
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
             self.send_message("%s joined the room" % (
-                with_color(user.fullname(room.id))
+                user.fullname_colored(room.id)
             ))
 
 
@@ -105,7 +105,7 @@ class EnterRoomController(StepmaniaController):
             "%s/%s players online. Moderators: %s" % (
                 room.nb_players,
                 room.max_users,
-                ", ".join(with_color(player.fullname(room.id))
+                ", ".join(player.fullname_colored(room.id)
                           for player in room.moderators)
             )
         )

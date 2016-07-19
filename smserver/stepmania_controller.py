@@ -154,7 +154,7 @@ class StepmaniaController(object):
             :rtype: str
         """
 
-        return "%s" % " & ".join(with_color(user.fullname(room_id)) for user in self.active_users)
+        return "%s" % " & ".join(user.fullname_colored(room_id) for user in self.active_users)
 
     def level(self, room_id=None):
         """

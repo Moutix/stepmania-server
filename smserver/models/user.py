@@ -8,6 +8,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, f
 from sqlalchemy.orm import relationship, reconstructor, object_session
 
 from smserver.models import schema
+from smserver.chathelper import with_color
 from smserver.models.privilege import Privilege
 from smserver import ability
 
@@ -69,9 +70,23 @@ class User(schema.Base):
         return UserStatus(self.status)
 
     def fullname(self, room_id=None):
+        """ Return user name with level prefix (~, &, ...) """
+
         return "%s%s" % (
             self._level_to_symbol(self.level(room_id)),
             self.name)
+
+    def fullname_colored(self, room_id=None):
+        """ Retun user fullname with chat_color """
+
+        color = None
+        if not self.online:
+            color = "141414"
+
+        if self.room_id != room_id:
+            color = "313131"
+
+        return with_color(message=self.fullname(room_id), color=color)
 
     def can(self, action, room_id=None):
         return ability.Ability.can(action, self.level(room_id))

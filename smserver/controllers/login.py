@@ -92,4 +92,5 @@ class LoginController(StepmaniaController):
             to="me")
 
         self.send(models.Room.smo_list(self.session, self.active_users))
+        self.server.send_sd_running_status()
 

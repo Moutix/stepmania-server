@@ -8,7 +8,7 @@ from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
 from smserver.database import DataBase
 from smserver.watcher import StepmaniaWatcher
-from smserver import conf, logger, models, sdnotify
+from smserver import conf, logger, models, sdnotify, __version__
 from smserver.chathelper import with_color
 from smserver.smutils import smthread, smpacket
 
@@ -138,7 +138,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.watcher.start()
         self.sd_notify.ready()
-        self.sd_notify.status("Running")
+        self.send_sd_running_status()
 
         smthread.StepmaniaServer.start(self)
 
@@ -179,8 +179,25 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.log.info("Plugins reloaded")
 
-        self.sd_notify.status("Running")
+        self.send_sd_running_status()
         self.sd_notify.ready()
+
+    def send_sd_running_status(self):
+        """ Send running status to systemd """
+
+        with self.db.session_scope() as session:
+            nb_onlines = models.User.nb_onlines(session)
+
+        max_users = self.config.server.get("max_users", -1)
+
+        self.sd_notify.status(
+            "Running. SMServer v%s, started on %s. %s/%s users online" % (
+                __version__,
+                self.started_at.strftime("%x at %X"),
+                nb_onlines,
+                max_users if max_users > 0 else "--"
+            )
+        )
 
     @with_session
     def add_connection(self, session, conn):
@@ -190,6 +207,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             return
 
         smthread.StepmaniaServer.add_connection(self, conn)
+        self.send_sd_running_status()
 
     @with_session
     def on_packet(self, session, serv, packet):

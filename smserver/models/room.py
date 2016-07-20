@@ -42,6 +42,11 @@ class Room(schema.Base):
     created_at     = Column(DateTime, default=datetime.datetime.now)
     updated_at     = Column(DateTime, onupdate=datetime.datetime.now)
 
+    def __init__(self, **kwargs):
+        self._nb_players = None
+
+        schema.Base.__init__(self, **kwargs)
+
     @reconstructor
     def _init_on_load(self):
         self._nb_players = None

@@ -133,28 +133,22 @@ class StepmaniaController(object):
 
     def user_repr(self, room_id=None):
         """
-            A textual representation of the users connected on this connection.
+            Textual representation of the users connected on this connection.
 
-            :param room_id: The ID of the room
-            :type room_id: int
-            :return: A textual representations of the users name
-            :rtype: str
+            :param int room_id: The ID of the room
         """
 
-        return "%s" % " & ".join(user.fullname(room_id) for user in self.active_users)
+        return models.User.users_repr(self.active_users, room_id)
 
     def colored_user_repr(self, room_id=None):
         """
-            A colored textual representation of the users connected on this
+            Colored textual representation of the users connected on this
             connection. Use it when sending chat message
 
-            :param room_id: The ID of the room
-            :type room_id: int
-            :return: A colored textual representations of the users name
-            :rtype: str
+            :param int room_id: The ID of the room
         """
 
-        return "%s" % " & ".join(user.fullname_colored(room_id) for user in self.active_users)
+        return models.User.colored_users_repr(self.active_users, room_id)
 
     def level(self, room_id=None):
         """

@@ -197,6 +197,27 @@ class User(schema.Base):
 
         return 0
 
+
+    @staticmethod
+    def users_repr(users, room_id=None):
+        """
+            Textual representation of multiple users?
+
+            :param int room_id: The ID of the room
+        """
+
+        return "%s" % " & ".join(user.fullname(room_id) for user in users)
+
+    @staticmethod
+    def colored_users_repr(users, room_id=None):
+        """
+            Colored textual representation of multiple users.
+
+            :param int room_id: The ID of the room
+        """
+
+        return "%s" % " & ".join(user.fullname_colored(room_id) for user in users)
+
     @classmethod
     def disconnect(cls, user, session):
         user.online = False

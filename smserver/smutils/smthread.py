@@ -56,6 +56,15 @@ class StepmaniaServer(object):
         with self.mutex:
             self._connections.append(conn)
 
+    def find_connection(self, user_id):
+        """ Find the connection where a specific user is """
+
+        for conn in self.connections:
+            if user_id in conn.users:
+                return conn
+
+        return None
+
     def room_connections(self, room_id):
         """ Iterator of all the connections in a given room """
 

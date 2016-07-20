@@ -7,6 +7,7 @@ from smserver.smutils import smpacket
 from smserver.chathelper import with_color
 
 from smserver.stepmania_controller import StepmaniaController
+from smserver.controllers import enter_room
 from smserver import models
 
 class CreateRoomController(StepmaniaController):
@@ -31,6 +32,9 @@ class CreateRoomController(StepmaniaController):
 
         self.log.info("New room %s created by player %s" % (room.name, self.conn.ip))
 
+        if self.room:
+            self.server.leave_room(self.room, conn=self.conn)
+
         self.conn.room = room.id
         for user in self.active_users:
             user.room = room
@@ -40,4 +44,10 @@ class CreateRoomController(StepmaniaController):
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))
+
+        enter_room.EnterRoomController.send_room_resume(self.server, self.conn, room)
+        self.send_message(
+            "Welcome to your new room! Type /help for options", to="me"
+        )
+
 

@@ -83,4 +83,27 @@ class ChatRoomInfo(ChatPlugin):
     def __call__(self, serv, message):
         EnterRoomController.send_room_resume(serv.server, serv.conn, serv.room)
 
+class ChatDeleteRoom(ChatPlugin):
+    command = "delete"
+    helper = "Delete the current room"
+    room = True
+    permission = ability.Permissions.delete_room
+
+    def __call__(self, serv, message):
+        serv.send_message("!! %s delete this room !!" % serv.colored_user_repr(serv.conn.room))
+
+        room = serv.room
+
+        for conn in serv.server.room_connections(serv.conn.room):
+            serv.server.leave_room(room, conn=conn)
+
+        serv.session.delete(room)
+
+class ChatLeaveRoom(ChatPlugin):
+    command = "leave"
+    helper = "Leave the current room"
+    room = True
+
+    def __call__(self, serv, message):
+        serv.server.leave_room(serv.room, conn=serv.conn)
 

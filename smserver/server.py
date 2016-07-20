@@ -4,6 +4,8 @@
 import sys
 import datetime
 
+from sqlalchemy.orm import object_session
+
 from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
 from smserver.database import DataBase
@@ -264,15 +266,20 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         users = models.User.get_from_ids(serv.users, session)
         if not users:
-            self.log.info("Player %s disconnected" % serv.ip)
+            self.log.info("Player %s disconnected", serv.ip)
             return
 
         for user in users:
             models.User.disconnect(user, session)
-            self.log.info("Player %s disconnected" % user.name)
+            self.log.info("Player %s disconnected", user.name)
 
         if room_id:
             room = session.query(models.Room).get(room_id)
+            self.send_message(
+                "%s disconnected" % models.User.colored_users_repr(users, room_id),
+                room=room
+            )
+
             self.send_user_list(room)
 
     def send_user_list(self, room):
@@ -313,6 +320,57 @@ class StepmaniaServer(smthread.StepmaniaServer):
             func = self.sendroom
 
         func(room.id, packet)
+
+    def leave_room(self, room, user_id=None, conn=None):
+        """
+            Make a user leave a given room
+
+            :param room: Room where the user have to leave
+            :param int user_id: User id which leave the room
+            :param conn: Connection which leave the room
+            :type room: smserver.models.room.Room
+            :type conn: smserver.smutils.smconn.StepmaniaConnection
+        """
+
+        if not user_id and not conn or not room:
+            return
+
+        if not conn:
+            conn = self.find_connection(user_id)
+
+        if not conn or conn.room != room.id:
+            return
+
+        session = object_session(room)
+
+        users = models.User.get_from_ids(conn.users, session)
+
+        self.send_message(
+            "%s leave the room" % models.User.colored_users_repr(users, room.id),
+            room=room
+        )
+
+
+        conn.room = None
+        conn.song = None
+
+        for user in users:
+            user.room = None
+
+        self.log.info("%s leave the room %s", models.User.users_repr(users, room.id), room.name)
+        self.send_user_list(room)
+
+        return True
+
+    def disconnect_user(self, user_id):
+        """ Disconnect the given user """
+
+        connection = self.find_connection(user_id)
+        if not connection:
+            return
+
+        connection.close()
+        return True
 
     def _init_controllers(self, force_reload=False):
         controllers = {}

@@ -23,24 +23,7 @@ class EnterRoomController(StepmaniaController):
 
         room = models.Room.login(self.packet["room"], self.packet["password"], self.session)
 
-        if not room:
-            self.log.info("Player %s fail to enter in room %s" % (self.conn.ip, self.packet["room"]))
-            return
-
-        if models.Ban.is_ban(self.session, ip=self.conn.ip, room_id=room.id):
-            self.log.info("Ban ip %s fail to enter in room %s" % (self.conn.ip, room.name))
-            self.send_message("IP %s is ban from this room." % (with_color(self.conn.ip)), to="me")
-            return
-
-        for user in self.active_users:
-            if models.Ban.is_ban(self.session, user_id=user.id, room_id=room.id):
-                self.log.info("Ban player %s fail to enter in room %s" % (user.name, room.name))
-                self.send_message("Player %s is ban from this room." % (user.fullname_colored()), to="me")
-                return
-
-        if room.nb_players >= room.max_users:
-            self.log.info("Player %s can't enter in room %s, the room is full" % (user.name, room.name))
-            self.send_message("Room %s is full (%s/%s) players" % (with_color(room.name), room.nb_players, room.max_users), to="me")
+        if not self._can_enter_room(room):
             return
 
         self.send(smpacket.SMPacketServerNSSMONL(
@@ -50,19 +33,9 @@ class EnterRoomController(StepmaniaController):
         if self.conn.room == room.id:
             return
 
-        precedent_room = self.room
+        self.server.leave_room(self.room, conn=self.conn)
 
-        self.conn.room = room.id
-        self.send_room_resume(self.server, self.conn, room)
         for user in self.active_users:
-            if precedent_room:
-                self.send_message(
-                    "Player %s leave the room" % (
-                        user.fullname_colored(precedent_room.id)
-                    ),
-                    room_id=precedent_room.id
-                )
-
             user.room = room
             if not user.room_privilege(room.id):
                 user.set_level(room.id, 1)
@@ -70,13 +43,37 @@ class EnterRoomController(StepmaniaController):
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
             self.send_message("%s joined the room" % (
                 user.fullname_colored(room.id)
-            ))
+            ), room_id=room.id)
 
-
-        if precedent_room:
-            self.server.send_user_list(precedent_room)
+        self.conn.room = room.id
 
         self.server.send_user_list(room)
+        self.send_room_resume(self.server, self.conn, room)
+
+
+    def _can_enter_room(self, room):
+        if not room:
+            self.log.info(
+                "Player %s fail to enter in room %s" % (self.conn.ip, self.packet["room"]))
+            return False
+
+        if models.Ban.is_ban(self.session, ip=self.conn.ip, room_id=room.id):
+            self.log.info("Ban ip %s fail to enter in room %s" % (self.conn.ip, room.name))
+            self.send_message("IP %s is ban from this room." % (with_color(self.conn.ip)), to="me")
+            return False
+
+        for user in self.active_users:
+            if models.Ban.is_ban(self.session, user_id=user.id, room_id=room.id):
+                self.log.info("Ban player %s fail to enter in room %s" % (user.name, room.name))
+                self.send_message("Player %s is ban from this room." % (user.fullname_colored()), to="me")
+                return False
+
+        if room.nb_players >= room.max_users:
+            self.log.info("Player %s can't enter in room %s, the room is full" % (user.name, room.name))
+            self.send_message("Room %s is full (%s/%s) players" % (with_color(room.name), room.nb_players, room.max_users), to="me")
+            return False
+
+        return True
 
     @staticmethod
     def send_room_resume(server, conn, room):

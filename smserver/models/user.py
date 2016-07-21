@@ -8,7 +8,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, f
 from sqlalchemy.orm import relationship, reconstructor, object_session
 
 from smserver.models import schema
-from smserver.chathelper import with_color
+from smserver.chathelper import with_color, nick_color
 from smserver.models.privilege import Privilege
 from smserver import ability
 
@@ -80,7 +80,7 @@ class User(schema.Base):
     def fullname_colored(self, room_id=None):
         """ Retun user fullname with chat_color """
 
-        color = None
+        color = nick_color(self.name)
         if not self.online:
             color = "141414"
 

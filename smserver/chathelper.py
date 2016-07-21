@@ -69,7 +69,7 @@ def nick_color(nick):
         '005ad0'
 
         >>> nick_color("Hello!")
-        'f20c0c'
+        'f20c1a'
     """
     try:
         return STATIC_COLOR[nick.lower()]

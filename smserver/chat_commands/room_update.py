@@ -37,6 +37,19 @@ class ChatMOTD(ChatPlugin):
         serv.session.commit()
         serv.send_message("Room MOTD set to: %s" % message)
 
+
+class ChatDescription(ChatPlugin):
+    command = "description"
+    helper = "Update room description"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        serv.room.description = message
+        serv.session.commit()
+        serv.send_message("Room description set to: %s" % message)
+
+
 class ChatRoomHidden(ChatPlugin):
     command = "hide"
     helper = "Show/Hide the room"
@@ -53,6 +66,7 @@ class ChatRoomHidden(ChatPlugin):
 
         serv.session.commit()
         serv.send_message(msg)
+
 
 class ChatRoomFree(ChatPlugin):
     command = "free"
@@ -93,6 +107,7 @@ class ChatSpectate(ChatPlugin):
         serv.send_message(msg)
         serv.server.send_user_list(serv.room)
 
+
 class ChatRoomInfo(ChatPlugin):
     command = "info"
     helper = "Room resume"
@@ -100,6 +115,7 @@ class ChatRoomInfo(ChatPlugin):
 
     def __call__(self, serv, message):
         EnterRoomController.send_room_resume(serv.server, serv.conn, serv.room)
+
 
 class ChatDeleteRoom(ChatPlugin):
     command = "delete"
@@ -116,6 +132,7 @@ class ChatDeleteRoom(ChatPlugin):
             serv.server.leave_room(room, conn=conn)
 
         serv.session.delete(room)
+
 
 class ChatLeaveRoom(ChatPlugin):
     command = "leave"

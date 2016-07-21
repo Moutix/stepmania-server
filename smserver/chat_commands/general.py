@@ -39,3 +39,18 @@ class ChatUserListing(ChatPlugin):
                     user.enum_status.name),
                 to="me")
 
+class ChatTimestamp(ChatPlugin):
+    command = "timestamp"
+    helper = "Show timestamp"
+
+    def __call__(self, serv, message):
+        if serv.conn.chat_timestamp:
+            serv.conn.chat_timestamp = False
+            serv.send_message("Chat timestamp disabled", to="me")
+        else:
+            serv.send_message("Chat timestamp enabled", to="me")
+            serv.conn.chat_timestamp = True
+
+        for user in serv.active_users:
+            user.chat_timestamp = serv.conn.chat_timestamp
+

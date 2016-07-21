@@ -302,20 +302,17 @@ class StepmaniaServer(smthread.StepmaniaServer):
         """
 
 
-        packet = smpacket.SMPacketServerNSCCM()
-        packet["message"] = "[%s] " % datetime.datetime.now().strftime("%X")
+        packet = smpacket.SMPacketServerNSCCM(message=message)
 
         if conn:
-            packet["message"] += message
             conn.send(packet)
             return
 
         if not room:
-            packet["message"] += message
             self.sendall(packet)
             return
 
-        packet["message"] += "#%s %s" % (with_color(room.name), message)
+        packet["message"] = "#%s %s" % (with_color(room.name), message)
         if not func:
             func = self.sendroom
 

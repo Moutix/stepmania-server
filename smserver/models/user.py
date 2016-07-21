@@ -47,6 +47,7 @@ class User(schema.Base):
     stepmania_name    = Column(String(255))
     online            = Column(Boolean)
     status            = Column(Integer, default=1)
+    chat_timestamp    = Column(Boolean, default=False)
 
     room_id           = Column(Integer, ForeignKey('rooms.id'))
     room              = relationship("Room", back_populates="users")

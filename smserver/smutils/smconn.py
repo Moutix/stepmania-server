@@ -27,6 +27,8 @@ class StepmaniaConn(object):
         self.ingame = False
         self.spectate = False
 
+        self.chat_timestamp = False
+
         self.last_ping = datetime.datetime.now()
         self.stepmania_version = None
         self.stepmania_name = None
@@ -62,7 +64,13 @@ class StepmaniaConn(object):
         self._serv.on_packet(self, packet)
 
     def send(self, packet):
-        self.logger.debug("packet send to %s: %s" % (self.ip, packet))
+        if packet.command == smpacket.SMServerCommand.NSCCM and self.chat_timestamp:
+            packet["message"] = "[%s] %s" % (
+                datetime.datetime.now().strftime("%X"),
+                packet["message"]
+            )
+
+        self.logger.debug("packet send to %s: %s", self.ip, packet)
         self._send_data(packet.to_(self.ENCODING))
 
     def _send_data(self, data):

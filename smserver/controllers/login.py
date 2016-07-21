@@ -67,6 +67,8 @@ class LoginController(StepmaniaController):
 
         self.session.commit()
 
+        self.conn.chat_timestamp = user.chat_timestamp
+
         for online_user in self.users:
             if online_user.pos == self.packet["player_number"] and online_user.name != user.name:
                 online_user.pos = None

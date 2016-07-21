@@ -108,7 +108,7 @@ class StepmaniaController(object):
         """
 
         if not self._users:
-            self._users = models.User.get_from_ids(self.conn.users, self.session)
+            self._users = models.User.from_ids(self.conn.users, self.session)
 
         return self._users
 

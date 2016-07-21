@@ -264,7 +264,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         room_id = serv.room
         smthread.StepmaniaServer.on_disconnect(self, serv)
 
-        users = models.User.get_from_ids(serv.users, session)
+        users = models.User.online_from_ids(serv.users, session)
         if not users:
             self.log.info("Player %s disconnected", serv.ip)
             return
@@ -340,7 +340,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         session = object_session(room)
 
-        users = models.User.get_from_ids(conn.users, session)
+        users = models.User.online_from_ids(conn.users, session)
 
         self.send_message(
             "%s leave the room" % models.User.colored_users_repr(users, room.id),

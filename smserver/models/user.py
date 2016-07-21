@@ -142,13 +142,22 @@ class User(schema.Base):
         return cls.REPR[keys[-1]]
 
     @classmethod
-    def get_from_ids(cls, ids, session):
+    def from_ids(cls, ids, session):
         """ Return a list of user instance from the ids list """
 
         if not ids:
             return []
 
         return session.query(cls).filter(cls.id.in_(ids))
+
+    @classmethod
+    def online_from_ids(cls, ids, session):
+        """ Return a list of online users from the ids list """
+
+        if not ids:
+            return []
+
+        return session.query(cls).filter(cls.id.in_(ids)).filter_by(online=True)
 
     @classmethod
     def get_from_pos(cls, ids, pos, session):

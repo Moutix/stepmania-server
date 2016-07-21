@@ -20,15 +20,57 @@ STATIC_COLOR = {
 }
 
 def chat_color(color):
+    """
+        Stepmania chat color format
+
+        :param str color: Color in hex format
+
+        :Example:
+
+        >>> chat_color("cecece")
+        '|c0cecece'
+    """
+
+
     return "|c0%s" % color
 
 def with_color(message, color=None):
+    """
+        Add a color to a message, for Stepmania Chat.
+
+        If no color is provided, it guess the color with `nick_color`
+
+        :param str message: Message to color
+        :param str color: Color in hex format
+
+        :Example:
+
+        >>> with_color("Hello")
+        '|c0f20c0cHello|c0ffffff'
+
+        >>> with_color("Hello", "cecece")
+        '|c0cececeHello|c0ffffff'
+    """
+
     if not color:
         color = nick_color(message)
 
     return "%s%s%s" % (chat_color(color), message, chat_color("ffffff"))
 
 def nick_color(nick):
+    """
+        Generate a color from a given string.
+
+        :param str nick: Input string
+        :return: A hex color
+        :rtype: str
+
+        >>> nick_color("A")
+        '005ad0'
+
+        >>> nick_color("Hello!")
+        'f20c0c'
+    """
     try:
         return STATIC_COLOR[nick.lower()]
     except KeyError:
@@ -43,7 +85,5 @@ def nick_color(nick):
     return ''.join(["{:02x}".format(int(c*255)) for c in color])
 
 if __name__ == "__main__":
-    print(nick_color("ningirsu"))
-    print(nick_color("taemin"))
-    print(nick_color("jungkook"))
-    print(nick_color("paf"))
+    import doctest
+    doctest.testmod()

@@ -65,10 +65,8 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.config = config
 
         self.log = logger.Logger(config.logger).logger
-        self.log.debug(self.sd_notify)
 
         self.log.debug("Configuration loaded")
-        self.log.debug(self.sd_notify.available)
 
         self.log.debug("Init database")
         self.sd_notify.status("Init database")

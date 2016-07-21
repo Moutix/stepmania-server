@@ -54,6 +54,24 @@ class ChatRoomHidden(ChatPlugin):
         serv.session.commit()
         serv.send_message(msg)
 
+class ChatRoomFree(ChatPlugin):
+    command = "free"
+    helper = "Free/Unfree the room"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        if serv.room.free:
+            serv.room.free = False
+            msg = "The room is no more free"
+        else:
+            serv.room.free = True
+            msg = "The room is free"
+
+        serv.session.commit()
+        serv.send_message(msg)
+
+
 class ChatSpectate(ChatPlugin):
     command = "spectate"
     helper = "Spectator mode"

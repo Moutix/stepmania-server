@@ -62,6 +62,11 @@ rooms:
 #      description: description
 #      max_users: 255
 #      motd: Welcome to my room!
+#      free: True
+#      moderators:
+#          - user1
+#      owner:
+#          - user2
 
 auth:
     plugin: "database"

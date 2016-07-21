@@ -24,6 +24,7 @@ class Room(schema.Base):
     static         = Column(Boolean, default=False)
     ingame         = Column(Boolean, default=False)
     hidden         = Column(Boolean, default=False)
+    free           = Column(Boolean, default=True)
 
     mode           = Column(String(255), default="normal")
 
@@ -250,6 +251,11 @@ class Room(schema.Base):
 
             room.description = hroom.get("description", "")
             room.motd = hroom.get("motd")
+            if "free" in hroom:
+                room.free = hroom["free"]
+
+            if "hidden" in hroom:
+                room.hidden = hroom["hidden"]
 
             max_users = hroom.get("max_users", 255)
             room.max_users = max_users if max_users > 0 and max_users < 255 else 255
@@ -259,6 +265,23 @@ class Room(schema.Base):
 
             room.static = True
 
+            session.commit()
+
+            for name in hroom.get("moderators", []):
+                usr = session.query(user.User).filter_by(name=name).first()
+                if not usr:
+                    continue
+
+                usr.set_level(room.id, 5)
+
+            for name in hroom.get("owner", []):
+                usr = session.query(user.User).filter_by(name=name).first()
+                if not usr:
+                    continue
+
+                usr.set_level(room.id, 10)
+
             rooms.append(room)
 
         return rooms
+

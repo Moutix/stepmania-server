@@ -15,6 +15,7 @@ class Permissions(Enum):
     set_op = 5
     set_owner = 10
     set_voice = 5
+    start_game = 5
 
 class Ability(object):
     @staticmethod

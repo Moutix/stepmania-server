@@ -4,7 +4,7 @@
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver.chathelper import with_color
-from smserver import models
+from smserver import models, ability
 
 class RequestStartGameController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCRSG
@@ -70,6 +70,10 @@ class RequestStartGameController(StepmaniaController):
             return self.conn.songs[song.id]
 
     def request_launch_song(self, song):
+        if not self.room.free and self.cannot(ability.Permissions.start_game, self.room.id):
+            self.send_message("You don't have the permission to start a game", to="me")
+            return
+
         if self.room.status == 2 and self.room.active_song_id:
             self.send_message(
                 "Room %s is already playing %s." % (

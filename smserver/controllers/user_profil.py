@@ -25,6 +25,8 @@ class UserProfilController(StepmaniaController):
             user.online = True
             self.log.info("User %s connected" % user.name)
 
+        self.server.send_sd_running_status()
+
         if self.conn.room:
             self.server.send_user_list(self.room)
 

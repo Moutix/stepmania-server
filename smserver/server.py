@@ -261,6 +261,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         room_id = serv.room
         smthread.StepmaniaServer.on_disconnect(self, serv)
+        self.send_sd_running_status()
 
         users = models.User.online_from_ids(serv.users, session)
         if not users:

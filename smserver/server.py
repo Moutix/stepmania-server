@@ -163,7 +163,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             server.join()
 
     def reload(self):
-        """ Relaod configuration files """
+        """ Reload configuration files """
 
         self.sd_notify.reloading()
 

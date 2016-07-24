@@ -8,6 +8,21 @@ from sqlalchemy.orm import sessionmaker
 from smserver.models import schema
 
 class DataBase(object):
+    """
+        The DataBase class hold information about a given database.
+
+        It's a wrapper around SQLAlchemy database creation.
+        By default, it create a in memory sqlite database.
+
+        :param str type: Type of database (sqlite, mysql, postgresql, ...)
+        :param str database: Name of the database (file for sqlite)
+        :param str user: User of the database
+        :param str password: Password of the database
+        :param str host: Location of the database (localhost for local)
+        :param int port: Port of the database
+        :param str driver: Driver for communication with the database.
+    """
+
     def __init__(self, type="sqlite", database=None, user=None,
                  password=None, host=None, port=None, driver=None):
         self._type = type
@@ -23,6 +38,10 @@ class DataBase(object):
 
     @property
     def engine(self):
+        """
+            SQLAlchemy engine assosiate with the DataBase
+        """
+
         if self._engine:
             return self._engine
 
@@ -31,11 +50,18 @@ class DataBase(object):
 
     @property
     def session(self):
+        """
+            Return a new SQLAlchemy Session
+        """
+
         return sessionmaker(bind=self.engine)
 
     @contextmanager
     def session_scope(self):
-        """Provide a transactional scope around a series of operations."""
+        """
+            Provide a transactional scope around a series of operations.
+        """
+
         session = self.session()
         try:
             yield session
@@ -59,14 +85,26 @@ class DataBase(object):
         )
 
     def create_tables(self):
+        """
+            Create all the table in the DataBase if they don't exist.
+        """
+
         schema.Base.metadata.create_all(self.engine)
 
     def recreate_tables(self):
+        """
+            Drop and recreate all the table in the DataBase
+        """
+
         schema.Base.metadata.drop_all(self.engine)
         schema.Base.metadata.create_all(self.engine)
 
     @classmethod
     def test_db(cls):
+        """
+            Return a inmemory database
+        """
+
         db = cls()
         db.create_tables()
         return db

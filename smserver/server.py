@@ -81,20 +81,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             driver=config.database.get("driver"),
         )
 
-        if self.config.database["update_schema"]:
-            self._update_schema()
-        else:
-            self.db.create_tables()
-
-        with self.db.session_scope() as session:
-            models.User.disconnect_all(session)
-            models.Room.init_from_hashes(config.get("rooms", []), session)
-            models.Room.reset_room_status(session)
-            models.Ban.reset_ban(session, fixed=True)
-
-            if self.config.get("ban_ips"):
-                for ip in self.config.get("ban_ips", []):
-                    models.Ban.ban(session, ip, fixed=True)
+        self._init_database()
 
         self.log.debug("Load plugins...")
         self.sd_notify.status("Load plugins...")
@@ -367,6 +354,23 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         connection.close()
         return True
+
+    def _init_database(self):
+        if self.config.database["update_schema"]:
+            self._update_schema()
+        else:
+            self.db.create_tables()
+
+        with self.db.session_scope() as session:
+            models.User.disconnect_all(session)
+            models.Room.init_from_hashes(self.config.get("rooms", []), session)
+            models.Room.reset_room_status(session)
+            models.Ban.reset_ban(session, fixed=True)
+
+            if self.config.get("ban_ips"):
+                for ip in self.config.get("ban_ips", []):
+                    models.Ban.ban(session, ip, fixed=True)
+
 
     def _init_controllers(self, force_reload=False):
         controllers = {}

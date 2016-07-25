@@ -15,7 +15,9 @@ from smserver import ability
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
 
 class AlreadyConnectError(Exception):
-    pass
+    def __init__(self, user):
+        self.user = user
+        Exception()
 
 class UserStatus(enum.Enum):
     spectator       = 0
@@ -177,7 +179,7 @@ class User(schema.Base):
             session.add(user)
 
         if user.online:
-            raise AlreadyConnectError
+            raise AlreadyConnectError(user)
 
         user.online = True
         user.pos = pos

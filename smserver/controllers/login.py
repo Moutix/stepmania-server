@@ -35,19 +35,21 @@ class LoginController(StepmaniaController):
             ))
             return
 
-
-
         try:
             user = models.User.connect(self.packet["username"], self.packet["player_number"], self.session)
-        except models.user.AlreadyConnectError:
-            self.log.info("Player %s is already connected", self.packet["username"])
-            self.send(smpacket.SMPacketServerNSSMONL(
-                packet=smpacket.SMOPacketServerLogin(
-                    approval=1,
-                    text="User %s is already connected" % self.packet["username"]
-                )
-            ))
-            return
+        except models.user.AlreadyConnectError as err:
+            if err.user.id in self.conn.users:
+                user = err.user
+                user.pos = self.packet["player_number"]
+            else:
+                self.log.info("Player %s is already connected", self.packet["username"])
+                self.send(smpacket.SMPacketServerNSSMONL(
+                    packet=smpacket.SMOPacketServerLogin(
+                        approval=1,
+                        text="User %s is already connected" % self.packet["username"]
+                    )
+                ))
+                return
 
         if models.Ban.is_ban(self.session, user_id=user.id):
             self.log.info("Connection failed for ban user %s", self.packet["username"])

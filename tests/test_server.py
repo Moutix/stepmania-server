@@ -1,165 +1,41 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-import pytest
-
-from smserver import server, conf, models, stepmania_controller
+from smserver import models, stepmania_controller
 from smserver.smutils import smpacket
-from smserver.smutils.smconnections import smtcpsocket, websocket
 
-class ClientTestBinary(smtcpsocket.SocketConn):
-    def __init__(self, serv, ip, port):
-        smtcpsocket.SocketConn.__init__(self, serv, ip, port, None)
-        self.packet_send = []
+from helper import *
 
-    def send(self, packet):
-        self.packet_send.append(packet)
-        return packet
+server_test = get_server_test()
+client_bin = server_test.add_bin_connection()
+client_json = server_test.add_json_connection()
 
 
-class ClientTestJSON(websocket.WebSocketClient):
-    def __init__(self, serv, ip, port):
-        websocket.WebSocketClient.__init__(self, serv, ip, port, None, None, None)
-        self.packet_send = []
-
-    def send(self, packet):
-        self.packet_send.append(packet)
-        return packet
-
-class ServerTest(server.StepmaniaServer):
-    pass
-
-config = conf.Conf("--update_schema", "-c", "")
-
-server_test = ServerTest(config)
-
-client_bin = ClientTestBinary(server_test, "42.42.42.42", 4271)
-client_json = ClientTestJSON(server_test, "50.50.50.50", 7272)
-
-def smpacket_in(packet_class, list_packet):
-    for packet in list_packet:
-        if isinstance(packet, packet_class):
-            return True
-
-    return False
-
-def get_smpacket_in(packet_class, list_packet):
-    for packet in list_packet:
-        if isinstance(packet, packet_class):
-            return packet
-
-    return None
-
-
-@pytest.yield_fixture()
-def session():
-    with server_test.db.session_scope() as sess:
-        yield sess
-
-@pytest.fixture()
-def clean_connections():
-    for conn in server_test.connections:
-        conn.packet_send = []
-
-pytestmark = pytest.mark.usefixtures("clean_connections")
-
-def test_addclient():
-    server_test.add_connection(client_bin)
-    server_test.add_connection(client_json)
-
-    assert client_bin in server_test.connections
-    assert client_json in server_test.connections
-
-def test_hello_binary():
-    client_bin._on_data(smpacket.SMPacketClientNSCHello(name="stepmania-binary", version=40).binary)
-
-    assert client_bin.stepmania_name == "stepmania-binary"
-    assert client_bin.stepmania_version == 40
-
-    assert smpacket_in(smpacket.SMPacketServerNSCHello, client_bin.packet_send)
-    client_bin.packet_send = []
-
-def test_hello_json():
-    client_json._on_data(smpacket.SMPacketClientNSCHello(name="stepmania-json", version=41).json)
-
-    assert client_json.stepmania_name == "stepmania-json"
-    assert client_json.stepmania_version == 41
-
-    assert smpacket_in(smpacket.SMPacketServerNSCHello, client_json.packet_send)
-    client_json.packet_send = []
-
-def test_client_bin_sign_in(session):
-    """ First time login for clientbin-user1, the user is created """
-
+# login 2 users for client_bin and 1 user for client_json
+def test_login(session):
     client_bin._on_data(smpacket.SMPacketClientNSSMONL(
         packet=smpacket.SMOPacketClientLogin(username="clientbin-user1", password="test", player_number=0)
     ).binary)
-
-    user = session.query(models.User).filter_by(name="clientbin-user1").first()
-
-    assert user.online is True
-    assert user.last_ip == client_bin.ip
-    assert user.room is None
-    assert user.pos == 0
-
-    assert user.id in client_bin.users
-
-def test_client_json_sign_in(session):
-    """ First time login for clientjson-user1, the user is created """
-
+    client_bin._on_data(smpacket.SMPacketClientNSSMONL(
+        packet=smpacket.SMOPacketClientLogin(username="clientbin-user2", password="test", player_number=1)
+    ).binary)
     client_json._on_data(smpacket.SMPacketClientNSSMONL(
         packet=smpacket.SMOPacketClientLogin(username="clientjson-user1", password="test", player_number=0)
     ).json)
 
-    user = session.query(models.User).filter_by(name="clientjson-user1").first()
-
-    assert user.online is True
-    assert user.last_ip == client_json.ip
-    assert user.room is None
-    assert user.pos == 0
-
-    assert user.id in client_json.users
-
-def test_client_bin_sign_in_2(session):
-    """ First time login for clientbin-user2, the user is created """
-
-    client_bin._on_data(smpacket.SMPacketClientNSSMONL(
-        packet=smpacket.SMOPacketClientLogin(username="clientbin-user2", password="test", player_number=1)
-    ).binary)
-
-    user = session.query(models.User).filter_by(name="clientbin-user2").first()
-
+    user = session.query(models.User).filter_by(name="clientbin-user1").first()
     assert user.online is True
     assert user.last_ip == client_bin.ip
     assert user.room is None
-    assert user.pos == 1
+    assert user.pos == 0
 
     assert user.id in client_bin.users
 
-def test_client_bin_logout_user(session):
-    """ Player select only one profile, we disconnect the player 1"""
-
-    client_bin._on_data(smpacket.SMPacketClientNSCSU(player_id=0, nb_players=1, player_name="name").binary)
-
-    user2 = session.query(models.User).filter_by(name="clientbin-user2").first()
-    assert user2.online is False
-
-    user1 = session.query(models.User).filter_by(name="clientbin-user1").first()
-    assert user1.online is True
-
-def test_client_bin_reconnect_user(session):
-    """ Player select only two profile, we reconnect the offline player """
-
-    client_bin._on_data(smpacket.SMPacketClientNSCSU(player_id=0, nb_players=2, player_name="name").binary)
-
-    user2 = session.query(models.User).filter_by(name="clientbin-user2").first()
-    assert user2.online is True
-
-    user1 = session.query(models.User).filter_by(name="clientbin-user1").first()
-    assert user1.online is True
-
 def test_client_bin_room_creation(session):
     """ First room creation """
+
+    ctrl = stepmania_controller.StepmaniaController(server_test, client_bin, None, session)
+    print(ctrl.active_users)
 
     client_bin._on_data(smpacket.SMPacketClientNSSMONL(
         packet=smpacket.SMOPacketClientCreateRoom(

@@ -76,6 +76,9 @@ class LoginController(StepmaniaController):
                 online_user.pos = None
                 online_user.online = False
 
+        if not self.conn.users:
+            self._send_server_resume(nb_onlines, max_users)
+
         if user.id not in self.conn.users:
             self.conn.users.append(user.id)
 
@@ -85,6 +88,12 @@ class LoginController(StepmaniaController):
                 text="Player %s successfully login" % self.packet["username"]
             )
         ))
+
+
+        self.send(models.Room.smo_list(self.session, self.active_users))
+        self.server.send_sd_running_status()
+
+    def _send_server_resume(self, nb_onlines, max_users):
         self.send_message(self.server.config.server.get("motd", ""), to="me")
         self.send_message(
             "SMServer v%s, started on %s. %s/%s users online" % (
@@ -94,7 +103,4 @@ class LoginController(StepmaniaController):
                 max_users if max_users > 0 else "--"
                 ),
             to="me")
-
-        self.send(models.Room.smo_list(self.session, self.active_users))
-        self.server.send_sd_running_status()
 

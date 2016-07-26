@@ -82,6 +82,10 @@ class LoginController(StepmaniaController):
         if user.id not in self.conn.users:
             self.conn.users.append(user.id)
 
+        self.session.commit()
+
+        self.server.enter_room(self.room, conn=self.conn)
+
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=smpacket.SMOPacketServerLogin(
                 approval=0,

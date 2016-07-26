@@ -13,21 +13,33 @@ class UserProfilController(StepmaniaController):
             return
 
         for user in self.users:
-            if user.pos == self.packet["player_id"]:
-                user.online = True
+            if self.packet["nb_players"] == 1 and self.packet["player_id"] != user.pos:
+                self.disconnect_user(user)
                 continue
 
-            if self.packet["nb_players"] == 1:
-                user.online = False
-                self.log.info("User %s disconnected" % user.name)
-                continue
-
-            user.online = True
-            self.log.info("User %s connected" % user.name)
+            self.reconnect_user(user)
 
         self.server.send_sd_running_status()
 
         if self.conn.room:
             self.server.send_user_list(self.room)
 
+    def reconnect_user(self, user):
+        if user.online:
+            return
+
+        user.online = True
+        self.session.commit()
+        self.server.enter_room(self.room, conn=self.conn)
+        self.log.info("User %s connected" % user.name)
+
+    def disconnect_user(self, user):
+        if not user.online:
+            return
+
+        user.online = False
+        self.log.info("User %s disconnected" % user.name)
+        user.room = None
+        if self.room:
+            self.send_message("%s leave the room" % user.fullname_colored(self.room.id))
 

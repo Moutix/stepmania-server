@@ -304,6 +304,44 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         func(room.id, packet)
 
+    def enter_room(self, room, user_id=None, conn=None):
+        """
+            Make a user enter in a given room
+
+            :param room: Room where the user have to enter
+            :param int user_id: User id which enter the room
+            :param conn: Connection which enter the room
+            :type room: smserver.models.room.Room
+            :type conn: smserver.smutils.smconn.StepmaniaConnection
+        """
+
+        if not user_id and not conn or not room:
+            return
+
+        if not conn:
+            conn = self.find_connection(user_id)
+
+        session = object_session(room)
+
+        users = models.User.online_from_ids(conn.users, session)
+
+        for user in users:
+            if user.room == room:
+                continue
+
+            user.room = room
+            if not user.room_privilege(room.id):
+                user.set_level(room.id, 1)
+
+            self.log.info("Player %s enter in room %s", user.name, room.name)
+            self.send_message("%s joined the room" % (
+                user.fullname_colored(room.id)
+            ), room=room)
+
+        conn.room = room.id
+
+        self.send_user_list(room)
+
     def leave_room(self, room, user_id=None, conn=None):
         """
             Make a user leave a given room

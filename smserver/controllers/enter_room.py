@@ -34,22 +34,9 @@ class EnterRoomController(StepmaniaController):
             return
 
         self.server.leave_room(self.room, conn=self.conn)
+        self.server.enter_room(room, conn=self.conn)
 
-        for user in self.active_users:
-            user.room = room
-            if not user.room_privilege(room.id):
-                user.set_level(room.id, 1)
-
-            self.log.info("Player %s enter in room %s" % (user.name, room.name))
-            self.send_message("%s joined the room" % (
-                user.fullname_colored(room.id)
-            ), room_id=room.id)
-
-        self.conn.room = room.id
-
-        self.server.send_user_list(room)
         self.send_room_resume(self.server, self.conn, room)
-
 
     def _can_enter_room(self, room):
         if not room:

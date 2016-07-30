@@ -112,8 +112,7 @@ class SongStat(schema.Base):
 
         return "{difficulty}: {user_name} {grade} ({percentage}%) on {date}".format(
             difficulty=color_func(self.full_difficulty, color=nick_color(self.lit_difficulty)),
-            feet=self.feet,
-            user_name=color_func(self.user.fullname(room_id)),
+            user_name=self.user.fullname_colored(room_id) if color else self.user.fullname(room_id),
             grade=color_func(self.lit_grade),
             percentage=self.percentage,
             date=self.created_at.strftime("%x")

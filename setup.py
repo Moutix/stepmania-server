@@ -56,7 +56,7 @@ setup(
 
     classifiers=[
         'Programming Language :: Python',
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Stable',
         'License :: OSI Approved :: MIT License',
         'Topic :: Games/Entertainment',
         'Topic :: Games/Entertainment :: Arcade',

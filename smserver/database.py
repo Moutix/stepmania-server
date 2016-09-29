@@ -80,30 +80,28 @@ class DataBase(object):
 
             :Example:
             >>> from smserver.database import DataBase
-            >>> DataBase(database="tmp")._database_url
-            'sqlite:///tmp'
 
-            >>> DataBase(database="tmp")._database_url
-            'sqlite:///tmp'
+            >>> DataBase(database="stepmania.db")._database_url
+            sqlite:///stepmania.db
 
             >>> DataBase(
             ...     type="postgresql",
-            ...     user="user",
+            ...     user="u/se//r",
             ...     password="password",
             ...     host="127.0.0.1",
             ...     database="stepmania"
             ... )._database_url
-            'postgresql://user:password@127.0.0.1/stepmania'
+            postgresql://u%2Fse%2F%2Fr:***@127.0.0.1/stepmania
 
             >>> DataBase(
             ...     type="mysql",
-            ...     user="user",
+            ...     user="user@mail.fr",
             ...     password="password",
             ...     host="localhost",
             ...     database="stepmania",
             ...     driver="pymysql"
             ... )._database_url
-            'mysql+pymysql://user:password@localhost/stepmania'
+            mysql+pymysql://user%40mail.fr:***@localhost/stepmania
         """
 
         return URL(

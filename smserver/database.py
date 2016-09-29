@@ -3,6 +3,7 @@
 
 from contextlib import contextmanager
 from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import sessionmaker
 
 from smserver.models import schema
@@ -74,14 +75,44 @@ class DataBase(object):
 
     @property
     def _database_url(self):
-        return '{dialect}{driver}://{username}{password}{host}{port}{database}'.format(
-            dialect=self._type,
-            driver="+%s" % self._driver if self._driver else "",
-            username=self._user if self._user else "",
-            password=":%s" % self._password if self._password else "",
-            host="@%s" % self._host if self._host else "",
-            port=":%s" % self._port if self._port else "",
-            database="/%s" % self._database if self._database else ""
+        """
+            Return a SQLAlchemy URL to use when creating the engine
+
+            :Example:
+            >>> from smserver.database import DataBase
+            >>> DataBase(database="tmp")._database_url
+            'sqlite:///tmp'
+
+            >>> DataBase(database="tmp")._database_url
+            'sqlite:///tmp'
+
+            >>> DataBase(
+            ...     type="postgresql",
+            ...     user="user",
+            ...     password="password",
+            ...     host="127.0.0.1",
+            ...     database="stepmania"
+            ... )._database_url
+            'postgresql://user:password@127.0.0.1/stepmania'
+
+            >>> DataBase(
+            ...     type="mysql",
+            ...     user="user",
+            ...     password="password",
+            ...     host="localhost",
+            ...     database="stepmania",
+            ...     driver="pymysql"
+            ... )._database_url
+            'mysql+pymysql://user:password@localhost/stepmania'
+        """
+
+        return URL(
+            '%s%s' % (self._type, "+%s" % self._driver if self._driver else ""),
+            username=self._user,
+            password=self._password,
+            host=self._host,
+            database=self._database,
+            port=self._port
         )
 
     def create_tables(self):
@@ -109,3 +140,6 @@ class DataBase(object):
         db.create_tables()
         return db
 
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

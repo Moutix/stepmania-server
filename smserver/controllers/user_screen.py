@@ -18,6 +18,13 @@ class UserStatusController(StepmaniaController):
         }
 
         if self.packet["action"] == 7:
+            for user in self.active_users:
+                user.room = None
+            for room in self.session.query(models.Room):
+                if not room.online_users:
+                    self.server.log.info("No users deleteing Room: %s" % (room.name))
+                    self.session.delete(room)
+                    self.conn.room = None
             self.send(models.Room.smo_list(self.session, self.active_users))
 
         if not self.conn.spectate:
@@ -28,5 +35,6 @@ class UserStatusController(StepmaniaController):
                 ).value
 
         if self.conn.room:
+            self.server.log.debug("Connection Room_id:  %s" % (self.conn.room))
             self.server.send_user_list(self.room)
 

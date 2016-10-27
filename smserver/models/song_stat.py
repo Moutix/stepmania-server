@@ -140,7 +140,7 @@ class SongStat(schema.Base):
             percentage += nb*weight
             nb_note += nb*max_weight
 
-        return percentage/nb_note*100 if nb_note > 0 else 0
+        return round(percentage/nb_note*100, 2) if nb_note > 0 else 0
 
     def calc_xp(self, config=None):
         if not config:

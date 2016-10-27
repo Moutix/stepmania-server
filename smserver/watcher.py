@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
 from threading import Thread, Lock
@@ -72,7 +71,7 @@ class StepmaniaWatcher(Thread):
 
                     session.commit()
 
-            time.sleep(self.fps)
+            time.sleep(float(1)/self.fps)
 
         self.server.log.info("Successfully close thread: %s", self)
 

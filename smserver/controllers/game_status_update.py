@@ -40,6 +40,7 @@ class GameStatusUpdateController(StepmaniaController):
             if stats["stepid"] > 2 and stats["stepid"] < 9:
                 stats["stepid"] = self.get_stepid(stats["offset"]/2000.0 - 16.384)
             self.conn.songstats[self.packet["player_id"]]["data"].append(stats)
+            self.conn.songstats[self.packet["player_id"]]["offsetacum"] += stats["offset"]
 
     def beat_best_score(self):
         user = [user for user in self.users if user.pos == self.packet["player_id"]][0]

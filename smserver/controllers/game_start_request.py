@@ -40,14 +40,18 @@ class StartGameRequestController(StepmaniaController):
                     "difficulty": self.packet["first_player_difficulty"],
                     "options": self.packet["first_player_options"],
                     "best_score": song.best_score_value(self.packet["first_player_feet"]),
-                    "chartkey": self.packet["first_player_chartkey"]
+                    "chartkey": self.packet["first_player_chartkey"],
+                    "rate": self.packet["rate"],
+                    "offsetacum": 0
                    },
                 1: {"data": [],
                     "feet": self.packet["second_player_feet"],
                     "difficulty": self.packet["second_player_difficulty"],
                     "options": self.packet["second_player_options"],
                     "best_score": song.best_score_value(self.packet["second_player_feet"]),
-                    "chartkey": self.packet["second_player_chartkey"]
+                    "chartkey": self.packet["second_player_chartkey"],
+                    "rate": self.packet["rate"],
+                    "offsetacum": 0
                    },
                 "start_at": datetime.datetime.now(),
                 "options": self.packet["song_options"],

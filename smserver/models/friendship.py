@@ -30,3 +30,6 @@ class Friendship(schema.Base):
 
     def __repr__(self):
         return "<Friendship #%s (user1_id='%s', user2_id='%s')>" % (self.id, self.user1_id, self.user2_id)
+
+
+

@@ -14,6 +14,6 @@ class HelloController(StepmaniaController):
         self.conn.stepmania_name = self.packet["name"]
 
         self.conn.send(smpacket.SMPacketServerNSCHello(
-            version=128,
+            version=130,
             name=self.server.config.server["name"]))
 

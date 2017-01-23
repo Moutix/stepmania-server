@@ -50,6 +50,8 @@ class User(schema.Base):
     online            = Column(Boolean)
     status            = Column(Integer, default=1)
     chat_timestamp    = Column(Boolean, default=False)
+    show_offset    = Column(Boolean, default=False)
+    friend_notifications    = Column(Boolean, default=False)
 
     room_id           = Column(Integer, ForeignKey('rooms.id'))
     room              = relationship("Room", back_populates="users")

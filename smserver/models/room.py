@@ -127,7 +127,6 @@ class Room(schema.Base):
         """ Return the NSCCUUL packets listing users in the room """
 
         users = self.online_users
-
         return smpacket.SMPacketServerNSCCUUL(
             max_players=self.max_users,
             nb_players=len(users),

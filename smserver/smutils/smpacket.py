@@ -80,6 +80,7 @@ class SMClientCommand(SMCommand):
     NSCFormatted = 13
     NSCAttack    = 14
     XMLPacket    = 15
+    FLU    = 16
 
 class SMServerCommand(SMCommand):
     """
@@ -102,6 +103,7 @@ class SMServerCommand(SMCommand):
     NSCFormatted = 141
     NSCAttack    = 142
     XMLPacket    = 143
+    FLU    = 144
 
 class SMOCommand(ParentCommand):
     pass
@@ -1061,6 +1063,8 @@ class SMPacketClientNSCGSR(SMPacket):
         (SMPayloadType.NT, "second_player_options", None),
         (SMPayloadType.NT, "first_player_chartkey", None),
         (SMPayloadType.NT, "second_player_chartkey", None),
+        (SMPayloadType.NT, "second_player_chartkey", None),
+        (SMPayloadType.NT, "rate", None)
     ]
 
 
@@ -1311,6 +1315,36 @@ class SMPacketServerNSCPing(SMPacket):
     """
 
     command = SMServerCommand.NSCPing
+
+
+class SMPacketClientFLU(SMPacket):
+    """
+        Client command 16 (FLU)
+
+        RESERVED
+
+    """
+
+    command = SMClientCommand.FLU
+    _payload = [
+    ]
+
+class SMPacketServerNSCPing(SMPacket):
+    """
+        Server command 128 (Ping)
+
+        This command will cause client to respond with a PingR command
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCPing()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x80'
+    """
+
+    command = SMServerCommand.NSCPing
+
 
 class SMPacketServerNSCPingR(SMPacket):
     """
@@ -1671,6 +1705,29 @@ class SMPacketServerXMLPacket(SMPacket):
     ]
 
 
+
+class SMPacketServerFLU(SMPacket):
+    """
+        Server command 144 (FLU)
+
+        This packet contains friendlist data.
+
+        :param str usernames : usernames
+        :param str userstates : usertates
+    """
+
+    command = SMServerCommand.FLU
+    _payload = [
+        (SMPayloadType.INT, "nb_players", 1),
+        (SMPayloadType.LIST, "players", ("nb_players", [
+            (SMPayloadType.INT, "status", 1),
+            (SMPayloadType.NT, "name", None),
+            ])
+        )
+    ]
+
+
+
 def main():
     import doctest
     doctest.testmod()
@@ -1716,6 +1773,16 @@ def main():
         SMServerCommand.NSCCUUL,
         max_players=255,
         nb_players=5,
+        players=[{"status": 5, "name": "machin"}, {"status": 1, "name": "bidule"}]
+    )
+
+    print(packet)
+    print(packet.payload)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
+
+    packet = SMPacket.new(
+        SMServerCommand.FLU,
+        nb_players=2,
         players=[{"status": 5, "name": "machin"}, {"status": 1, "name": "bidule"}]
     )
 

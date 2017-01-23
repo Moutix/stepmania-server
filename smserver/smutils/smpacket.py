@@ -1059,6 +1059,8 @@ class SMPacketClientNSCGSR(SMPacket):
         (SMPayloadType.NT, "song_options", None),
         (SMPayloadType.NT, "first_player_options", None),
         (SMPayloadType.NT, "second_player_options", None),
+        (SMPayloadType.NT, "first_player_chartkey", None),
+        (SMPayloadType.NT, "second_player_chartkey", None),
     ]
 
 

@@ -6,8 +6,12 @@ import datetime
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
+from smserver.models import ranked_song
+from smserver.models.ranked_song import Skillsets
 
 from smserver.chathelper import with_color
+
+topsize = 50
 
 class GameOverController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCGON
@@ -23,9 +27,23 @@ class GameOverController(StepmaniaController):
         song_duration = datetime.datetime.now() - self.conn.songstats["start_at"]
 
         for user in self.active_users:
+            score = self.conn.songstats[user.pos]["data"][-1]["score"]
+
             with self.conn.mutex:
                 songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration)
 
+            rankedsong = self.session.query(models.RankedSong).filter_by(chartkey = self.conn.songstats[user.pos]["chartkey"]).first()
+            if rankedsong:
+                if rankedsong.taps == songstat.taps():
+                    for skillset in Skillsets:
+                        ssrs = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).order_by(models.SSR.ssr.desc()).all()
+                        rating = eval("rankedsong." + skillset.name)
+                        ssr = rating * score / 9300
+                        if len(ssrs) < topsize:
+                            self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id))
+                        elif ssrs[0].ssr < ssr:
+                            serv.session.delete(ssrs[0])
+                            self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id))
             xp = songstat.calc_xp(self.server.config.score.get("xpWeight"))
             user.xp += xp
 

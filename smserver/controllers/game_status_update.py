@@ -37,6 +37,8 @@ class GameStatusUpdateController(StepmaniaController):
             self.beat_best_score()
 
         with self.conn.mutex:
+            if stats["stepid"] > 2 and stats["stepid"] < 9:
+                stats["stepid"] = self.get_stepid(stats["offset"]/2000.0 - 16.384)
             self.conn.songstats[self.packet["player_id"]]["data"].append(stats)
 
     def beat_best_score(self):
@@ -51,3 +53,22 @@ class GameStatusUpdateController(StepmaniaController):
 
         self.sendroom(self.conn.room, smpacket.SMPacketServerNSCSU(message=message))
 
+
+    def get_stepid(self, offset):
+        smarv  = 0.02259;
+        sperf  = 0.04509;
+        sgreat = 0.09009;
+        sgood  = 0.13509;
+        sboo   = 0.18909;
+        if (offset < smarv) and (offset > (smarv * -1.0)):
+            return 8
+        elif (offset < sperf) and (offset > (sperf * -1.0)):
+            return 7
+        elif (offset < sgreat) and (offset > (sgreat * -1.0)):
+            return 6
+        elif (offset < sgood) and (offset > (sgood * -1.0)):
+            return 5
+        elif (offset < sboo) and (offset > (sboo * -1.0)):
+            return 4
+        elif (offset > sboo) or (offset < (sboo * -1.0)):
+            return 3

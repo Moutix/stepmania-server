@@ -189,6 +189,10 @@ class SongStat(schema.Base):
     def nb_notes(self):
         return sum(getattr(self, note, 0) for note in self.stepid.values())
 
+    @property
+    def taps(self):
+        return self.miss+self.flawless+self.bad+self.good+self.perfect+self.great
+
 
 class BinaryStats(SMPacket):
     _payload = [

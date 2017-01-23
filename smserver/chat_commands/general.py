@@ -3,6 +3,7 @@
 
 
 from smserver import models
+from smserver import smutils
 from smserver.chathelper import with_color
 from smserver.chatplugin import ChatPlugin
 
@@ -62,7 +63,9 @@ class AddFriend(ChatPlugin):
     helper = "Add friend"
 
     def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
+        user = models.User.from_ids(serv.conn.users, serv.session)
+        user = user[0]
+        #user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
         if not user:
             return
         newfriend = serv.session.query(models.User).filter_by(name=message).first()
@@ -79,20 +82,29 @@ class AddFriend(ChatPlugin):
             serv.session.add(models.Friendship(user1_id = user.id, user2_id = newfriend.id, state = 0))
             serv.send_message("Friend request sent to %s" % with_color(message), to="me")
         else:
-            for friendship in friendships.all():
-                if friendship.state == 1:
-                    serv.send_message("%s is already friends with you" % with_color(message), to="me")
-                    return
-                if friendship.state == 2:
+            friendships = friendships.all()
+            if len(friendships) != 1:
+                if friendship[0].state == 2:
                     if friendship.user1_id == user.id:
                         Unignore.__call__(self, serv, message)
-                    serv.send_message("Cant send %s a friend request" % with_color(message), to="me")
-                    return
-                if friendship.user1_id == user.id:
-                    serv.send_message("Already sent a friend request to %s" % with_color(message), to="me")
-                    return
-                friendship.state = 1
-                serv.send_message("Accepted friend request from %s" % with_color(message), to="me")
+                        friendship = friendships[1]
+                if friendship[1].state == 2:
+                    if friendship.user1_id == user.id:
+                        Unignore.__call__(self, serv, message)
+                        friendship = friendships[0]
+            else:
+                friendship = friendships[0]
+            if friendship.state == 1:
+                serv.send_message("%s is already friends with you" % with_color(message), to="me")
+                return
+            if friendship.state == 2:
+                serv.send_message("Cant send %s a friend request" % with_color(message), to="me")
+                return
+            if friendship.user1_id == user.id:
+                serv.send_message("Already sent a friend request to %s" % with_color(message), to="me")
+                return
+            friendship.state = 1
+            serv.send_message("Accepted friend request from %s" % with_color(message), to="me")
         serv.session.commit()
 
 
@@ -101,7 +113,9 @@ class Ignore(ChatPlugin):
     helper = "Ignore someone(Can't send friend requests or pm)"
 
     def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
+        user = models.User.from_ids(serv.conn.users, serv.session)
+        user = user[0]
+        #user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
         if not user:
             return
         newignore = serv.session.query(models.User).filter_by(name=message).first()
@@ -111,18 +125,25 @@ class Ignore(ChatPlugin):
         if newignore.name == user.name:
             serv.send_message("Cant ignore yourself", to="me")
             return
-        friendship = serv.session.query(models.Friendship).filter( \
-            ((models.Friendship.user1_id == user.id) & (models.Friendship.user2_id == newfriend.id)) |  \
-            (models.Friendship.user2_id == user.id) & (models.Friendship.user1_id == newfriend.id)).first()
+        friendships = serv.session.query(models.Friendship).filter( \
+            ((models.Friendship.user1_id == user.id) & (models.Friendship.user2_id == newignore.id)) |  \
+            (models.Friendship.user2_id == user.id) & (models.Friendship.user1_id == newignore.id))
+        friendship = friendships.first()
         if not friendship:
-            serv.session.add(models.Friendship(user1_id = user.id, user2_id = newfriend.id, state = 2))
+            serv.session.add(models.Friendship(user1_id = user.id, user2_id = newignore.id, state = 2))
             serv.send_message("%s ignored" % with_color(message), to="me")
         else:
             if friendship.state == 2:
                 if friendship.user1_id == user.id:
                     serv.send_message("%s is already ignored" % with_color(message), to="me")
                 else:
-                    serv.session.add(models.Friendship(user1_id = user.id, user2_id = newfriend.id, state = 2))
+                    friendshiptwo = friendships.all()
+                    if len(friendshiptwo) > 1:
+                        friendshiptwo = friendshiptwo[1]
+                        if friendshiptwo.user1_id == user.id:
+                            serv.send_message("%s is already ignored" % with_color(message), to="me")
+                            return
+                    serv.session.add(models.Friendship(user1_id = user.id, user2_id = newignore.id, state = 2))
                     serv.send_message("%s ignored" % with_color(message), to="me")
                 return
             friendship.state = 2
@@ -138,16 +159,18 @@ class Unignore(ChatPlugin):
     helper = "Stop ignoring someone"
 
     def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
+        user = models.User.from_ids(serv.conn.users, serv.session)
+        user = user[0]
+        #user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
         if not user:
             return
         newignore = serv.session.query(models.User).filter_by(name=message).first()
         if not newignore:
             serv.send_message("Unknown user %s" % with_color(message), to="me")
             return
-        friendship = serv.session.query(models.Friendship).filter_by(user1_id = user.id).filter_by(user2_id = newfriend.id).filter_by(state = 2).first()
+        friendship = serv.session.query(models.Friendship).filter_by(user1_id = user.id).filter_by(user2_id = newignore.id).filter_by(state = 2).first()
         if friendship:
-            friendship.delete()
+            serv.session.delete(friendship)
             serv.session.commit()
             serv.send_message("%s unignored" % with_color(message), to="me")
             return
@@ -160,7 +183,9 @@ class Friendlist(ChatPlugin):
     helper = "Show friendlist"
 
     def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
+        user = models.User.from_ids(serv.conn.users, serv.session)
+        user = user[0]
+        #user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
         if not user:
             return
         friends = serv.session.query(models.Friendship).filter_by(state = 1).filter((models.Friendship.user1_id == user.id) | models.Friendship.user2_id == user.id).all()
@@ -179,9 +204,23 @@ class Friendlist(ChatPlugin):
             requestsStr += serv.session.query(models.User).filter_by(id=request.user1_id).first().name + ", "
         if requestsStr.endswith(", "):
             requestsStr = requestsStr[:-2]
+        requestsoutgoing = serv.session.query(models.Friendship).filter_by(user1_id = user.id).filter_by(state = 0).all()
+        requestsoutgoingStr = ""
+        for request in requestsoutgoing:
+            requestsoutgoingStr += serv.session.query(models.User).filter_by(id=request.user2_id).first().name + ", "
+        if requestsoutgoingStr.endswith(", "):
+            requestsoutgoingStr = requestsoutgoingStr[:-2]
+        ignores = serv.session.query(models.Friendship).filter_by(user1_id = user.id).filter_by(state = 2).all()
+        ignoresStr = ""
+        for ignore in ignores:
+            ignoresStr += serv.session.query(models.User).filter_by(id=ignore.user2_id).first().name + ", "
+        if ignoresStr.endswith(", "):
+            ignoresStr = ignoresStr[:-2]
 
         serv.send_message("Friends: %s" % friendsStr, to="me")
-        serv.send_message("Pending requests: %s" % requestsStr, to="me")
+        serv.send_message("Incoming requests: %s" % requestsStr, to="me")
+        serv.send_message("Outgoing requests: %s" % requestsoutgoingStr, to="me")
+        serv.send_message("Ignoring: %s" % ignoresStr, to="me")
 
 
 class PrivateMessage(ChatPlugin):
@@ -189,33 +228,43 @@ class PrivateMessage(ChatPlugin):
     helper = "Send a private message"
 
     def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
+        user = models.User.from_ids(serv.conn.users, serv.session)
+        user = user[0]
+        #user = serv.session.query(models.User).filter_by(online = True).filter_by(last_ip = serv.conn.ip).first()
         if not user:
             return
         message = message.split(' ', 1)
         if len(message) < 2:
             serv.send_message("Need a text message to send", to="me")
             return
-        receptor = serv.session.query(models.User).filter_by(online=True).filter_by(name=message[0]).first()
+        if self.sendpm(serv, user, message[0], message[1]) == False:
+            if '_' in message[0]:
+                self.sendpm(serv, user, message[0].replace('_',' '), message[1])
+
+    def sendpm(self, serv, user, receptorname, message):
+        receptor = serv.session.query(models.User).filter_by(online=True).filter_by(name=receptorname).first()
         if not receptor:
-            serv.send_message("Could not find %s online" % with_color(message[0]), to="me")
-            return
+            serv.send_message("Could not find %s online" % with_color(receptorname), to="me")
+            return False
         if receptor.name == user.name:
             serv.send_message("Cant pm yourself", to="me")
-            return
+            return False
         ignore = serv.session.query(models.Friendship).filter( \
             (((models.Friendship.user1_id == user.id) & (models.Friendship.user2_id == receptor.id)) |  \
             ((models.Friendship.user2_id == user.id) & (models.Friendship.user1_id == receptor.id))) &  \
             (models.Friendship.state == 2)).first()
         if ignore:
-            serv.send_message("Cant send %s a private message" %with_color( message[0]), to="me")
-            return    
-        receptor = serv.server.find_connection(receptor.id)
+            serv.send_message("Cant send %s a private message" %with_color(receptorname), to="me")
+            return False
         if not receptor:
-            serv.send_message("Could not find %s online" % with_color(message[0]), to="me")
-            return
-        serv.send_message("To %s : %s" % (with_color(user.name), message[1]), to="me")
-        serv.send_message("From %s : %s" % (with_color(user.name), message[1]), receptor)
+            serv.send_message("Could not find %s online" % with_color(receptorname), to="me")
+            return False
+        serv.send_message("To %s : %s" % (with_color(receptor.name), message), to="me")
+        receptor = serv.server.find_connection(receptor.id)
+        #if i do what's commented both players get the message for some reason
+        #serv.send_message("From %s : %s" % (with_color(user.name), message), receptor)
+        receptor.send(smutils.smpacket.SMPacketServerNSCCM(message="From %s : %s" % (with_color(user.name), message)))
+        return True
 
 
 

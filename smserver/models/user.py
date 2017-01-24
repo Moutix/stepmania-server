@@ -11,6 +11,7 @@ from smserver.models import schema
 from smserver.chathelper import with_color, nick_color
 from smserver.models.privilege import Privilege
 from smserver.models.ssr import SSR
+from smserver.models.ranked_song import Skillsets
 from smserver import ability
 
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
@@ -50,7 +51,8 @@ class User(schema.Base):
     stepmania_name    = Column(String(255))
     online            = Column(Boolean)
     status            = Column(Integer, default=1)
-    rating            = Column(Float, default=0)
+    for skillset in Skillsets:
+        exec("rating_" + skillset.name + " = Column(Float, default=0)")
     chat_timestamp    = Column(Boolean, default=False)
     show_offset    = Column(Boolean, default=False)
     friend_notifications    = Column(Boolean, default=False)
@@ -111,16 +113,13 @@ class User(schema.Base):
 
         return 0
 
-    def updaterating(self, session):
-        ssrs = session.query(SSR).filter_by(user_id = self.id).filter_by(skillset = 0).all()
-        self.rating = 0
+    def updaterating(self, session, skillset):
+        ssrs = session.query(SSR).filter_by(user_id = self.id).filter_by(skillset = skillset.value).all()
+        exec("self.rating_" + skillset.name + " = 0")
         ssrcount = len(ssrs)
         if ssrcount > 0:
             for count, ssr in enumerate(ssrs):
-                self.rating += ssr.ssr * 1 / (2 + 2 * count)
-        elif len(ssrs) > 0:
-            for ssr in ssrs:
-                self.rating = 0
+                exec("self.rating_" + skillset.name + " += ssr.ssr * 1 / (2 + 2 * count)")
 
     def room_privilege(self, room_id):
         if room_id in self._room_level:

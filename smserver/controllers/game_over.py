@@ -47,7 +47,7 @@ class GameOverController(StepmaniaController):
                             for skillset in Skillsets:
                                 rating = eval("rankedsong." + skillset.name)
                                 ssr = rating * score / 100
-                                repeated = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).filter_by(song_id = self.room.active_song.id).first()
+                                repeated = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).filter_by(chartkey = self.conn.songstats[user.pos]["chartkey"]).first()
                                 if not repeated:
                                     ssrs = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).order_by(models.SSR.ssr.desc()).all()
                                     if len(ssrs) >= self.server.config.server["max_ssrs"]:
@@ -60,9 +60,8 @@ class GameOverController(StepmaniaController):
                                         self.session.delete(repeated)
                                     else:
                                         continue
-                                self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id, song_id = self.room.active_song.id))
-                                if skillset.value == 0:
-                                    user.updaterating(self.session)
+                                self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id, song_id = self.room.active_song.id, chartkey = self.conn.songstats[user.pos]["chartkey"]))
+                                user.updaterating(self.session, skillset)
 
 
                 if user.show_offset == True:

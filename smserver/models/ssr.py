@@ -3,7 +3,7 @@
 
 import datetime
 
-from sqlalchemy import Column, Integer, ForeignKey, Float
+from sqlalchemy import Column, Integer, ForeignKey, Float, String
 from sqlalchemy import select, func, desc
 from smserver.models import schema, song_stat, user
 
@@ -16,5 +16,6 @@ class SSR(schema.Base):
     song_stat_id        = Column(Integer, ForeignKey('song_stats.id'))
     user_id    = Column(Integer, ForeignKey('users.id'))
     song_id    = Column(Integer, ForeignKey('songs.id'))
+    chartkey   = Column(String(255))
     skillset    = Column(Integer)
     ssr    = Column(Float)

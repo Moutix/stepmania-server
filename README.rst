@@ -102,6 +102,16 @@ To launch the server just type:
 
 For more information check the `docs <https://stepmania-server.readthedocs.io/>`_
 
+Ranked Songs
+-------------
+
+The rankedsongs.py script loads ranked songs into the database from Etterna cache files. To fill them just type:
+
+.. code-block:: console
+
+    $ rankedsongs.py -u
+    
+    
 License
 -------
 

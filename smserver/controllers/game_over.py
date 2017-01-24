@@ -26,8 +26,7 @@ class GameOverController(StepmaniaController):
         song_duration = datetime.datetime.now() - self.conn.songstats["start_at"]
 
         for user in self.active_users:
-            if len(self.conn.songstats[user.pos]["data"]) <= 0:
-                continue
+            user.status = 2
             taps = self.conn.songstats[user.pos]["taps"]
             if taps > 0:
                 score = self.conn.songstats[user.pos]["dpacum"] * 100 / (self.conn.songstats[user.pos]["taps"] * 2 + self.conn.songstats[user.pos]["holds"] * 6)
@@ -105,7 +104,7 @@ class GameOverController(StepmaniaController):
 
         if raw_stats["data"]:
             songstat.grade = raw_stats["data"][-1]["grade"]
-            songstat.score = raw_stats["dpacum"]
+            songstat.score = raw_stats["dpacum"] if raw_stats["dpacum"] > 0 else 0
 
         for stepid in models.SongStat.stepid.values():
             setattr(songstat, stepid, 0)
@@ -122,7 +121,10 @@ class GameOverController(StepmaniaController):
                     getattr(songstat, models.SongStat.stepid[value["stepid"]]) + 1
                    )
 
-        songstat.percentage = raw_stats["dpacum"] * 100 / (raw_stats["taps"] * 2 + raw_stats["holds"] * 6)
+        if raw_stats["taps"] > 0:
+            songstat.percentage = raw_stats["dpacum"] * 100 / (raw_stats["taps"] * 2 + raw_stats["holds"] * 6)
+        else:
+            songstat.percentage  = 0
         songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
 
         self.session.add(songstat)

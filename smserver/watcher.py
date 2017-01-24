@@ -110,7 +110,7 @@ class StepmaniaWatcher(Thread):
             if self.room_still_in_game(room):
                 continue
 
-            self.server.log.info("Room %s finish is last song: %s" % (room.name, room.active_song_id))
+            self.server.log.info("Room %s finish song, last song: %s" % (room.name, room.active_song_id))
             room.status = 1
             room.ingame = False
 

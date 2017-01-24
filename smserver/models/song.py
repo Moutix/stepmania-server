@@ -24,6 +24,8 @@ class Song(schema.Base):
     stats        = relationship("SongStat", back_populates="song")
     games        = relationship("Game", back_populates="song")
 
+    hash         = Column(String(255)) 
+
     time_played  = column_property(
         select([func.count(song_stat.SongStat.id)]).\
         where(song_stat.SongStat.song_id == id).\

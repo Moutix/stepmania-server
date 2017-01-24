@@ -56,6 +56,7 @@ class RequestStartGameController(StepmaniaController):
             self.conn.song = song.id
             self.conn.songs[song.id] = True
 
+        
         sendhash = True
         for conn in self.server.player_connections(self.room.id):
             if conn.stepmania_version < 4:
@@ -91,7 +92,7 @@ class RequestStartGameController(StepmaniaController):
         isplaying = False
         busy = []
         for user in self.room.online_users:
-            if user.status == 2 and self.room.active_song_id:
+            if user.status == 2 and self.room.active_song_id and self.room.ingame and self.room.status != 1:
                 canstart = False
                 isplaying = True
             if user.status == 3 or user.status == 4:

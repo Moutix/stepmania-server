@@ -336,7 +336,7 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
         if len(tmp) < 2:
             return payload, None
 
-        return tmp[1], tmp[0].decode('utf-8', 'ignore')
+        return tmp[1], tmp[0].decode('utf-8')
 
 class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
     """

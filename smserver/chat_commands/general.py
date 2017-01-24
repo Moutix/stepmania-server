@@ -73,6 +73,20 @@ class ShowOffset(ChatPlugin):
                 serv.send_message("Offset diplay enabled", to="me")
 
 
+class Profile(ChatPlugin):
+    command = "profile"
+    helper = "Display profile information"
+
+    def __call__(self, serv, message):
+
+        for user in serv.active_users:
+            serv.send_message("Name: %s" % with_color(user.name), to="me")
+            serv.send_message("XP: %s" % user.xp, to="me")
+            serv.send_message("Rank: %s" % user.rank, to="me")
+            for skillset in models.ranked_song.Skillsets:
+                rating = eval("user.rating_" + skillset.name)
+                serv.send_message(skillset.name.capitalize()+": %f" %  rating, to="me")
+
 
 class FriendNotification(ChatPlugin):
     command = "friendnotif"

@@ -19,6 +19,8 @@ class RequestStartGameController(StepmaniaController):
             self.packet["song_subtitle"],
             self.packet["song_artist"],
             self.session)
+        print(self.packet["song_hash"])
+        print(self.conn.stepmania_version)
 
         if self.packet["usage"] == 2:
             self.start_game_request(song)
@@ -56,12 +58,25 @@ class RequestStartGameController(StepmaniaController):
             self.conn.song = song.id
             self.conn.songs[song.id] = True
 
-        self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
-            usage=1,
-            song_title=song.title,
-            song_subtitle=song.subtitle,
-            song_artist=song.artist
-            ))
+        sendhash = True
+        for conn in self.server.player_connections(self.room.id):
+            if conn.stepmania_version < 4:
+                sendhash = False
+                break
+        if sendhash:
+            self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
+                usage=1,
+                song_title=song.title,
+                song_subtitle=song.subtitle,
+                song_artist=song.artist
+                ))
+        else:
+            self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
+                usage=1,
+                song_title=song.title,
+                song_subtitle=song.subtitle,
+                song_artist=song.artist
+                ))
 
     def check_song_presence(self, song):
         with self.conn.mutex:
@@ -78,18 +93,18 @@ class RequestStartGameController(StepmaniaController):
         isplaying = False
         busy = []
         for user in self.room.online_users:
-            if user.status == 2:
+            if user.status == 2 and self.room.active_song_id:
                 canstart = False
                 isplaying = True
-            if user.status == 3 or user.status == 3:
+            if user.status == 3 or user.status == 4:
                 busy.append(user)
                 canstart = False
 
-        if canstart == False:
+        if not canstart:
             if len(busy) > 0:
                 for user in busy:
                     self.send_message("User %s is busy." % with_color(user.name),to="me")
-            if isplaying == True:
+            if isplaying:
                 self.send_message(
                     "Room %s is already playing %s." % (
                         with_color(self.room.name),

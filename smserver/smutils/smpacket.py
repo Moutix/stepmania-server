@@ -336,7 +336,7 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
         if len(tmp) < 2:
             return payload, None
 
-        return tmp[1], tmp[0].decode('utf-8')
+        return tmp[1], tmp[0].decode('utf-8', 'ignore')
 
 class SMPayloadTypeNTLIST(SMPayloadTypeAbstract):
     """
@@ -1192,7 +1192,8 @@ class SMPacketClientNSCRSG(SMPacket):
         (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),
         (SMPayloadType.NT, "song_artist", None),
-        (SMPayloadType.NT, "song_subtitle", None)
+        (SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_hash", None)
     ]
 
 
@@ -1560,7 +1561,8 @@ class SMPacketServerNSCRSG(SMPacket):
         (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),
         (SMPayloadType.NT, "song_artist", None),
-        (SMPayloadType.NT, "song_subtitle", None)
+        (SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_hash", None)
     ]
 
 

@@ -19,8 +19,6 @@ class RequestStartGameController(StepmaniaController):
             self.packet["song_subtitle"],
             self.packet["song_artist"],
             self.session)
-        print(self.packet["song_hash"])
-        print(self.conn.stepmania_version)
 
         if self.packet["usage"] == 2:
             self.start_game_request(song)

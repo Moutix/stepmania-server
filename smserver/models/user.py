@@ -4,12 +4,13 @@
 
 import datetime
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func, Float
 from sqlalchemy.orm import relationship, reconstructor, object_session
 
 from smserver.models import schema
 from smserver.chathelper import with_color, nick_color
 from smserver.models.privilege import Privilege
+from smserver.models.ssr import SSR
 from smserver import ability
 
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
@@ -49,6 +50,7 @@ class User(schema.Base):
     stepmania_name    = Column(String(255))
     online            = Column(Boolean)
     status            = Column(Integer, default=1)
+    rating            = Column(Float, default=0)
     chat_timestamp    = Column(Boolean, default=False)
     show_offset    = Column(Boolean, default=False)
     friend_notifications    = Column(Boolean, default=False)
@@ -108,6 +110,17 @@ class User(schema.Base):
             return priv.level
 
         return 0
+
+    def updaterating(self, session):
+        ssrs = session.query(SSR).filter_by(user_id = self.id).filter_by(skillset = 0).all()
+        self.rating = 0
+        ssrcount = len(ssrs)
+        if ssrcount > 0:
+            for count, ssr in enumerate(ssrs):
+                self.rating += ssr.ssr * 1 / (2 + 2 * count)
+        elif len(ssrs) > 0:
+            for ssr in ssrs:
+                self.rating = 0
 
     def room_privilege(self, room_id):
         if room_id in self._room_level:

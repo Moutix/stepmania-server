@@ -21,6 +21,7 @@ class Skillsets(enum.Enum):
     jackspeed       = 5
     jackstamina       = 6
     technical  = 7
+    
 class Diffs(enum.Enum):
     Beginner       = 0
     Easy       = 1

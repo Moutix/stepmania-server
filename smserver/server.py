@@ -226,7 +226,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
             func = getattr(app, "on_%s" % packet.command.name.lower(), None)
             if not func:
                 continue
-
             try:
                 func(session, serv, packet)
             except Exception as err:

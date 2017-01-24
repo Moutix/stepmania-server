@@ -64,7 +64,6 @@ class StartGameRequestController(StepmaniaController):
                 "course_title": self.packet["course_title"]
                 }
             self.conn.wait_start = True
-            print(self.packet["first_player_chartkey"])
         for player in self.server.player_connections(self.room.id):
             with player.mutex:
                 if player.wait_start is False:

@@ -41,27 +41,29 @@ class GameOverController(StepmaniaController):
                 songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration)
                 rate = self.conn.songstats[user.pos]["rate"]
                 if rate == 100:
-                    rankedsong = self.session.query(models.RankedSong).filter_by(chartkey = self.conn.songstats[user.pos]["chartkey"]).first()
-                    if rankedsong:
-                        if rankedsong.taps == taps:
-                            for skillset in Skillsets:
-                                rating = eval("rankedsong." + skillset.name)
-                                ssr = rating * score / 100
-                                repeated = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).filter_by(chartkey = self.conn.songstats[user.pos]["chartkey"]).first()
-                                if not repeated:
-                                    ssrs = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).order_by(models.SSR.ssr.desc()).all()
-                                    if len(ssrs) >= self.server.config.server["max_ssrs"]:
-                                        if ssrs[0].ssr < ssr:
-                                            self.session.delete(ssrs[0])
+                    chartkey = self.conn.songstats[user.pos]["chartkey"]
+                    if chartkey != None:
+                        rankedsong = self.session.query(models.RankedSong).filter_by(chartkey = chartkey).first()
+                        if rankedsong:
+                            if rankedsong.taps == taps:
+                                for skillset in Skillsets:
+                                    rating = eval("rankedsong." + skillset.name)
+                                    ssr = rating * score / 100
+                                    repeated = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).filter_by(chartkey = chartkey).first()
+                                    if not repeated:
+                                        ssrs = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).order_by(models.SSR.ssr.desc()).all()
+                                        if len(ssrs) >= self.server.config.server["max_ssrs"]:
+                                            if ssrs[0].ssr < ssr:
+                                                self.session.delete(ssrs[0])
+                                            else:
+                                                continue
+                                    else:
+                                        if repeated.ssr < ssr:
+                                            self.session.delete(repeated)
                                         else:
                                             continue
-                                else:
-                                    if repeated.ssr < ssr:
-                                        self.session.delete(repeated)
-                                    else:
-                                        continue
-                                self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id, song_id = self.room.active_song.id, chartkey = self.conn.songstats[user.pos]["chartkey"]))
-                                user.updaterating(self.session, skillset)
+                                    self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id, song_id = self.room.active_song.id, chartkey = chartkey))
+                                    user.updaterating(self.session, skillset)
 
 
                 if user.show_offset == True:
@@ -101,7 +103,7 @@ class GameOverController(StepmaniaController):
 
         if raw_stats["data"]:
             songstat.grade = raw_stats["data"][-1]["grade"]
-            songstat.score = raw_stats["data"][-1]["score"]
+            songstat.score = raw_stats["dpacum"]
 
         for stepid in models.SongStat.stepid.values():
             setattr(songstat, stepid, 0)
@@ -118,7 +120,7 @@ class GameOverController(StepmaniaController):
                     getattr(songstat, models.SongStat.stepid[value["stepid"]]) + 1
                    )
 
-        songstat.percentage = songstat.calc_percentage(self.server.config.score.get("percentWeight"))
+        songstat.percentage = raw_stats["dpacum"] * 100 / (raw_stats["taps"] * 2 + raw_stats["holds"] * 6)
         songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
 
         self.session.add(songstat)

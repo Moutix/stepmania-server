@@ -41,10 +41,18 @@ class GameStatusUpdateController(StepmaniaController):
             if stats["stepid"] > 3 and stats["stepid"] < 9:
                 stats["stepid"] = self.get_stepid(offset)
                 self.conn.songstats[pid]["taps"] += 1
+            if stats["stepid"] > 3 and stats["stepid"] < 6:
+                stats["combo"] = 0
+            elif stats["stepid"] > 6 and stats["stepid"] < 9:
+                if len(self.conn.songstats[pid]["data"]) > 1:
+                    stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"] + 1
             elif stats["stepid"] == 10 or stats["stepid"] == 9:
                 self.conn.songstats[pid]["holds"] += 1
+                if len(self.conn.songstats[pid]["data"]) > 1:
+                    stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"]
             elif stats["stepid"] == 3 :
                 self.conn.songstats[pid]["taps"] += 1
+                stats["combo"] = 0
             self.conn.songstats[pid]["data"].append(stats)
             self.conn.songstats[pid]["offsetacum"] += offset
             self.conn.songstats[pid]["dpacum"] += self.dp(stats["stepid"])

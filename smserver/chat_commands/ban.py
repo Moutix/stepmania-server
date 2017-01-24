@@ -19,14 +19,14 @@ class ChatBan(ChatPlugin):
             return
 
         if user.level(serv.conn.room) > serv.level(serv.conn.room):
-            serv.send_message("Not authorize to ban %s" % user.fullname_colored(serv.conn.room), to="me")
+            serv.send_message("Not authorized to ban %s" % user.fullname_colored(serv.conn.room), to="me")
             return
 
         models.Ban.ban(serv.session, user_id=user.id, room_id=serv.conn.room)
         ChatKick.kick_user(serv.server, user, serv.room)
 
         serv.server.send_message(
-            "%s ban user %s" % (
+            "%s banned user %s" % (
                 serv.colored_user_repr(serv.room),
                 user.fullname_colored(serv.room)
             ),
@@ -46,7 +46,7 @@ class ChatKick(ChatPlugin):
             return
 
         if user.level(serv.conn.room) > serv.level(serv.conn.room):
-            serv.send_message("Not authorize to kick %s" % user.fullname_colored(serv.conn.room), to="me")
+            serv.send_message("Not authorized to kick %s" % user.fullname_colored(serv.conn.room), to="me")
             return
 
         ret = self.kick_user(serv.server, user, serv.room)
@@ -91,5 +91,5 @@ class ChatUnBan(ChatPlugin):
             return
 
         models.Ban.unban(serv.session, user_id=user.id, room_id=serv.conn.room)
-        serv.send_message("User %s has been unban from this room" % user.fullname_colored(serv.conn.room))
+        serv.send_message("User %s has been unbanned from this room" % user.fullname_colored(serv.conn.room))
 

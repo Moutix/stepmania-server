@@ -44,7 +44,7 @@ class ChatUserListing(ChatPlugin):
 
 class ChatTimestamp(ChatPlugin):
     command = "timestamp"
-    helper = "Enable timestamps"
+    helper = "Enable chat timestamps"
 
     def __call__(self, serv, message):
         if serv.conn.chat_timestamp:
@@ -105,7 +105,7 @@ class FriendNotification(ChatPlugin):
 
 class AddFriend(ChatPlugin):
     command = "addfriend"
-    helper = "Add friend"
+    helper = "Add a friend. /addfriend user"
 
     def __call__(self, serv, message):
         for user in serv.active_users:
@@ -153,7 +153,7 @@ class AddFriend(ChatPlugin):
 
 class Ignore(ChatPlugin):
     command = "ignore"
-    helper = "Ignore someone(Can't send friend requests or pm)"
+    helper = "Ignore someone(Can't send friend requests or pm). /ignore user"
 
     def __call__(self, serv, message):
         for user in serv.active_users:
@@ -197,7 +197,7 @@ class Ignore(ChatPlugin):
 
 class Unignore(ChatPlugin):
     command = "unignore"
-    helper = "Stop ignoring someone"
+    helper = "Stop ignoring someone. /unignore user"
 
     def __call__(self, serv, message):
         for user in serv.active_users:
@@ -262,7 +262,7 @@ class Friendlist(ChatPlugin):
 
 class PrivateMessage(ChatPlugin):
     command = "pm"
-    helper = "Send a private message"
+    helper = "Send a private message. /pm user message"
 
     def __call__(self, serv, message):
         user = models.User.from_ids(serv.conn.users, serv.session)

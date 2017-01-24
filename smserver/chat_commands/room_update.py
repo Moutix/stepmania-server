@@ -77,10 +77,10 @@ class ChatRoomFree(ChatPlugin):
     def __call__(self, serv, message):
         if serv.room.free:
             serv.room.free = False
-            msg = "The room is no more free"
+            msg = "This room is no longer free"
         else:
             serv.room.free = True
-            msg = "The room is free"
+            msg = "This room is now free"
 
         serv.session.commit()
         serv.send_message(msg)
@@ -93,7 +93,7 @@ class ChatSpectate(ChatPlugin):
 
     def __call__(self, serv, message):
         if serv.conn.spectate:
-            msg = "You are no more in spectator mode"
+            msg = "You are no longer in spectator mode"
             for user in serv.active_users:
                 user.status = 1
 
@@ -124,7 +124,7 @@ class ChatDeleteRoom(ChatPlugin):
     permission = ability.Permissions.delete_room
 
     def __call__(self, serv, message):
-        serv.send_message("!! %s delete this room !!" % serv.colored_user_repr(serv.conn.room))
+        serv.send_message("!! %s deleted this room !!" % serv.colored_user_repr(serv.conn.room))
 
         room = serv.room
 

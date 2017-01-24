@@ -27,9 +27,9 @@ class GameStatusUpdateController(StepmaniaController):
                  "health": self.packet["health"],
                  "offset": self.packet["offset"]
                 }
-
         with self.conn.mutex:
-            best_score = self.conn.songstats[self.packet["player_id"]]["best_score"]
+            pid = self.packet["player_id"]
+            best_score = self.conn.songstats[pid]["best_score"]
 
         if best_score and stats["score"] > best_score:
             with self.conn.mutex:
@@ -37,10 +37,17 @@ class GameStatusUpdateController(StepmaniaController):
             self.beat_best_score()
 
         with self.conn.mutex:
-            if stats["stepid"] > 2 and stats["stepid"] < 9:
-                stats["stepid"] = self.get_stepid(stats["offset"]/2000.0 - 16.384)
-            self.conn.songstats[self.packet["player_id"]]["data"].append(stats)
-            self.conn.songstats[self.packet["player_id"]]["offsetacum"] += stats["offset"]
+            offset = float(stats["offset"]) / 2000.0 - 16.384
+            if stats["stepid"] > 3 and stats["stepid"] < 9:
+                stats["stepid"] = self.get_stepid(offset)
+                self.conn.songstats[pid]["taps"] += 1
+            elif stats["stepid"] == 10 or stats["stepid"] == 9:
+                self.conn.songstats[pid]["holds"] += 1
+            elif stats["stepid"] == 3 :
+                self.conn.songstats[pid]["taps"] += 1
+            self.conn.songstats[pid]["data"].append(stats)
+            self.conn.songstats[pid]["offsetacum"] += offset
+            self.conn.songstats[pid]["dpacum"] += self.dp(stats["stepid"])
 
     def beat_best_score(self):
         user = [user for user in self.users if user.pos == self.packet["player_id"]][0]
@@ -69,7 +76,22 @@ class GameStatusUpdateController(StepmaniaController):
             return 6
         elif (offset < sgood) and (offset > (sgood * -1.0)):
             return 5
-        elif (offset < sboo) and (offset > (sboo * -1.0)):
+        else:
             return 4
-        elif (offset > sboo) or (offset < (sboo * -1.0)):
-            return 3
+
+
+    def dp(self, stepsid):
+        if stepsid == 8 or stepsid == 7:
+            return 2
+        elif stepsid == 6:
+            return 1
+        elif stepsid == 5:
+            return 0
+        elif stepsid == 4:
+            return -4
+        elif stepsid == 3:
+            return -8
+        elif stepsid == 10:
+            return 6
+        else:
+            return 0

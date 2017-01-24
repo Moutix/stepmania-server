@@ -42,7 +42,10 @@ class StartGameRequestController(StepmaniaController):
                     "best_score": song.best_score_value(self.packet["first_player_feet"]),
                     "chartkey": self.packet["first_player_chartkey"],
                     "rate": self.packet["rate"],
-                    "offsetacum": 0
+                    "offsetacum": 0,
+                    "dpacum": 0,
+                    "holds": 0,
+                    "taps": 0
                    },
                 1: {"data": [],
                     "feet": self.packet["second_player_feet"],
@@ -51,16 +54,16 @@ class StartGameRequestController(StepmaniaController):
                     "best_score": song.best_score_value(self.packet["second_player_feet"]),
                     "chartkey": self.packet["second_player_chartkey"],
                     "rate": self.packet["rate"],
-                    "offsetacum": 0
+                    "offsetacum": 0,
+                    "dpacum": 0,
+                    "holds": 0,
+                    "taps": 0
                    },
                 "start_at": datetime.datetime.now(),
                 "options": self.packet["song_options"],
                 "course_title": self.packet["course_title"]
                 }
-
-
             self.conn.wait_start = True
-
         for player in self.server.player_connections(self.room.id):
             with player.mutex:
                 if player.wait_start is False:

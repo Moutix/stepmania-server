@@ -15,5 +15,6 @@ class SSR(schema.Base):
     id           = Column(Integer, primary_key=True)
     song_stat_id        = Column(Integer, ForeignKey('song_stats.id'))
     user_id    = Column(Integer, ForeignKey('users.id'))
+    song_id    = Column(Integer, ForeignKey('songs.id'))
     skillset    = Column(Integer)
     ssr    = Column(Float)

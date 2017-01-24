@@ -26,27 +26,41 @@ class GameOverController(StepmaniaController):
         song_duration = datetime.datetime.now() - self.conn.songstats["start_at"]
 
         for user in self.active_users:
-            score = self.conn.songstats[user.pos]["data"][-1]["score"]
-
+            taps = self.conn.songstats[user.pos]["taps"]
+            if taps > 0:
+                score = self.conn.songstats[user.pos]["dpacum"] * 100 / (self.conn.songstats[user.pos]["taps"] * 2 + self.conn.songstats[user.pos]["holds"] * 6)
+            else:
+                score = 0
             with self.conn.mutex:
+                if self.conn.songstats[user.pos]["data"]:
+                    if score > 0:
+                        self.conn.songstats[user.pos]["data"][-1]["score"] = int(score*100)
+                    else:
+                        self.conn.songstats[user.pos]["data"][-1]["score"] = 0
+                    self.conn.songstats[user.pos]["data"][-1]["grade"] = self.grade(score, self.conn.songstats[user.pos]["data"])
                 songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration)
-                try:
-                    rate = float(self.conn.songstats[user.pos]["rate"])
-                except:
-                    rate = 0
-                if rate == 1.0:
+                rate = self.conn.songstats[user.pos]["rate"]
+                if rate == 100:
                     rankedsong = self.session.query(models.RankedSong).filter_by(chartkey = self.conn.songstats[user.pos]["chartkey"]).first()
                     if rankedsong:
-                        if float(rankedsong.taps) == songstat.taps:
+                        if rankedsong.taps == taps:
                             for skillset in Skillsets:
-                                ssrs = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).order_by(models.SSR.ssr.desc()).all()
                                 rating = eval("rankedsong." + skillset.name)
-                                ssr = rating * score / 9300
-                                if len(ssrs) < self.server.config.server["max_ssrs"]:
-                                    self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id))
-                                elif ssrs[0].ssr < ssr:
-                                    serv.session.delete(ssrs[0])
-                                    self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id))
+                                ssr = rating * score / 93
+                                repeated = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).filter_by(song_id = self.room.active_song).first()
+                                if not repeated:
+                                    ssrs = self.session.query(models.SSR).filter_by(user_id = user.id).filter_by(skillset = skillset.value).order_by(models.SSR.ssr.desc()).all()
+                                    if len(ssrs) < self.server.config.server["max_ssrs"]:
+                                        self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id, song_id = self.room.active_song))
+                                    elif ssrs[0].ssr < ssr:
+                                        serv.session.delete(ssrs[0])
+                                        self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id, song_id = self.room.active_song))
+                                else:
+                                    if repeated.ssr < ssr:
+                                        serv.session.delete(repeated)
+                                        self.session.add(models.SSR(user_id = user.id, skillset = skillset.value, ssr = ssr, song_stat_id = songstat.id, song_id = self.room.active_song))
+
+
                 if user.show_offset == True:
                     self.send_message(
                         "%s average offset" % self.conn.songstats[user.pos]["offsetacum"] / 
@@ -108,4 +122,23 @@ class GameOverController(StepmaniaController):
         self.session.commit()
 
         return songstat
+
+    def grade(self, score, data):
+        if score >= 100.00:
+            for note in data:
+                if note["stepid"] > 2 and note["stepid"] < 9:
+                    if note != 9:
+                        return 1
+            return 0
+        elif score >= 93.00:
+            return 2
+        elif score >= 80.00:
+            return 3
+        elif score >= 65.00:
+            return 4
+        elif score >= 45.00:
+            return 5
+        elif score >= 0.0:
+            return 6
+        return 7
 

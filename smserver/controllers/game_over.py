@@ -26,6 +26,8 @@ class GameOverController(StepmaniaController):
         song_duration = datetime.datetime.now() - self.conn.songstats["start_at"]
 
         for user in self.active_users:
+            if self.conn.songstats[user.pos]["data"] <= 0:
+                continue
             taps = self.conn.songstats[user.pos]["taps"]
             if taps > 0:
                 score = self.conn.songstats[user.pos]["dpacum"] * 100 / (self.conn.songstats[user.pos]["taps"] * 2 + self.conn.songstats[user.pos]["holds"] * 6)

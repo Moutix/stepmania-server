@@ -41,7 +41,7 @@ class RequestStartGameController(StepmaniaController):
             self.request_launch_song(song)
             return
 
-        self.send_message("%s select %s which have been played %s times.%s" % (
+        self.send_message("%s select %s which has been played %s times.%s" % (
             self.colored_user_repr(self.room.id),
             with_color(song.fullname),
             song.time_played,
@@ -74,14 +74,29 @@ class RequestStartGameController(StepmaniaController):
             self.send_message("You don't have the permission to start a game", to="me")
             return
 
-        if self.room.status == 2 and self.room.active_song_id:
-            self.send_message(
-                "Room %s is already playing %s." % (
-                    with_color(self.room.name),
-                    with_color(self.room.active_song.fullname)
-                    ),
-                to="me"
-            )
+        canstart = True
+        isplaying = False
+        busy = []
+        for user in self.room.online_users:
+            if user.status == 2:
+                canstart = False
+                isplaying = True
+            if user.status == 3 or user.status == 3:
+                busy.append(user)
+                canstart = False
+
+        if canstart == False:
+            if len(busy) > 0:
+                for user in busy:
+                    self.send_message("User %s is busy." % with_color(user.name),to="me")
+            if isplaying == True:
+                self.send_message(
+                    "Room %s is already playing %s." % (
+                        with_color(self.room.name),
+                        with_color(self.room.active_song.fullname)
+                        ),
+                    to="me"
+                )
             return
 
         game = models.Game(room_id=self.room.id, song_id=song.id)

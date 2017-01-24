@@ -1192,8 +1192,7 @@ class SMPacketClientNSCRSG(SMPacket):
         (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),
         (SMPayloadType.NT, "song_artist", None),
-        (SMPayloadType.NT, "song_subtitle", None),
-        (SMPayloadType.NT, "songhash", None)
+        (SMPayloadType.NT, "song_subtitle", None)
     ]
 
 
@@ -1561,8 +1560,7 @@ class SMPacketServerNSCRSG(SMPacket):
         (SMPayloadType.INT, "usage", 1),
         (SMPayloadType.NT, "song_title", None),
         (SMPayloadType.NT, "song_artist", None),
-        (SMPayloadType.NT, "song_subtitle", None),
-        (SMPayloadType.NT, "songhash", None)
+        (SMPayloadType.NT, "song_subtitle", None)
     ]
 
 

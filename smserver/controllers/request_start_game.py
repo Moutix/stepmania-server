@@ -55,7 +55,7 @@ class RequestStartGameController(StepmaniaController):
             self.conn.song = song.id
             self.conn.songs[song.id] = True
 
-        
+        #Send hash if all players in the room can use it
         sendhash = True
         for conn in self.server.player_connections(self.room.id):
             if conn.stepmania_version < 4:
@@ -66,7 +66,8 @@ class RequestStartGameController(StepmaniaController):
                 usage=1,
                 song_title=song.title,
                 song_subtitle=song.subtitle,
-                song_artist=song.artist
+                song_artist=song.artist,
+                song_hash=self.packet["song_hash"]
                 ))
         else:
             self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(

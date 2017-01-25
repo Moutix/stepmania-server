@@ -98,7 +98,7 @@ class GameOverController(StepmaniaController):
             self.send_message("New result: %s" % 
                 songstat.pretty_result(room_id=self.room.id,
                 color=True, date=False, toasty=toasty) + 
-                songstat.showbests(user.id, self.room.active_song.id))
+                songstat.get_rank(user.id, self.room.active_song.id))
 
             self.send_message(
                 "%s gained %s XP!" % (
@@ -178,29 +178,6 @@ class GameOverController(StepmaniaController):
         elif score >= 45.00:
             return 5
         return 6
-
-    def showbests(self, user, songstat):
-        tbs = (self.session.query(models.SongStat)
-            .filter_by(song_id = self.room.active_song.id)
-            .filter_by(difficulty = songstat.difficulty)
-            .order_by(models.SongStat.dp.asc()).all())
-        pbs = (self.session.query(models.SongStat)
-            .filter_by(user_id = user.id)
-            .filter_by(song_id = self.room.active_song.id)
-            .filter_by(difficulty = songstat.difficulty)
-            .order_by(models.SongStat.dp.asc()).all())
-
-        for count, tb in enumerate(tbs, 1):
-            if tb == songstat:
-                tbcount = count
-                break
-        for count, pb in enumerate(pbs, 1):
-            if pb == songstat:
-                pbcount = count
-                break
-
-        return (" PB: " + str(tbcount) + "/" + str(len(tbs)) + " TB: " + str(pbcount) + "/" + str(len(pbs)))
-
 
     def migs(self, stepsid):
         if stepsid == 8:

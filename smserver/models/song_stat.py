@@ -5,7 +5,7 @@ import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Float, LargeBinary
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, object_session
 
 from smserver.models import schema
 from smserver.chathelper import with_color, nick_color
@@ -199,27 +199,28 @@ class SongStat(schema.Base):
     def taps(self):
         return self.miss+self.flawless+self.bad+self.good+self.perfect+self.great
 
-    def get_rank(self, userid, songid):
-        tbs = (self.session.query(models.SongStat)
-            .filter_by(song_id = songid)
-            .filter_by(difficulty = songstat.difficulty)
-            .order_by(models.SongStat.dp.asc()).all())
-        pbs = (self.session.query(models.SongStat)
-            .filter_by(user_id = user.id)
-            .filter_by(song_id = self.room.active_song.id)
-            .filter_by(difficulty = songstat.difficulty)
-            .order_by(models.SongStat.dp.asc()).all())
+    def get_rank(self, user_id, song_id):
+        tbs = (object_session(self).query(SongStat)
+            .filter_by(song_id = song_id)
+            .filter_by(difficulty = self.difficulty)
+            .order_by(SongStat.migsp.asc()).all())
+        pbs = (object_session(self).query(SongStat)
+            .filter_by(user_id = user_id)
+            .filter_by(song_id = song_id)
+            .filter_by(difficulty = self.difficulty)
+            .order_by(SongStat.migsp.asc()).all())
         
         for count, tb in enumerate(tbs, 1):
-            if tb == songstat:
+            if tb == self:
                 tbcount = count
                 break
         for count, pb in enumerate(pbs, 1):
-            if pb == songstat:
+            if pb == self:
                 pbcount = count
                 break
 
         return (" PB: " + str(tbcount) + "/" + str(len(tbs)) + " TB: " + str(pbcount) + "/" + str(len(pbs)))
+
 
 
 

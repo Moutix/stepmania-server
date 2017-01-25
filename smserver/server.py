@@ -279,13 +279,31 @@ class StepmaniaServer(smthread.StepmaniaServer):
             )
 
             self.send_user_list(room)
+        else:
+            for conn in self.connections:
+                if conn.room == None:
+                    self.send_user_list_lobby(conn, session)
+
 
     def send_user_list(self, room):
         """
             Send a NSCUUL packet to update the user list for a given room
         """
-
         self.sendroom(room.id, room.nsccuul)
+
+    def send_user_list_lobby(self, conn, session):
+        """
+            Send a NSCUUL packet to update the user list for the lobby
+        """
+        users = session.query(models.User).filter_by(online = 1).filter_by(room_id = None).all()
+        packet =  smpacket.SMPacketServerNSCCUUL(
+            max_players=255,
+            nb_players=len(users),
+            players=[{"status": u.enum_status.value, "name": u.name}
+                     for u in users]
+            )
+        conn.send(packet)
+
 
     def send_friend_list(self, userid, conn):
         """
@@ -382,6 +400,10 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         conn.room = room.id
 
+        for conn in self.server.connections:
+            if conn.room == None:
+                conn.send(roomspacket)
+                self.server.send_user_list_lobby(conn, self.session)
         self.send_user_list(room)
 
     def leave_room(self, room, user_id=None, conn=None):

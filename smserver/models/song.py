@@ -53,7 +53,7 @@ class Song(schema.Base):
                 .query(song_stat.SongStat)
                 .filter_by(feet=feet)
                 .filter_by(song_id=self.id)
-                .order_by(desc(song_stat.SongStat.dp))
+                .order_by(desc(song_stat.SongStat.migsp))
                 .first())
 
     def best_score_value(self, feet):

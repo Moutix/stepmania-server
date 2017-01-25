@@ -94,6 +94,7 @@ class LoginController(StepmaniaController):
         ))
 
 
+
         self.send(models.Room.smo_list(self.session, self.active_users))
         self.server.send_sd_running_status()
         friends = self.session.query(models.Friendship).filter_by(state = 1).filter((models.Friendship.user1_id == user.id) | (models.Friendship.user2_id == user.id)).all()
@@ -113,7 +114,6 @@ class LoginController(StepmaniaController):
 
         self.server.send_friend_list(user.id, self.conn)
         
-
     def _send_server_resume(self, nb_onlines, max_users):
         self.send_message(self.server.config.server.get("motd", ""), to="me")
         self.send_message(

@@ -43,6 +43,8 @@ class StartGameRequestController(StepmaniaController):
                     "chartkey": self.packet["first_player_chartkey"],
                     "rate": self.packet["rate"],
                     "offsetacum": 0,
+                    "toasties": 0,
+                    "perfect_combo": 0,
                     "dpacum": 0,
                     "holds": 0,
                     "taps": 0
@@ -55,6 +57,8 @@ class StartGameRequestController(StepmaniaController):
                     "chartkey": self.packet["second_player_chartkey"],
                     "rate": self.packet["rate"],
                     "offsetacum": 0,
+                    "toasties": 0,
+                    "perfect_combo": 0,
                     "dpacum": 0,
                     "holds": 0,
                     "taps": 0

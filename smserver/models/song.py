@@ -53,7 +53,7 @@ class Song(schema.Base):
                 .query(song_stat.SongStat)
                 .filter_by(feet=feet)
                 .filter_by(song_id=self.id)
-                .order_by(desc(song_stat.SongStat.score))
+                .order_by(desc(song_stat.SongStat.dp))
                 .first())
 
     def best_score_value(self, feet):
@@ -63,7 +63,7 @@ class Song(schema.Base):
         if not stat:
             return None
 
-        return stat.score
+        return stat.dp
 
     @property
     def fullname(self):

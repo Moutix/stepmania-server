@@ -73,11 +73,15 @@ class SongStat(schema.Base):
     max_combo  = Column(Integer, default=0)
     options    = Column(Text, default="")
     score      = Column(Integer, default=0)
+    dp      = Column(Integer, default=0)
+    migsp      = Column(Integer, default=0)
+    toasty      = Column(Integer, default=0)
     grade      = Column(Integer, default=0)
     difficulty = Column(Integer, default=0)
     feet       = Column(Integer, default=0)
 
     percentage = Column(Float(precision=5))
+    migs = Column(Float(precision=5))
 
     duration   = Column(Integer, default=0)
 
@@ -87,7 +91,7 @@ class SongStat(schema.Base):
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
-        return "<SongStat #%s score=%s (%s%%)>" % (self.id, self.score, self.percentage)
+        return "<SongStat #%s score=%s (%s%%)>" % (self.id, self.dp, self.percentage)
 
     @property
     def lit_difficulty(self):
@@ -107,15 +111,16 @@ class SongStat(schema.Base):
 
         return self.GRADES.get(self.grade, self.grade)
 
-    def pretty_result(self, room_id=None, color=False):
+    def pretty_result(self, room_id=None, color=False, date=True, toasty=False):
         color_func = with_color if color else lambda x, *_: x
 
-        return "{difficulty}: {user_name} {grade} ({percentage}%) on {date}".format(
+        return "{difficulty}: {user_name} {grade} ({percentage}%){toasty}{date}".format(
             difficulty=color_func(self.full_difficulty, color=nick_color(self.lit_difficulty)),
             user_name=self.user.fullname_colored(room_id) if color else self.user.fullname(room_id),
             grade=color_func(self.lit_grade),
             percentage=self.percentage,
-            date=self.created_at.strftime("%x")
+            toasty=" Toasty:" + str(self.toasty) + " " if toasty else "",
+            date=" on " + self.created_at.strftime("%x") if date else ""
         )
 
     def calc_percentage(self, config=None):
@@ -150,7 +155,8 @@ class SongStat(schema.Base):
                 "good": 2,
                 "great": 3,
                 "perfect": 4,
-                "flawless": 5
+                "flawless": 5,
+                "toasty": 100,
             }
 
         xp = 0
@@ -192,6 +198,29 @@ class SongStat(schema.Base):
     @property
     def taps(self):
         return self.miss+self.flawless+self.bad+self.good+self.perfect+self.great
+
+    def get_rank(self, userid, songid):
+        tbs = (self.session.query(models.SongStat)
+            .filter_by(song_id = songid)
+            .filter_by(difficulty = songstat.difficulty)
+            .order_by(models.SongStat.dp.asc()).all())
+        pbs = (self.session.query(models.SongStat)
+            .filter_by(user_id = user.id)
+            .filter_by(song_id = self.room.active_song.id)
+            .filter_by(difficulty = songstat.difficulty)
+            .order_by(models.SongStat.dp.asc()).all())
+        
+        for count, tb in enumerate(tbs, 1):
+            if tb == songstat:
+                tbcount = count
+                break
+        for count, pb in enumerate(pbs, 1):
+            if pb == songstat:
+                pbcount = count
+                break
+
+        return (" PB: " + str(tbcount) + "/" + str(len(tbs)) + " TB: " + str(pbcount) + "/" + str(len(pbs)))
+
 
 
 class BinaryStats(SMPacket):

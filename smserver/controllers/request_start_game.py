@@ -19,7 +19,6 @@ class RequestStartGameController(StepmaniaController):
             self.packet["song_subtitle"],
             self.packet["song_artist"],
             self.session)
-
         if self.packet["usage"] == 2:
             self.start_game_request(song)
             return

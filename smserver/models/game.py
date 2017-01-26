@@ -52,7 +52,7 @@ class Game(schema.Base):
 
         for songstat in (session.query(song_stat.SongStat)
                          .filter_by(game_id=self.id)
-                         .order_by(desc(song_stat.SongStat.dp))):
+                         .order_by(desc(song_stat.SongStat.migsp))):
 
             packet["nb_players"] += 1
             packet["ids"].append(user.User.user_index(songstat.user.id, self.room_id, session))

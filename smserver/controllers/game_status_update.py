@@ -18,7 +18,7 @@ class GameStatusUpdateController(StepmaniaController):
 
         if "start_at" not in self.conn.songstats:
             return
-
+        print("update start")
         stats = {"time": datetime.datetime.now() - self.conn.songstats.get("start_at"),
                  "stepid": self.packet["step_id"],
                  "grade": self.packet["grade"],
@@ -53,28 +53,42 @@ class GameStatusUpdateController(StepmaniaController):
                 self.conn.songstats[pid]["taps"] += 1
                 self.conn.songstats[pid]["perfect_combo"] = 0
 
+            print("update middle")
             self.conn.songstats[pid]["data"].append(stats)
+            print("update middle2")
             self.conn.songstats[pid]["dp"] += self.dp(stats["stepid"])
+            print("update middle3")
             self.conn.songstats[pid]["migsp"] += self.migsp(stats["stepid"])
+            print("update middle4")
 
             if best_score and self.conn.songstats[pid]["migsp"] > best_score:
+                print("update middle5")
                 self.conn.songstats[self.packet["player_id"]]["best_score"] = None
+                print("update middle6")
                 self.beat_best_score()
+                print("update middle7")
+            print("update middle8")
 
             if self.conn.songstats[pid]["perfect_combo"] != 0 and self.conn.songstats[pid]["perfect_combo"] % 250 == 0:
                 self.conn.songstats[pid]["toasties"] += 1
+            print("update middle9")
+        print("update end")
 
     def beat_best_score(self):
+        print("superbefore")
         user = [user for user in self.users if user.pos == self.packet["player_id"]][0]
 
-        with self.conn.mutex:
-            message = "%s just beat the best score on %s(%s)" % (
-                user.name,
-                models.SongStat.DIFFICULTIES.get(self.conn.songstats[self.packet["player_id"]]["difficulty"]),
-                self.conn.songstats[self.packet["player_id"]]["feet"]
-            )
+        print("kindabefore")
+        print("justbefore")
+        message = "%s just beat the best score on %s(%s)" % (
+            user.name,
+            models.SongStat.DIFFICULTIES.get(self.conn.songstats[self.packet["player_id"]]["difficulty"]),
+            self.conn.songstats[self.packet["player_id"]]["feet"]
+        )
 
+        print("before")
         self.sendroom(self.conn.room, smpacket.SMPacketServerNSCSU(message=message))
+        print("after")
 
 
     def get_stepid(self, offset):

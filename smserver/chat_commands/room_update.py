@@ -95,10 +95,10 @@ class ChatRoomReqSong(ChatPlugin):
     def __call__(self, serv, message):
         if serv.room.reqsong:
             serv.room.reqsong = False
-            msg = "This room now does not need all players to have the song"
+            msg = "This room now does not require all players to have the song"
         else:
             serv.room.reqsong = True
-            msg = "This room now needs all players to have the song"
+            msg = "This room now requires all players to have the song"
 
         serv.session.commit()
         serv.send_message(msg)

@@ -45,7 +45,8 @@ class StartGameRequestController(StepmaniaController):
                     "offsetacum": 0,
                     "toasties": 0,
                     "perfect_combo": 0,
-                    "dpacum": 0,
+                    "dp": 0,
+                    "migsp": 0,
                     "holds": 0,
                     "taps": 0
                    },
@@ -59,7 +60,8 @@ class StartGameRequestController(StepmaniaController):
                     "offsetacum": 0,
                     "toasties": 0,
                     "perfect_combo": 0,
-                    "dpacum": 0,
+                    "dp": 0,
+                    "migsp": 0,
                     "holds": 0,
                     "taps": 0
                    },

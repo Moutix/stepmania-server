@@ -73,7 +73,6 @@ class SongStat(schema.Base):
     max_combo  = Column(Integer, default=0)
     options    = Column(Text, default="")
     score      = Column(Integer, default=0)
-    dp      = Column(Integer, default=0)
     rate      = Column(Integer, default=0)
     filehash      = Column(String(255))
     chartkey      = Column(String(255))
@@ -83,7 +82,7 @@ class SongStat(schema.Base):
     difficulty = Column(Integer, default=0)
     feet       = Column(Integer, default=0)
 
-    percentage = Column(Float(precision=5))
+    ssr = Column(Float(precision=5))
     migs = Column(Float(precision=5))
 
     duration   = Column(Integer, default=0)
@@ -94,7 +93,7 @@ class SongStat(schema.Base):
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
-        return "<SongStat #%s score=%s (%s%%)>" % (self.id, self.dp, self.percentage)
+        return "<SongStat #%s score=%s (%s%%)>" % (self.id, self.migsp, self.migs)
 
     @property
     def lit_difficulty(self):
@@ -117,12 +116,12 @@ class SongStat(schema.Base):
     def pretty_result(self, room_id=None, color=False, date=True, toasty=True, points=True, userfirst=False):
         color_func = with_color if color else lambda x, *_: x
 
-        return ("{user_name}: {difficulty} {grade} {percentage}% {toasty}{date}{points}" if userfirst else
-             "{difficulty}: {user_name} {grade} {percentage}% {toasty}{date}{points}").format(
+        return ("{user_name}: {difficulty} {grade} {percentage:12.2f}% {toasty}{date}{points}" if userfirst else
+             "{difficulty}: {user_name} {grade} {percentage:12.2f}% {toasty}{date}{points}").format(
             difficulty=color_func(self.full_difficulty, color=nick_color(self.lit_difficulty)),
             user_name=self.user.fullname_colored(room_id) if color else self.user.fullname(room_id),
             grade=color_func(self.lit_grade),
-            percentage=str(self.migs)[:6],
+            percentage=self.migs,
             toasty=" Toasty:" + str(self.toasty) + " " if toasty and self.toasty > 0 else "",
             date=" on " + self.created_at.strftime("%x") if date else "",
             points=" Points: " + str(self.migsp) if points else ""
@@ -207,12 +206,16 @@ class SongStat(schema.Base):
 
     def get_rank(self, user_id, song_id):
         tbs = (object_session(self).query(SongStat)
-            .filter_by(song_id = song_id)
+            .filter_by(chartkey = self.chartkey)
+            .filter_by(feet = self.feet)
+            .filter_by(song_id = self.song_id)
             .filter_by(difficulty = self.difficulty)
             .order_by(SongStat.migsp.desc()).all())
         pbs = (object_session(self).query(SongStat)
-            .filter_by(user_id = user_id)
-            .filter_by(song_id = song_id)
+            .filter_by(chartkey = self.chartkey)
+            .filter_by(feet = self.feet)
+            .filter_by(user_id = self.user_id)
+            .filter_by(song_id = self.song_id)
             .filter_by(difficulty = self.difficulty)
             .order_by(SongStat.migsp.desc()).all())
         

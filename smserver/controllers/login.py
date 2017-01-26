@@ -26,11 +26,11 @@ class LoginController(StepmaniaController):
         nb_onlines = models.User.nb_onlines(self.session)
         max_users = self.server.config.server.get("max_users", -1)
         if max_users > 0 and nb_onlines >= max_users:
-            self.log.info("Player %s cannot login, nb max of user reaches", self.packet["username"])
+            self.log.info("Player %s cannot login, nb max of user reached", self.packet["username"])
             self.send(smpacket.SMPacketServerNSSMONL(
                 packet=smpacket.SMOPacketServerLogin(
                     approval=1,
-                    text="Can't login, nb max users reaches (%s/%s)" % (nb_onlines, max_users)
+                    text="Can't login, server is full (%s/%s)" % (nb_onlines, max_users)
                 )
             ))
             return
@@ -108,10 +108,12 @@ class LoginController(StepmaniaController):
             frienduser = self.session.query(models.User).filter_by(id = friendid).first()
             if frienduser.online == True and frienduser.friend_notifications == True and friendconn:
                 self.send_message(
-                    "Your friend %s connected" % user.name,
-                    friendconn
-                )
-
+                    "Your friend %s connected" % with_color(user.name),
+                    friendconn)
+            if user.friend_notifications == True and frienduser.online == True and friendconn:
+                self.send_message(
+                    "Your friend %s is online" % with_color(frienduser.name),
+                    self.conn)
         self.server.send_friend_list(user.id, self.conn)
         
     def _send_server_resume(self, nb_onlines, max_users):

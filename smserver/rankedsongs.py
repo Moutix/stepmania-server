@@ -3,9 +3,9 @@ import smserver
 import smserver.server
 from smserver.server import StepmaniaServer
 from smserver import models, conf
-from smserver.models import ranked_song
-from smserver.models.ranked_song import Skillsets
-from smserver.models.ranked_song import Diffs
+from smserver.models import ranked_chart
+# from smserver.models.ranked_chart import Skillsets
+from smserver.models.ranked_chart import Diffs
 from sqlalchemy.orm import object_session
 import sys, getopt
 from optparse import OptionParser
@@ -20,6 +20,7 @@ config = conf.Conf(*sys.argv[3:])
 
 rebuild = False
 update = True
+
 if len(sys.argv) > 1 and sys.argv[1]  == "-r":
     rebuild = True
     update = False
@@ -56,17 +57,19 @@ for filename in os.listdir(directory):
                 line = line[:line.rfind(";")]
                 radar = line.split(',')
             if chartkey and len(radar) > 3 and len(msds) > 1 and diff:
-                newsong = models.RankedSong(chartkey = chartkey, taps = float(radar[5]) - 1)
-                for skillset in Skillsets:
-                    exec("newsong." + skillset.name + " = msds[skillset.value]" )
+                newsong = models.RankedChart(chartkey = chartkey, taps = float(radar[6]))
+                #for skillset in Skillsets:
+                #    exec("newsong." + skillset.name + " = msds[skillset.value]" )
+                newsong.rating = msds[0]
                 exec("diff = Diffs." + diff + ".value")
                 newsong.diff = diff
-                exists = session.query(models.RankedSong).filter_by(chartkey = chartkey).first()
+                exists = session.query(models.RankedChart).filter_by(chartkey = chartkey).first()
                 if exists:
                     exists.diff = newsong.diff
                     exists.taps = newsong.taps
-                    for skillset in Skillsets:
-                        exec("exists." + skillset.name + " = newsong." + skillset.name )
+                    exists.rating = newsong.rating
+                    # for skillset in Skillsets:
+                    #     exec("exists." + skillset.name + " = newsong." + skillset.name )
                 else:
                     session.add(newsong)
                 foundsteps=False

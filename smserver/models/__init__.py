@@ -4,7 +4,7 @@ from smserver.models.song import Song
 from smserver.models.song_stat import SongStat
 from smserver.models.privilege import Privilege
 from smserver.models.friendship import Friendship
-from smserver.models.ssr import SSR
-from smserver.models.ranked_song import RankedSong
+#from smserver.models.ssr import SSR
+from smserver.models.ranked_chart import RankedChart
 from smserver.models.ban import Ban
 from smserver.models.game import Game

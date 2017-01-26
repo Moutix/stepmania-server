@@ -6,8 +6,9 @@ import datetime
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
-from smserver.models import ranked_song
-from smserver.models.ranked_song import Skillsets
+from smserver.models import ranked_chart
+from smserver.models import song_stat
+# from smserver.models.ranked_chart import Skillsets
 
 from smserver.chathelper import with_color
 
@@ -28,58 +29,26 @@ class GameOverController(StepmaniaController):
         for user in self.active_users:
             user.status = 2
             taps = self.conn.songstats[user.pos]["taps"]
-            migs = 0
-            for update in self.conn.songstats[user.pos]["data"]:
-                migs += self.migs(update["stepid"])
             if taps > 0:
-                dppercent = (self.conn.songstats[user.pos]["dpacum"] * 100 
+                dppercent = (self.conn.songstats[user.pos]["dp"] * 100 
                     / (self.conn.songstats[user.pos]["taps"] * 2
-                     + self.conn.songstats[user.pos]["holds"] * 6))
-                migspercent = (migs * 100 
-                    / (self.conn.songstats[user.pos]["taps"] * 4
                      + self.conn.songstats[user.pos]["holds"] * 6))
             else:
                 dppercent = 0
-                migspercent = 0
             with self.conn.mutex:
-                songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration, self.conn.songstats["filehash"])
                 rate = self.conn.songstats[user.pos]["rate"]
+                ssr = 0
                 if rate == 100:
                     chartkey = self.conn.songstats[user.pos]["chartkey"]
                     if chartkey != None:
-                        rankedsong = (self.session.query(models.RankedSong)
+                        rankedsong = (self.session.query(models.RankedChart)
                             .filter_by(chartkey = chartkey).first())
                         if rankedsong:
                             if rankedsong.taps == taps:
-                                for skillset in Skillsets:
-                                    rating = eval("rankedsong." + skillset.name)
-                                    ssr = rating * dppercent / 100
-                                    repeated = (self.session.query(models.SSR)
-                                        .filter_by(user_id = user.id)
-                                        .filter_by(skillset = skillset.value)
-                                        .filter_by(chartkey = chartkey).first())
-                                    if not repeated:
-                                        ssrs = (self.session.query(models.SSR)
-                                            .filter_by(user_id = user.id)
-                                            .filter_by(skillset = skillset.value)
-                                            .order_by(models.SSR.ssr.desc()).all())
-                                        if len(ssrs) >= self.server.config.server["max_ssrs"]:
-                                            if ssrs[0].ssr < ssr:
-                                                self.session.delete(ssrs[0])
-                                            else:
-                                                continue
-                                    else:
-                                        if repeated.ssr < ssr:
-                                            self.session.delete(repeated)
-                                        else:
-                                            continue
-                                    self.session.add(models.SSR(
-                                        user_id = user.id, skillset = skillset.value,
-                                        ssr = ssr, song_stat_id = songstat.id,
-                                        song_id = self.room.active_song.id,
-                                        chartkey = chartkey))
-                                    user.updaterating(self.session, skillset)
-
+                                if dppercent >= 85:
+                                    ssr = rankedsong.rating * dppercent / 100
+                songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration, self.conn.songstats["filehash"], ssr)
+                
 
                 if user.show_offset == True:
                     if taps > 0:
@@ -87,6 +56,10 @@ class GameOverController(StepmaniaController):
                             "%s average offset" % 
                             str(self.conn.songstats[user.pos]["offsetacum"] / taps)[:5],
                             to="me")
+                if ssr > 0:
+                    query = self.session.query(models.SongStat).filter_by(user_id = user.id).order_by(models.SongStat.ssr.desc()).limit(25)
+                    if query.first() and ssr > query[-1].ssr:
+                        user.rating = user.updaterating(self.session)
                             
             xp = songstat.calc_xp(self.server.config.score.get("xpWeight"))
             user.xp += xp
@@ -95,9 +68,8 @@ class GameOverController(StepmaniaController):
             self.send_message( 
                 (songstat.pretty_result(room_id=self.room.id,
                 color=True, date=False, toasty=True, points=self.room.show_points, userfirst=True) + 
-                songstat.get_rank(user.id, self.room.active_song.id)) + 
-                " " + with_color(xp, "aaaa00") +" XP gained"
-                )
+                songstat.get_rank(user.id, self.room.active_song.id) ) + 
+                " " + with_color(xp, "aaaa00") +" XP gained" )
             user.toastycount =+ self.conn.songstats[user.pos]["toasties"]
 
 
@@ -107,7 +79,7 @@ class GameOverController(StepmaniaController):
             self.conn.songstats = {0: {"data": []}, 1: {"data": []}}
             self.conn.song = None
 
-    def create_stats(self, user, raw_stats, duration, filehash):
+    def create_stats(self, user, raw_stats, duration, filehash, ssr):
         songstat = models.SongStat(
             song_id=self.room.active_song.id,
             user_id=user.id,
@@ -120,13 +92,13 @@ class GameOverController(StepmaniaController):
             toasty=raw_stats["toasties"],
             filehash=filehash,
             chartkey=raw_stats["chartkey"],
-            dp =raw_stats["dpacum"]
+            migsp=raw_stats["migsp"],
+            rate=raw_stats["rate"],
+            ssr=ssr
         )
-        songstat.migsp = 0
         for stepid in models.SongStat.stepid.values():
             setattr(songstat, stepid, 0)
         for value in raw_stats["data"]:
-            songstat.migsp += self.migs(value["stepid"])
             if value["combo"] > songstat.max_combo:
                 songstat.max_combo = value["combo"]
 
@@ -139,17 +111,12 @@ class GameOverController(StepmaniaController):
                    )
 
         if raw_stats["taps"] > 0:
-            songstat.percentage = songstat.dp * 100 / (raw_stats["taps"] * 2 + raw_stats["holds"] * 6)
-        else:
-            songstat.percentage  = 0
-
-        if raw_stats["taps"] > 0:
-            songstat.migs = songstat.migsp * 100 / (raw_stats["taps"] * 4 + raw_stats["holds"] * 6)
+            songstat.migs = songstat.migsp * 100 / (raw_stats["taps"] * 3 + raw_stats["holds"] * 6)
         else:
             songstat.migs  = 0
 
         if raw_stats["data"]:
-            songstat.grade = self.grade(songstat.percentage, raw_stats["data"])
+            songstat.grade = self.grade(songstat.dp * 100 / (raw_stats["taps"] * 2 + raw_stats["holds"] * 6), raw_stats["data"])
             songstat.score = raw_stats["data"][-1]["score"]
 
         songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
@@ -162,7 +129,7 @@ class GameOverController(StepmaniaController):
         if score >= 100.00:
             for note in data:
                 if note["stepid"] > 2 and note["stepid"] < 9:
-                    if note != 9:
+                    if note != 8:
                         return 1
             return 0
         elif score >= 93.00:
@@ -174,21 +141,3 @@ class GameOverController(StepmaniaController):
         elif score >= 45.00:
             return 5
         return 6
-
-    def migs(self, stepsid):
-        if stepsid == 8:
-            return 3
-        elif stepsid == 7:
-            return 2
-        elif stepsid == 6:
-            return 1
-        elif stepsid == 5:
-            return 0
-        elif stepsid == 4:
-            return -4
-        elif stepsid == 3:
-            return -8
-        elif stepsid == 10:
-            return 6
-        else:
-            return 0

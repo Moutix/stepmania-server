@@ -31,41 +31,34 @@ class GameStatusUpdateController(StepmaniaController):
             pid = self.packet["player_id"]
             best_score = self.conn.songstats[pid]["best_score"]
 
-        if best_score and self.conn.songstats[pid]["dpacum"] > best_score:
-            with self.conn.mutex:
-                self.conn.songstats[self.packet["player_id"]]["best_score"] = None
-            self.beat_best_score()
 
-        with self.conn.mutex:
             offset = float(stats["offset"]) / 2000.0 - 16.384
+            self.conn.songstats[pid]["offsetacum"] += offset
             if stats["stepid"] > 3 and stats["stepid"] < 9:
                 stats["stepid"] = self.get_stepid(offset)
                 self.conn.songstats[pid]["taps"] += 1
+
+            notesize = self.notesize(stats["combo"], self.conn.songstats[pid]["data"])
             if stats["stepid"] == 4 or stats["stepid"] == 5:
-                stats["combo"] = 0
                 self.conn.songstats[pid]["perfect_combo"] = 0
             elif stats["stepid"] == 7 or stats["stepid"] == 8:
-                if len(self.conn.songstats[pid]["data"]) > 1:
-                    stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"] + 1
-                else:
-                    stats["combo"] = 1
-                self.conn.songstats[pid]["perfect_combo"] += 1
+                self.conn.songstats[pid]["perfect_combo"] += notesize
             elif stats["stepid"] == 6:
-                if len(self.conn.songstats[pid]["data"]) > 1:
-                    stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"] + 1
-                else:
-                    stats["combo"] = 1
                 self.conn.songstats[pid]["perfect_combo"] = 0
             elif stats["stepid"] == 10 or stats["stepid"] == 9:
                 self.conn.songstats[pid]["holds"] += 1
-                stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"]
             elif stats["stepid"] == 3 :
                 self.conn.songstats[pid]["taps"] += 1
-                stats["combo"] = 0
                 self.conn.songstats[pid]["perfect_combo"] = 0
+
             self.conn.songstats[pid]["data"].append(stats)
-            self.conn.songstats[pid]["offsetacum"] += offset
-            self.conn.songstats[pid]["dpacum"] += self.dp(stats["stepid"])
+            self.conn.songstats[pid]["dp"] += self.dp(stats["stepid"])
+            self.conn.songstats[pid]["migsp"] += self.migsp(stats["stepid"])
+
+            if best_score and self.conn.songstats[pid]["migsp"] > best_score:
+                self.conn.songstats[self.packet["player_id"]]["best_score"] = None
+                self.beat_best_score()
+                
             if self.conn.songstats[pid]["perfect_combo"] != 0 and self.conn.songstats[pid]["perfect_combo"] % 250 == 0:
                 self.conn.songstats[pid]["toasties"] += 1
 
@@ -115,3 +108,31 @@ class GameStatusUpdateController(StepmaniaController):
             return 6
         else:
             return 0
+
+    def migsp(self, stepsid):
+        if stepsid == 8:
+            return 3
+        elif stepsid == 7:
+            return 2
+        elif stepsid == 6:
+            return 1
+        elif stepsid == 5:
+            return 0
+        elif stepsid == 4:
+            return -4
+        elif stepsid == 3:
+            return -8
+        elif stepsid == 10:
+            return 6
+        else:
+            return 0
+
+
+    def notesize(self, combo, data):
+        if len(data) > 0:
+            if combo > 0:
+                return combo - data[-1]["combo"]
+            else:
+                return 1
+        else:
+            return 1

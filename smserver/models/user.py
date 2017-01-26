@@ -10,8 +10,7 @@ from sqlalchemy.orm import relationship, reconstructor, object_session
 from smserver.models import schema
 from smserver.chathelper import with_color, nick_color
 from smserver.models.privilege import Privilege
-from smserver.models.ssr import SSR
-from smserver.models.ranked_song import Skillsets
+from smserver.models.song_stat import SongStat
 from smserver import ability
 
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
@@ -52,15 +51,14 @@ class User(schema.Base):
     stepmania_name    = Column(String(255))
     online            = Column(Boolean)
     status            = Column(Integer, default=1)
-    for skillset in Skillsets:
-        exec("rating_" + skillset.name + " = Column(Float, default=0)")
+    rating            = Column(Float, default=0)
     chat_timestamp    = Column(Boolean, default=False)
-    show_offset    = Column(Boolean, default=False)
-    friend_notifications    = Column(Boolean, default=False)
+    show_offset       = Column(Boolean, default=False)
+    friend_notifications = Column(Boolean, default=False)
 
     room_id           = Column(Integer, ForeignKey('rooms.id'))
     room              = relationship("Room", back_populates="users")
-    has_song    = Column(Boolean, default=False)
+    has_song          = Column(Boolean, default=False)
 
     song_stats        = relationship("SongStat", back_populates="user")
     privileges        = relationship("Privilege", back_populates="user")
@@ -80,6 +78,10 @@ class User(schema.Base):
     def enum_status(self):
         return UserStatus(self.status)
 
+    @property
+    def skillrank(self):
+        return object_session(self).query(User).filter(User.rating > self.rating).count() + 1
+
     def fullname(self, room_id=None):
         """ Return user name with level prefix (~, &, ...) """
 
@@ -88,7 +90,7 @@ class User(schema.Base):
             self.name)
 
     def fullname_colored(self, room_id=None):
-        """ Retun user fullname with chat_color """
+        """ Return user fullname with chat_color """
 
         color = nick_color(self.name)
         if not self.online:
@@ -115,13 +117,14 @@ class User(schema.Base):
 
         return 0
 
-    def updaterating(self, session, skillset):
-        ssrs = session.query(SSR).filter_by(user_id = self.id).filter_by(skillset = skillset.value).all()
-        exec("self.rating_" + skillset.name + " = 0")
-        ssrcount = len(ssrs)
-        if ssrcount > 0:
-            for count, ssr in enumerate(ssrs):
-                exec("self.rating_" + skillset.name + " += ssr.ssr * 1 / (2 + 2 * count)")
+
+    @classmethod
+    def updaterating(self, session):
+        song_stats = session.query(SongStat).filter_by(user_id = self.id).order_by(SongStat.ssr.desc()).limit(25).all()
+        rating = 0
+        for count, song_stat in enumerate(song_stats):
+            rating += song_stat.ssr / (2 + 2 * count)
+        return rating
 
     def room_privilege(self, room_id):
         if room_id in self._room_level:

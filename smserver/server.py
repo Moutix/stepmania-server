@@ -268,7 +268,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
                 frienduser = session.query(models.User).filter_by(id = friendid).first()
                 if frienduser.online == True and frienduser.friend_notifications == True and not friendconn == None:
                     self.send_message(
-                        "Your friend %s disconnected" % user.name,
+                        "Your friend %s disconnected" % with_color(user.name),
                         conn=friendconn
                     )
         if room_id:

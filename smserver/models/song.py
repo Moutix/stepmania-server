@@ -63,7 +63,7 @@ class Song(schema.Base):
         if not stat:
             return None
 
-        return stat.dp
+        return stat.migsp
 
     @property
     def fullname(self):

@@ -82,10 +82,11 @@ class Profile(ChatPlugin):
         for user in serv.active_users:
             serv.send_message("Name: %s" % with_color(user.name), to="me")
             serv.send_message("XP: %s" % user.xp, to="me")
-            serv.send_message("Rank: %s" % user.rank, to="me")
-            for skillset in models.ranked_song.Skillsets:
-                rating = eval("user.rating_" + skillset.name)
-                serv.send_message(skillset.name.capitalize()+": %f" %  rating, to="me")
+            serv.send_message("Rank: %s" % user.skillrank, to="me")
+            serv.send_message("Rating: %12.2f" % user.rating, to="me")
+            #for skillset in models.ranked_song.Skillsets:
+            #    rating = eval("user.rating_" + skillset.name)
+            #    serv.send_message(skillset.name.capitalize()+": %f" %  rating, to="me")
 
 
 class FriendNotification(ChatPlugin):

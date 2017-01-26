@@ -86,7 +86,7 @@ class ChatRoomFree(ChatPlugin):
         serv.send_message(msg)
 
 
-class ChatRoomFree(ChatPlugin):
+class ChatRoomReqSong(ChatPlugin):
     command = "reqsong"
     helper = "Enable/Disable song requirement"
     room = True

@@ -34,6 +34,8 @@ class GameStatusUpdateController(StepmaniaController):
 
             offset = float(stats["offset"]) / 2000.0 - 16.384
             self.conn.songstats[pid]["offsetacum"] += offset
+            if self.conn.stepmania_version < 3:
+                stats["stepid"] += 2
             if stats["stepid"] > 3 and stats["stepid"] < 9:
                 stats["stepid"] = self.get_stepid(offset)
                 self.conn.songstats[pid]["taps"] += 1
@@ -58,7 +60,7 @@ class GameStatusUpdateController(StepmaniaController):
             if best_score and self.conn.songstats[pid]["migsp"] > best_score:
                 self.conn.songstats[self.packet["player_id"]]["best_score"] = None
                 self.beat_best_score()
-                
+
             if self.conn.songstats[pid]["perfect_combo"] != 0 and self.conn.songstats[pid]["perfect_combo"] % 250 == 0:
                 self.conn.songstats[pid]["toasties"] += 1
 

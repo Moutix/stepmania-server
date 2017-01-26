@@ -66,7 +66,6 @@ class LoginController(StepmaniaController):
         user.last_ip = self.conn.ip
         user.stepmania_name = self.conn.stepmania_name
         user.stepmania_version = self.conn.stepmania_version
-
         self.session.commit()
 
         self.conn.chat_timestamp = user.chat_timestamp

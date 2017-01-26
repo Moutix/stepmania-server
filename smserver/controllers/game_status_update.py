@@ -3,95 +3,137 @@
 
 import datetime
 
+from smserver import models
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
-from smserver import models
+from smserver.chathelper import with_color
 
-from sqlalchemy.orm import object_session
-
-class StartGameRequestController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCGSR
-    require_login = True
+class GameStatusUpdateController(StepmaniaController):
+    command = smpacket.SMClientCommand.NSCGSU
+    require_login = False
 
     def handle(self):
-        if not self.room:
+        if not self.conn.room:
             return
 
-        if self.room.status != 2:
+        if "start_at" not in self.conn.songstats:
             return
-
-        if self.packet["start_position"] == 1:
-            self.send(smpacket.SMPacketServerNSCGSR())
-            return
-
-        song = models.Song.find_or_create(
-            self.packet["song_title"],
-            self.packet["song_subtitle"],
-            self.packet["song_artist"],
-            self.session)
-
-        with self.conn.mutex:
-            self.conn.song_id = song.id
-            self.conn.songs[song.id] = True
-
-            self.conn.songstats = {
-                0: {"data": [],
-                    "feet": self.packet["first_player_feet"],
-                    "difficulty": self.packet["first_player_difficulty"],
-                    "options": self.packet["first_player_options"],
-                    "best_score": song.best_score_value(self.packet["first_player_feet"]),
-                    "chartkey": self.packet["first_player_chartkey"],
-                    "rate": self.packet["rate"],
-                    "offsetacum": 0,
-                    "toasties": 0,
-                    "perfect_combo": 0,
-                    "dp": 0,
-                    "migsp": 0,
-                    "holds": 0,
-                    "taps": 0
-                   },
-                1: {"data": [],
-                    "feet": self.packet["second_player_feet"],
-                    "difficulty": self.packet["second_player_difficulty"],
-                    "options": self.packet["second_player_options"],
-                    "best_score": song.best_score_value(self.packet["second_player_feet"]),
-                    "chartkey": self.packet["second_player_chartkey"],
-                    "rate": self.packet["rate"],
-                    "offsetacum": 0,
-                    "toasties": 0,
-                    "perfect_combo": 0,
-                    "dp": 0,
-                    "migsp": 0,
-                    "holds": 0,
-                    "taps": 0
-                   },
-                "filehash": self.packet["filehash"],
-                "start_at": datetime.datetime.now(),
-                "options": self.packet["song_options"],
-                "course_title": self.packet["course_title"]
+        stats = {"time": datetime.datetime.now() - self.conn.songstats.get("start_at"),
+                 "stepid": self.packet["step_id"],
+                 "grade": self.packet["grade"],
+                 "score": self.packet["score"],
+                 "combo": self.packet["combo"],
+                 "health": self.packet["health"],
+                 "offset": self.packet["offset"]
                 }
-            self.conn.wait_start = True
-        for player in self.server.player_connections(self.room.id):
-            with player.mutex:
-                if player.wait_start is False:
-                    self.log.debug("Room %s waiting for other player to start the game" % self.room.name)
-                    return
+                
+        with self.conn.mutex:
+            pid = self.packet["player_id"]
+            best_score = self.conn.songstats[pid]["best_score"]
 
-        self.launch_song(self.room, song, self.server)
 
-    @staticmethod
-    def launch_song(room, song, server):
-        room.active_song = song
-        room.ingame = True
-        server.log.info("Room %s start a new song %s" % (room.name, song.fullname))
-        server.send_user_list(room)
+            offset = float(stats["offset"]) / 2000.0 - 16.384
+            self.conn.songstats[pid]["offsetacum"] += offset
+            if self.conn.stepmania_version < 3:
+                stats["stepid"] += 2
+            if stats["stepid"] > 3 and stats["stepid"] < 9:
+                stats["stepid"] = self.get_stepid(offset)
+                self.conn.songstats[pid]["taps"] += 1
 
-        for player in server.ingame_connections(room.id):
-            with player.mutex:
-                player.songstats["start_at"] = datetime.datetime.now()
-                player.wait_start = False
-                player.ingame = True
-                player.dp = 0
+            notesize = self.notesize(stats["combo"], self.conn.songstats[pid]["data"])
+            if stats["stepid"] == 4 or stats["stepid"] == 5:
+                self.conn.songstats[pid]["perfect_combo"] = 0
+            elif stats["stepid"] == 7 or stats["stepid"] == 8:
+                self.conn.songstats[pid]["perfect_combo"] += notesize
+            elif stats["stepid"] == 6:
+                self.conn.songstats[pid]["perfect_combo"] = 0
+            elif stats["stepid"] == 10 or stats["stepid"] == 9:
+                self.conn.songstats[pid]["holds"] += 1
+            elif stats["stepid"] == 3 :
+                self.conn.songstats[pid]["taps"] += 1
+                self.conn.songstats[pid]["perfect_combo"] = 0
 
-            player.send(smpacket.SMPacketServerNSCGSR())
+            self.conn.songstats[pid]["data"].append(stats)
+            self.conn.songstats[pid]["dp"] += self.dp(stats["stepid"])
+            self.conn.songstats[pid]["migsp"] += self.migsp(stats["stepid"])
 
+            if best_score and self.conn.songstats[pid]["migsp"] > best_score:
+                self.conn.songstats[self.packet["player_id"]]["best_score"] = None
+                self.beat_best_score()
+
+            if self.conn.songstats[pid]["perfect_combo"] != 0 and self.conn.songstats[pid]["perfect_combo"] % 250 == 0:
+                self.conn.songstats[pid]["toasties"] += 1
+
+    def beat_best_score(self):
+        user = [user for user in self.users if user.pos == self.packet["player_id"]][0]
+
+        message = "%s just beat the best score on %s(%s)" % (
+            user.name,
+            models.SongStat.DIFFICULTIES.get(self.conn.songstats[self.packet["player_id"]]["difficulty"]),
+            self.conn.songstats[self.packet["player_id"]]["feet"]
+        )
+
+        self.sendroom(self.conn.room, smpacket.SMPacketServerNSCSU(message=message))
+
+
+    def get_stepid(self, offset):
+        smarv  = 0.02259;
+        sperf  = 0.04509;
+        sgreat = 0.09009;
+        sgood  = 0.13509;
+        sboo   = 0.18909;
+        if (offset < smarv) and (offset > (smarv * -1.0)):
+            return 8
+        elif (offset < sperf) and (offset > (sperf * -1.0)):
+            return 7
+        elif (offset < sgreat) and (offset > (sgreat * -1.0)):
+            return 6
+        elif (offset < sgood) and (offset > (sgood * -1.0)):
+            return 5
+        else:
+            return 4
+
+
+    def dp(self, stepsid):
+        if stepsid == 8 or stepsid == 7:
+            return 2
+        elif stepsid == 6:
+            return 1
+        elif stepsid == 5:
+            return 0
+        elif stepsid == 4:
+            return -4
+        elif stepsid == 3:
+            return -8
+        elif stepsid == 10:
+            return 6
+        else:
+            return 0
+
+    def migsp(self, stepsid):
+        if stepsid == 8:
+            return 3
+        elif stepsid == 7:
+            return 2
+        elif stepsid == 6:
+            return 1
+        elif stepsid == 5:
+            return 0
+        elif stepsid == 4:
+            return -4
+        elif stepsid == 3:
+            return -8
+        elif stepsid == 10:
+            return 6
+        else:
+            return 0
+
+
+    def notesize(self, combo, data):
+        if len(data) > 0:
+            if combo > 0:
+                return combo - data[-1]["combo"]
+            else:
+                return 1
+        else:
+            return 1

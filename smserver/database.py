@@ -110,7 +110,8 @@ class DataBase(object):
                 password=self._password,
                 host=self._host,
                 database=self._database,
-                port=self._port
+                port=self._port,
+-               query={'check_same_thread': False}
             )
         else:
             return URL(

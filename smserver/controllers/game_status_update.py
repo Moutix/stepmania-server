@@ -41,21 +41,24 @@ class GameStatusUpdateController(StepmaniaController):
             if stats["stepid"] > 3 and stats["stepid"] < 9:
                 stats["stepid"] = self.get_stepid(offset)
                 self.conn.songstats[pid]["taps"] += 1
-            if stats["stepid"] > 3 and stats["stepid"] < 6:
+            if stats["stepid"] == 4 or stats["stepid"] == 5:
                 stats["combo"] = 0
                 self.conn.songstats[pid]["perfect_combo"] = 0
-            elif stats["stepid"] > 6 and stats["stepid"] < 9:
+            elif stats["stepid"] == 7 or stats["stepid"] == 8:
                 if len(self.conn.songstats[pid]["data"]) > 1:
                     stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"] + 1
-                    self.conn.songstats[pid]["perfect_combo"] += 1
-            elif stats["stepid"] == 5:
+                else:
+                    stats["combo"] = 1
+                self.conn.songstats[pid]["perfect_combo"] += 1
+            elif stats["stepid"] == 6:
                 if len(self.conn.songstats[pid]["data"]) > 1:
                     stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"] + 1
-                    self.conn.songstats[pid]["perfect_combo"] = 0
+                else:
+                    stats["combo"] = 1
+                self.conn.songstats[pid]["perfect_combo"] = 0
             elif stats["stepid"] == 10 or stats["stepid"] == 9:
                 self.conn.songstats[pid]["holds"] += 1
-                if len(self.conn.songstats[pid]["data"]) > 1:
-                    stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"]
+                stats["combo"] = self.conn.songstats[pid]["data"][-1]["combo"]
             elif stats["stepid"] == 3 :
                 self.conn.songstats[pid]["taps"] += 1
                 stats["combo"] = 0
@@ -63,7 +66,7 @@ class GameStatusUpdateController(StepmaniaController):
             self.conn.songstats[pid]["data"].append(stats)
             self.conn.songstats[pid]["offsetacum"] += offset
             self.conn.songstats[pid]["dpacum"] += self.dp(stats["stepid"])
-            if self.conn.songstats[pid]["perfect_combo"] % 250:
+            if self.conn.songstats[pid]["perfect_combo"] != 0 and self.conn.songstats[pid]["perfect_combo"] % 250 == 0:
                 self.conn.songstats[pid]["toasties"] += 1
 
     def beat_best_score(self):

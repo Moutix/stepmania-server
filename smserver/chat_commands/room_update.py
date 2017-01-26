@@ -98,7 +98,25 @@ class ChatRoomReqSong(ChatPlugin):
             msg = "This room now does not need all players to have the song"
         else:
             serv.room.reqsong = True
-            msg = "This room now need all players to have the song"
+            msg = "This room now needs all players to have the song"
+
+        serv.session.commit()
+        serv.send_message(msg)
+
+
+class ChatRoomShowBests(ChatPlugin):
+    command = "showbests"
+    helper = "Enable/disable showing best scores on song select"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        if serv.room.show_bests:
+            serv.room.show_bests = False
+            msg = "This room now does not show best scores on song select"
+        else:
+            serv.room.show_bests = True
+            msg = "This room now shows best scores on song select"
 
         serv.session.commit()
         serv.send_message(msg)

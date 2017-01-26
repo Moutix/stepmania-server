@@ -26,6 +26,7 @@ class Room(schema.Base):
     hidden         = Column(Boolean, default=False)
     free           = Column(Boolean, default=True)
     reqsong           = Column(Boolean, default=True)
+    show_bests           = Column(Boolean, default=False)
 
     mode           = Column(String(255), default="normal")
 

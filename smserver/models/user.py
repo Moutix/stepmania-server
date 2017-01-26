@@ -46,6 +46,7 @@ class User(schema.Base):
     email             = Column(String(255))
     rank              = Column(Integer, default=1)
     xp                = Column(Integer, default=0)
+    toastycount       = Column(Integer, default=0)
     last_ip           = Column(String(255))
     stepmania_version = Column(Integer)
     stepmania_name    = Column(String(255))

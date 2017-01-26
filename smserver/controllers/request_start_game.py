@@ -45,10 +45,10 @@ class RequestStartGameController(StepmaniaController):
             self.colored_user_repr(self.room.id),
             with_color(song.fullname),
             song.time_played,
-            " Best scores:" if song.time_played > 0 else ""
+            " Best scores:" if song.time_played > 0 and self.room.show_bests else ""
             ))
 
-        if song.time_played > 0:
+        if song.time_played > 0 and self.room.show_bests:
             for song_stat in song.best_scores:
                 self.send_message(song_stat.pretty_result(room_id=self.room.id, color=True))
 

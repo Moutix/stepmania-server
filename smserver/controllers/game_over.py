@@ -87,6 +87,7 @@ class GameOverController(StepmaniaController):
                             "%s average offset" % 
                             str(self.conn.songstats[user.pos]["offsetacum"] / taps)[:5],
                             to="me")
+                            
             xp = songstat.calc_xp(self.server.config.score.get("xpWeight"))
             user.xp += xp
 
@@ -95,17 +96,14 @@ class GameOverController(StepmaniaController):
             else:
                 toasty = False
             self.session.commit()
-            self.send_message("New result: %s" % 
-                songstat.pretty_result(room_id=self.room.id,
+            self.send_message( 
+                (songstat.pretty_result(room_id=self.room.id,
                 color=True, date=False, toasty=toasty) + 
-                songstat.get_rank(user.id, self.room.active_song.id))
+                songstat.get_rank(user.id, self.room.active_song.id)) + 
+                " " + with_color(xp, "aaaa00") +" XP gained"
+                )
+            user.toastycount =+ self.conn.songstats[user.pos]["toasties"]
 
-            self.send_message(
-                "%s gained %s XP!" % (
-                    user.fullname_colored(user.room_id),
-                    with_color(xp, "aaaa00")
-                    ),
-                to="me")
 
 
         with self.conn.mutex:

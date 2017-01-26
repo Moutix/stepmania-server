@@ -121,7 +121,7 @@ class SongStat(schema.Base):
             difficulty=color_func(self.full_difficulty, color=nick_color(self.lit_difficulty)),
             user_name=self.user.fullname_colored(room_id) if color else self.user.fullname(room_id),
             grade=color_func(self.lit_grade),
-            percentage=self.percentage,
+            percentage=str(self.percentage)[:5],
             toasty=" Toasty:" + str(self.toasty) + " " if toasty else "",
             date=" on " + self.created_at.strftime("%x") if date else ""
         )
@@ -159,7 +159,7 @@ class SongStat(schema.Base):
                 "great": 3,
                 "perfect": 4,
                 "flawless": 5,
-                "toasty": 100,
+                "toasty": 100
             }
 
         xp = 0
@@ -167,7 +167,7 @@ class SongStat(schema.Base):
             nb = getattr(self, note, 0)
             xp += nb*weight
 
-        return int(xp/len(config))
+        return xp
 
 
     @staticmethod
@@ -206,12 +206,12 @@ class SongStat(schema.Base):
         tbs = (object_session(self).query(SongStat)
             .filter_by(song_id = song_id)
             .filter_by(difficulty = self.difficulty)
-            .order_by(SongStat.migsp.asc()).all())
+            .order_by(SongStat.migsp.desc()).all())
         pbs = (object_session(self).query(SongStat)
             .filter_by(user_id = user_id)
             .filter_by(song_id = song_id)
             .filter_by(difficulty = self.difficulty)
-            .order_by(SongStat.migsp.asc()).all())
+            .order_by(SongStat.migsp.desc()).all())
         
         for count, tb in enumerate(tbs, 1):
             if tb == self:

@@ -104,6 +104,24 @@ class ChatRoomReqSong(ChatPlugin):
         serv.send_message(msg)
 
 
+class ChatRoomShowPoints(ChatPlugin):
+    command = "showpoints"
+    helper = "Enable/Disable score points message"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        if serv.room.show_points:
+            serv.room.show_points = False
+            msg = "This room now doesnt show each score's points"
+        else:
+            serv.room.show_points = True
+            msg = "This room now shows each score's points"
+
+        serv.session.commit()
+        serv.send_message(msg)
+
+
 class ChatRoomShowBests(ChatPlugin):
     command = "showbests"
     helper = "Enable/disable showing best scores on song select"

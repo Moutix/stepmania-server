@@ -91,14 +91,10 @@ class GameOverController(StepmaniaController):
             xp = songstat.calc_xp(self.server.config.score.get("xpWeight"))
             user.xp += xp
 
-            if self.conn.songstats[user.pos]["toasties"] > 0:
-                toasty = True
-            else:
-                toasty = False
             self.session.commit()
             self.send_message( 
                 (songstat.pretty_result(room_id=self.room.id,
-                color=True, date=False, toasty=toasty) + 
+                color=True, date=False, toasty=True, points=self.room.show_points, userfirst=True) + 
                 songstat.get_rank(user.id, self.room.active_song.id)) + 
                 " " + with_color(xp, "aaaa00") +" XP gained"
                 )

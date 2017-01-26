@@ -114,17 +114,20 @@ class SongStat(schema.Base):
 
         return self.GRADES.get(self.grade, self.grade)
 
-    def pretty_result(self, room_id=None, color=False, date=True, toasty=False):
+    def pretty_result(self, room_id=None, color=False, date=True, toasty=True, points=True, userfirst=False):
         color_func = with_color if color else lambda x, *_: x
 
-        return "{difficulty}: {user_name} {grade} ({percentage}%){toasty}{date}".format(
+        return ("{user_name}: {difficulty} {grade} {percentage}% {toasty}{date}{points}" if userfirst else
+             "{difficulty}: {user_name} {grade} {percentage}% {toasty}{date}{points}").format(
             difficulty=color_func(self.full_difficulty, color=nick_color(self.lit_difficulty)),
             user_name=self.user.fullname_colored(room_id) if color else self.user.fullname(room_id),
             grade=color_func(self.lit_grade),
-            percentage=str(self.percentage)[:5],
-            toasty=" Toasty:" + str(self.toasty) + " " if toasty else "",
-            date=" on " + self.created_at.strftime("%x") if date else ""
+            percentage=str(self.migs)[:6],
+            toasty=" Toasty:" + str(self.toasty) + " " if toasty and self.toasty > 0 else "",
+            date=" on " + self.created_at.strftime("%x") if date else "",
+            points=" Points: " + str(self.migsp) if points else ""
         )
+
 
     def calc_percentage(self, config=None):
         if not config:
@@ -222,7 +225,7 @@ class SongStat(schema.Base):
                 pbcount = count
                 break
 
-        return (" PB: " + str(tbcount) + "/" + str(len(tbs)) + " TB: " + str(pbcount) + "/" + str(len(pbs)))
+        return (" PB: " + with_color(str(pbcount) + "/" + str(len(pbs)), "aaaa00") + " TB: " + with_color(str(tbcount) + "/" + str(len(tbs)), "aaaa00"))
 
 
 

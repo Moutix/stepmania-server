@@ -25,8 +25,9 @@ class Room(schema.Base):
     ingame         = Column(Boolean, default=False)
     hidden         = Column(Boolean, default=False)
     free           = Column(Boolean, default=True)
-    reqsong           = Column(Boolean, default=True)
-    show_bests           = Column(Boolean, default=False)
+    reqsong        = Column(Boolean, default=True)
+    show_points    = Column(Boolean, default=False)
+    show_bests     = Column(Boolean, default=False)
 
     mode           = Column(String(255), default="normal")
 

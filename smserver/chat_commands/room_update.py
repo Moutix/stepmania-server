@@ -113,10 +113,10 @@ class ChatRoomShowPoints(ChatPlugin):
     def __call__(self, serv, message):
         if serv.room.show_points:
             serv.room.show_points = False
-            msg = "This room now doesnt show each score's points"
+            msg = "This room now doesnt show each score's MIGS points"
         else:
             serv.room.show_points = True
-            msg = "This room now shows each score's points"
+            msg = "This room now shows each score's MIGS points"
 
         serv.session.commit()
         serv.send_message(msg)

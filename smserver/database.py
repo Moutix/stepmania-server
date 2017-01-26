@@ -25,7 +25,7 @@ class DataBase(object):
     """
 
     def __init__(self, type="sqlite", database=None, user=None,
-                 password=None, host=None, port=None, driver=None):
+                 password=None, host=None, port=None, driver=None, check_same_thread=True):
         self._type = type
         if not type:
             self._type = "sqlite"
@@ -36,6 +36,7 @@ class DataBase(object):
         self._port = port
         self._driver = driver
         self._engine = None
+        self._check_same_thread = check_same_thread
 
     @property
     def engine(self):
@@ -45,7 +46,6 @@ class DataBase(object):
 
         if self._engine:
             return self._engine
-
         self._engine = create_engine(self._database_url)
         return self.engine
 
@@ -103,16 +103,25 @@ class DataBase(object):
             ... )._database_url
             mysql+pymysql://user%40mail.fr:***@localhost/stepmania
         """
-
-        return URL(
-            '%s%s' % (self._type, "+%s" % self._driver if self._driver else ""),
-            username=self._user,
-            password=self._password,
-            host=self._host,
-            database=self._database,
-            port=self._port
-        )
-
+        if self._type == 'sqlite':
+            return URL(
+                '%s%s' % (self._type, "+%s" % self._driver if self._driver else ""),
+                username=self._user,
+                password=self._password,
+                host=self._host,
+                database=self._database,
+                port=self._port,
+                query={'check_same_thread': False}
+            )
+        else:
+            return URL(
+                '%s%s' % (self._type, "+%s" % self._driver if self._driver else ""),
+                username=self._user,
+                password=self._password,
+                host=self._host,
+                database=self._database,
+                port=self._port
+            )
     def create_tables(self):
         """
             Create all the table in the DataBase if they don't exist.

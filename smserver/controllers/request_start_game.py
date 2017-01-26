@@ -24,7 +24,8 @@ class RequestStartGameController(StepmaniaController):
             return
 
         have_song = self.check_song_presence(song)
-
+        for user in self.active_users:
+            user.has_song = have_song
         if not have_song:
             self.send_message("%s does %s have the song (%s)!" % (
                 self.colored_user_repr(self.room.id),
@@ -55,27 +56,24 @@ class RequestStartGameController(StepmaniaController):
             self.conn.song = song.id
             self.conn.songs[song.id] = True
 
-        #Send hash if all players in the room can use it
-        sendhash = True
-        for conn in self.server.player_connections(self.room.id):
-            if conn.stepmania_version < 4:
-                sendhash = False
-                break
-        if sendhash:
-            self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
+        hashpacket = smpacket.SMPacketServerNSCRSG(
                 usage=1,
                 song_title=song.title,
                 song_subtitle=song.subtitle,
                 song_artist=song.artist,
                 song_hash=self.packet["song_hash"]
-                ))
-        else:
-            self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
+                )
+        nonhashpacket = smpacket.SMPacketServerNSCRSG(
                 usage=1,
                 song_title=song.title,
                 song_subtitle=song.subtitle,
                 song_artist=song.artist
-                ))
+                )
+        for conn in self.server.player_connections(self.room.id):
+            if conn.stepmania_version < 4:
+                conn.send(nonhashpacket)
+            else:
+                conn.send(hashpacket)
 
     def check_song_presence(self, song):
         with self.conn.mutex:
@@ -91,6 +89,7 @@ class RequestStartGameController(StepmaniaController):
         canstart = True
         isplaying = False
         busy = []
+        nosong = []
         for user in self.room.online_users:
             if user.status == 2 and self.room.active_song_id and self.room.ingame and self.room.status != 1:
                 canstart = False
@@ -98,11 +97,16 @@ class RequestStartGameController(StepmaniaController):
             if user.status == 3 or user.status == 4:
                 busy.append(user)
                 canstart = False
+            if self.room.reqsong:
+                if user.has_song == False:
+                    canstart = False
+                    nosong.append(user)
 
         if not canstart:
-            if len(busy) > 0:
-                for user in busy:
-                    self.send_message("User %s is busy." % with_color(user.name),to="me")
+            for user in busy:
+                self.send_message("User %s is busy." % with_color(user.name),to="me")
+            for user in nosong:
+                    self.send_message("User %s does not have the song." % with_color(user.name),to="me")
             if isplaying:
                 self.send_message(
                     "Room %s is already playing %s." % (

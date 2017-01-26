@@ -63,6 +63,7 @@ class StartGameRequestController(StepmaniaController):
                     "holds": 0,
                     "taps": 0
                    },
+                "filehash": self.packet["filehash"],
                 "start_at": datetime.datetime.now(),
                 "options": self.packet["song_options"],
                 "course_title": self.packet["course_title"]

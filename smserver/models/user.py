@@ -59,6 +59,7 @@ class User(schema.Base):
 
     room_id           = Column(Integer, ForeignKey('rooms.id'))
     room              = relationship("Room", back_populates="users")
+    has_song    = Column(Boolean, default=False)
 
     song_stats        = relationship("SongStat", back_populates="user")
     privileges        = relationship("Privilege", back_populates="user")

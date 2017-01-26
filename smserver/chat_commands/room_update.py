@@ -86,6 +86,24 @@ class ChatRoomFree(ChatPlugin):
         serv.send_message(msg)
 
 
+class ChatRoomFree(ChatPlugin):
+    command = "reqsong"
+    helper = "Enable/Disable song requirement"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        if serv.room.reqsong:
+            serv.room.reqsong = False
+            msg = "This room now does not need all players to have the song"
+        else:
+            serv.room.reqsong = True
+            msg = "This room now need all players to have the song"
+
+        serv.session.commit()
+        serv.send_message(msg)
+
+
 class ChatSpectate(ChatPlugin):
     command = "spectate"
     helper = "Spectator mode"

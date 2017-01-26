@@ -1063,7 +1063,8 @@ class SMPacketClientNSCGSR(SMPacket):
         (SMPayloadType.NT, "second_player_options", None),
         (SMPayloadType.NT, "first_player_chartkey", None),
         (SMPayloadType.NT, "second_player_chartkey", None),
-        (SMPayloadType.INT, "rate", 0)
+        (SMPayloadType.INT, "rate", 0),
+        (SMPayloadType.NT, "filehash", None)
     ]
 
 

@@ -42,7 +42,7 @@ class GameOverController(StepmaniaController):
                 dppercent = 0
                 migspercent = 0
             with self.conn.mutex:
-                songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration)
+                songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration, self.conn.songstats["filehash"])
                 rate = self.conn.songstats[user.pos]["rate"]
                 if rate == 100:
                     chartkey = self.conn.songstats[user.pos]["chartkey"]
@@ -113,7 +113,7 @@ class GameOverController(StepmaniaController):
             self.conn.songstats = {0: {"data": []}, 1: {"data": []}}
             self.conn.song = None
 
-    def create_stats(self, user, raw_stats, duration):
+    def create_stats(self, user, raw_stats, duration, filehash):
         songstat = models.SongStat(
             song_id=self.room.active_song.id,
             user_id=user.id,
@@ -124,6 +124,8 @@ class GameOverController(StepmaniaController):
             difficulty=raw_stats["difficulty"],
             options=raw_stats["options"],
             toasty=raw_stats["toasties"],
+            filehash=filehash,
+            chartkey=raw_stats["chartkey"],
             dp =raw_stats["dpacum"]
         )
         songstat.migsp = 0
@@ -181,7 +183,7 @@ class GameOverController(StepmaniaController):
 
     def migs(self, stepsid):
         if stepsid == 8:
-            return 4
+            return 3
         elif stepsid == 7:
             return 2
         elif stepsid == 6:

@@ -126,6 +126,7 @@ class RequestStartGameController(StepmaniaController):
 
         self.room.status = 2
         self.room.active_song = song
+        self.room.active_song_hash = self.packet["song_hash"]
         self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
             usage=2,
             song_title=song.title,

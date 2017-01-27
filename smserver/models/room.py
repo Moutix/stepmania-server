@@ -41,6 +41,7 @@ class Room(schema.Base):
     bans           = relationship("Ban", back_populates="room")
 
     active_song_id = Column(Integer, ForeignKey('songs.id', ondelete="SET NULL"))
+    active_song_hash = Column(String(255))
     active_song    = relationship("Song", back_populates="active_rooms")
 
     created_at     = Column(DateTime, default=datetime.datetime.now)

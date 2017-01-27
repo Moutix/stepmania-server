@@ -26,10 +26,10 @@ class RankedChart(schema.Base):
     id                = Column(Integer, primary_key=True)
     chartkey               = Column(String(255))
     taps              = Column(Integer)
+    jumps              = Column(Integer)
+    hands              = Column(Integer)
     diff          = Column(Integer)
     rating = Column(Float)
-    #for skillset in Skillsets:
-    #    exec(skillset.name + " = Column(Float)")
 
     def __repr__(self):
         return "<RankedChart #%s (hash='%s')>" % (self.id, self.hash)

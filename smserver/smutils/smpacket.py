@@ -1105,7 +1105,7 @@ class SMPacketClientNSCGSU(SMPacket):
         (SMPayloadType.MSN, "player_id", None),
         (SMPayloadType.LSN, "step_id", None),
         (SMPayloadType.MSN, "grade", None),
-        (SMPayloadType.LSN, "reserved", None),
+        (SMPayloadType.LSN, "note_size", None),
         (SMPayloadType.INT, "score", 4),
         (SMPayloadType.INT, "combo", 2),
         (SMPayloadType.INT, "health", 2),

@@ -8,7 +8,6 @@ from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 from smserver.models import ranked_chart
 from smserver.models import song_stat
-# from smserver.models.ranked_chart import Skillsets
 
 from smserver.chathelper import with_color
 
@@ -28,8 +27,7 @@ class GameOverController(StepmaniaController):
 
         for user in self.active_users:
             user.status = 2
-            taps = self.conn.songstats[user.pos]["taps"]
-            if taps > 0:
+            if self.conn.songstats[user.pos]["taps"] > 0:
                 dppercent = (self.conn.songstats[user.pos]["dp"] * 100 
                     / (self.conn.songstats[user.pos]["taps"] * 2
                      + self.conn.songstats[user.pos]["holds"] * 6))
@@ -41,20 +39,22 @@ class GameOverController(StepmaniaController):
                 if rate == 100:
                     chartkey = self.conn.songstats[user.pos]["chartkey"]
                     if chartkey != None:
-                        rankedsong = (self.session.query(models.RankedChart)
+                        rankedchart = (self.session.query(models.RankedChart)
                             .filter_by(chartkey = chartkey).first())
-                        if rankedsong:
-                            if rankedsong.taps == taps:
+                        if rankedchart:
+                            if (rankedchart.taps == self.conn.songstats[user.pos]["taps"] and 
+                            rankedchart.jumps == self.conn.songstats[user.pos]["jumps"] and 
+                            rankedchart.hands == self.conn.songstats[user.pos]["hands"]):
                                 if dppercent >= 85:
-                                    ssr = rankedsong.rating * dppercent / 100
+                                    ssr = rankedchart.rating * dppercent / 100
                 songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration, self.conn.songstats["filehash"], ssr, dppercent)
                 
-
                 if user.show_offset == True:
-                    if taps > 0:
+                    if self.conn.songstats[user.pos]["taps"] > 0:
                         self.send_message(
                             "%s average offset" % 
-                            str(self.conn.songstats[user.pos]["offsetacum"] / taps)[:5],
+                            str(self.conn.songstats[user.pos]["offsetacum"] / 
+                            self.conn.songstats[user.pos]["taps"])[:5],
                             to="me")
                 if ssr > 0:
                     query = self.session.query(models.SongStat).filter_by(user_id = user.id).order_by(models.SongStat.ssr.desc()).limit(25)
@@ -69,7 +69,7 @@ class GameOverController(StepmaniaController):
                 (songstat.pretty_result(room_id=self.room.id,
                 color=True, date=False, toasty=True, points=self.room.show_points, userfirst=True) + 
                 songstat.get_rank(user.id, self.room.active_song.id) ) + 
-                " " + with_color(xp, "aaaa00") +" XP gained" )
+                " " + with_color(xp, "aaaa00") +" XP gained" + (" Score Rating : %12.2f" % ssr if ssr > 0 else ""))
             user.toastycount =+ self.conn.songstats[user.pos]["toasties"]
 
 

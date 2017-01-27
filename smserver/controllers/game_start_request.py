@@ -48,7 +48,9 @@ class StartGameRequestController(StepmaniaController):
                     "dp": 0,
                     "migsp": 0,
                     "holds": 0,
-                    "taps": 0
+                    "taps": 0,
+                    "jumps": 0,
+                    "hands": 0
                    },
                 1: {"data": [],
                     "feet": self.packet["second_player_feet"],
@@ -63,7 +65,9 @@ class StartGameRequestController(StepmaniaController):
                     "dp": 0,
                     "migsp": 0,
                     "holds": 0,
-                    "taps": 0
+                    "taps": 0,
+                    "jumps": 0,
+                    "hands": 0
                    },
                 "filehash": self.packet["filehash"],
                 "start_at": datetime.datetime.now(),

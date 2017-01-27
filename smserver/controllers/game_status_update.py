@@ -24,9 +24,9 @@ class GameStatusUpdateController(StepmaniaController):
                  "score": self.packet["score"],
                  "combo": self.packet["combo"],
                  "health": self.packet["health"],
-                 "offset": self.packet["offset"]
+                 "offset": self.packet["offset"],
+                 "note_size": self.packet["note_size"]
                 }
-                
         with self.conn.mutex:
             pid = self.packet["player_id"]
             best_score = self.conn.songstats[pid]["best_score"]
@@ -36,11 +36,20 @@ class GameStatusUpdateController(StepmaniaController):
             self.conn.songstats[pid]["offsetacum"] += offset
             if self.conn.stepmania_version < 3:
                 stats["stepid"] += 2
+                
+            if not stats["note_size"] or stats["note_size"] <= 0:
+                notesize = self.notesize(stats["combo"], self.conn.songstats[pid]["data"])
+            else:
+                notesize = stats["note_size"]
+
             if stats["stepid"] > 3 and stats["stepid"] < 9:
                 stats["stepid"] = self.get_stepid(offset)
                 self.conn.songstats[pid]["taps"] += 1
+                if notesize > 1:
+                    self.conn.songstats[pid]["jumps"] += 1
+                    if notesize > 2:
+                        self.conn.songstats[pid]["hands"] += 1
 
-            notesize = self.notesize(stats["combo"], self.conn.songstats[pid]["data"])
             if stats["stepid"] == 4 or stats["stepid"] == 5:
                 self.conn.songstats[pid]["perfect_combo"] = 0
             elif stats["stepid"] == 7 or stats["stepid"] == 8:
@@ -50,12 +59,17 @@ class GameStatusUpdateController(StepmaniaController):
             elif stats["stepid"] == 10 or stats["stepid"] == 9:
                 self.conn.songstats[pid]["holds"] += 1
             elif stats["stepid"] == 3 :
-                self.conn.songstats[pid]["taps"] += 1
                 self.conn.songstats[pid]["perfect_combo"] = 0
+                self.conn.songstats[pid]["taps"] += 1
+                if notesize > 1:
+                    self.conn.songstats[pid]["jumps"] += 1
+                    if notesize > 2:
+                        self.conn.songstats[pid]["hands"] += 1
 
             self.conn.songstats[pid]["data"].append(stats)
             self.conn.songstats[pid]["dp"] += self.dp(stats["stepid"])
             self.conn.songstats[pid]["migsp"] += self.migsp(stats["stepid"])
+            self.conn.songstats["data"]["grade"] = self.grade(self.conn.songstats[pid]["dp"] / (self.conn.songstats[pid]["taps"]*2))
 
             if best_score and self.conn.songstats[pid]["migsp"] > best_score:
                 self.conn.songstats[self.packet["player_id"]]["best_score"] = None
@@ -137,3 +151,21 @@ class GameStatusUpdateController(StepmaniaController):
                 return 1
         else:
             return 1
+
+
+    def grade(self, score, data):
+        if score >= 100.00:
+            for note in data:
+                if note["stepid"] > 2 and note["stepid"] < 9:
+                    if note != 8:
+                        return 1
+            return 0
+        elif score >= 93.00:
+            return 2
+        elif score >= 80.00:
+            return 3
+        elif score >= 65.00:
+            return 4
+        elif score >= 45.00:
+            return 5
+        return 6

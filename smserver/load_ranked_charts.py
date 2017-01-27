@@ -4,7 +4,6 @@ import smserver.server
 from smserver.server import StepmaniaServer
 from smserver import models, conf
 from smserver.models import ranked_chart
-# from smserver.models.ranked_chart import Skillsets
 from smserver.models.ranked_chart import Diffs
 from sqlalchemy.orm import object_session
 import sys, getopt
@@ -57,9 +56,7 @@ for filename in os.listdir(directory):
                 line = line[:line.rfind(";")]
                 radar = line.split(',')
             if chartkey and len(radar) > 3 and len(msds) > 1 and diff:
-                newsong = models.RankedChart(chartkey = chartkey, taps = float(radar[6]))
-                #for skillset in Skillsets:
-                #    exec("newsong." + skillset.name + " = msds[skillset.value]" )
+                newsong = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]))
                 newsong.rating = msds[0]
                 exec("diff = Diffs." + diff + ".value")
                 newsong.diff = diff
@@ -67,9 +64,9 @@ for filename in os.listdir(directory):
                 if exists:
                     exists.diff = newsong.diff
                     exists.taps = newsong.taps
+                    exists.jumps = newsong.jumps
+                    exists.hands = newsong.hands
                     exists.rating = newsong.rating
-                    # for skillset in Skillsets:
-                    #     exec("exists." + skillset.name + " = newsong." + skillset.name )
                 else:
                     session.add(newsong)
                 foundsteps=False

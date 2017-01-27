@@ -111,7 +111,7 @@ class DataBase(object):
                 host=self._host,
                 database=self._database,
                 port=self._port,
--               query={'check_same_thread': False}
+                query={'check_same_thread': False}
             )
         else:
             return URL(

@@ -29,7 +29,6 @@ class GameOverController(StepmaniaController):
             user.status = 2
             ssr = 0
             with self.conn.mutex:
-                print(self.conn.songstats[user.pos]["chartkey"])
                 if self.conn.songstats[user.pos]["taps"] > 0:
                     self.conn.songstats[user.pos]["dppercent"] = (self.conn.songstats[user.pos]["dp"] * 100 
                         / (self.conn.songstats[user.pos]["taps"] * 2))

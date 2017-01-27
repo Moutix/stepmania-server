@@ -27,27 +27,27 @@ class GameOverController(StepmaniaController):
 
         for user in self.active_users:
             user.status = 2
-            if self.conn.songstats[user.pos]["taps"] > 0:
-                dppercent = (self.conn.songstats[user.pos]["dp"] * 100 
-                    / (self.conn.songstats[user.pos]["taps"] * 2
-                     + self.conn.songstats[user.pos]["holds"] * 6))
-            else:
-                dppercent = 0
+            ssr = 0
             with self.conn.mutex:
+                print(self.conn.songstats[user.pos]["chartkey"])
+                if self.conn.songstats[user.pos]["taps"] > 0:
+                    self.conn.songstats[user.pos]["dppercent"] = (self.conn.songstats[user.pos]["dp"] * 100 
+                        / (self.conn.songstats[user.pos]["taps"] * 2))
+                else:
+                    self.conn.songstats[user.pos]["dppercent"] = 0
                 rate = self.conn.songstats[user.pos]["rate"]
-                ssr = 0
                 if rate == 100:
-                    chartkey = self.conn.songstats[user.pos]["chartkey"]
-                    if chartkey != None:
-                        rankedchart = (self.session.query(models.RankedChart)
-                            .filter_by(chartkey = chartkey).first())
-                        if rankedchart:
-                            if (rankedchart.taps == self.conn.songstats[user.pos]["taps"] and 
-                            rankedchart.jumps == self.conn.songstats[user.pos]["jumps"] and 
-                            rankedchart.hands == self.conn.songstats[user.pos]["hands"]):
-                                if dppercent >= 85:
-                                    ssr = rankedchart.rating * dppercent / 100
-                songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration, self.conn.songstats["filehash"], ssr, dppercent)
+                    if self.conn.songstats[user.pos]["dppercent"] >= 93:
+                        chartkey = self.conn.songstats[user.pos]["chartkey"]
+                        if chartkey != None:
+                            rankedchart = (self.session.query(models.RankedChart)
+                                .filter_by(chartkey = chartkey).first())
+                            if rankedchart:
+                                if (rankedchart.taps == self.conn.songstats[user.pos]["taps"] and 
+                                rankedchart.jumps == self.conn.songstats[user.pos]["jumps"] and 
+                                rankedchart.hands == self.conn.songstats[user.pos]["hands"]):
+                                    ssr = rankedchart.rating * self.conn.songstats[user.pos]["dppercent"] / 95
+                songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration, self.conn.songstats["filehash"], ssr)
                 
                 if user.show_offset == True:
                     if self.conn.songstats[user.pos]["taps"] > 0:
@@ -79,7 +79,7 @@ class GameOverController(StepmaniaController):
             self.conn.songstats = {0: {"data": []}, 1: {"data": []}}
             self.conn.song = None
 
-    def create_stats(self, user, raw_stats, duration, filehash, ssr, dppercent):
+    def create_stats(self, user, raw_stats, duration, filehash, ssr):
         songstat = models.SongStat(
             song_id=self.room.active_song.id,
             user_id=user.id,
@@ -116,7 +116,7 @@ class GameOverController(StepmaniaController):
             songstat.migs  = 0
 
         if raw_stats["data"]:
-            songstat.grade = self.grade(dppercent * 100 / (raw_stats["taps"] * 2 + raw_stats["holds"] * 6), raw_stats["data"])
+            songstat.grade = self.grade(self.conn.songstats[user.pos]["dppercent"], raw_stats["data"])
             songstat.score = raw_stats["data"][-1]["score"]
 
         songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])

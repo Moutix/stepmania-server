@@ -69,7 +69,7 @@ class GameStatusUpdateController(StepmaniaController):
             self.conn.songstats[pid]["data"].append(stats)
             self.conn.songstats[pid]["dp"] += self.dp(stats["stepid"])
             self.conn.songstats[pid]["migsp"] += self.migsp(stats["stepid"])
-            self.conn.songstats["data"]["grade"] = self.grade(self.conn.songstats[pid]["dp"] / (self.conn.songstats[pid]["taps"]*2))
+            self.conn.songstats[pid]["data"][-1]["grade"] = self.grade(self.conn.songstats[pid]["dp"] / (self.conn.songstats[pid]["taps"]*2), self.conn.songstats[pid]["data"])
 
             if best_score and self.conn.songstats[pid]["migsp"] > best_score:
                 self.conn.songstats[self.packet["player_id"]]["best_score"] = None
@@ -120,7 +120,7 @@ class GameStatusUpdateController(StepmaniaController):
         elif stepsid == 3:
             return -8
         elif stepsid == 10:
-            return 6
+            return 0
         else:
             return 0
 
@@ -154,18 +154,18 @@ class GameStatusUpdateController(StepmaniaController):
 
 
     def grade(self, score, data):
-        if score >= 100.00:
+        if score >= 1:
             for note in data:
                 if note["stepid"] > 2 and note["stepid"] < 9:
                     if note != 8:
                         return 1
             return 0
-        elif score >= 93.00:
+        elif score >= 0.93:
             return 2
-        elif score >= 80.00:
+        elif score >= 0.80:
             return 3
-        elif score >= 65.00:
+        elif score >= 0.65:
             return 4
-        elif score >= 45.00:
+        elif score >= 0.45:
             return 5
         return 6

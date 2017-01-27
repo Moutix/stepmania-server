@@ -120,11 +120,15 @@ class User(schema.Base):
 
     @classmethod
     def updaterating(self, session):
-        song_stats = session.query(SongStat).filter_by(user_id = self.id).order_by(SongStat.ssr.desc()).limit(25).all()
+        ssrs = (session.query(func.max(SongStat.ssr))
+        .filter_by(user_id = self.id)
+        .group_by(SongStat.chartkey)
+        .order_by(SongStat.ssr.desc()).limit(25).all())
         rating = 0
-        for count, song_stat in enumerate(song_stats):
-            rating += song_stat.ssr / (2 + 2 * count)
+        for count, ssr in enumerate(ssrs):
+            rating += ssr[0] / (2 + 2 * count)
         return rating
+
 
     def room_privilege(self, room_id):
         if room_id in self._room_level:

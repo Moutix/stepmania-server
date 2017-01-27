@@ -403,23 +403,13 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         #Ask client if they have the selected song
         if room.active_song:
-            hashpacket = smpacket.SMPacketServerNSCRSG(
-                    usage=1,
-                    song_title=room.active_song.title,
-                    song_subtitle=room.active_song.subtitle,
-                    song_artist=room.active_song.artist,
-                    song_hash=self.packet["song_hash"]
-                    )
             nonhashpacket = smpacket.SMPacketServerNSCRSG(
                     usage=1,
                     song_title=room.active_song.title,
                     song_subtitle=room.active_song.subtitle,
                     song_artist=room.active_song.artist
                     )
-            if conn.stepmania_version < 4:
-                conn.send(nonhashpacket)
-            else:
-                conn.send(hashpacket)
+            conn.send(nonhashpacket)
 
         for conn in self.connections:
             if conn.room == None:

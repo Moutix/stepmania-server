@@ -59,6 +59,8 @@ class Game(schema.Base):
             for option in options:
                 if option == "score":
                     packet[option].append(getattr(songstat, option, None) if getattr(songstat, option, None) > 0 else 0)
+                elif option == "options":
+                    packet[option].append("%12.2f, " % songstat.migs + getattr(songstat, option, None))
                 else:
                     packet[option].append(getattr(songstat, option, None))
 

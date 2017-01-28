@@ -47,8 +47,8 @@ score:
         good: 2
         great: 3
         perfect: 4
-        toasty: 100
         flawless: 5
+        toasty: 100
 
 logger:
     stderr:

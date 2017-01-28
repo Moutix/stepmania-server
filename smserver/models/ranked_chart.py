@@ -1,14 +1,9 @@
 
-
-import datetime
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func, Float
-from sqlalchemy.orm import relationship, reconstructor, object_session
+
+from sqlalchemy import Column, Integer, String, Float
 
 from smserver.models import schema
-from smserver.chathelper import with_color, nick_color
-from smserver.models.privilege import Privilege
-from smserver import ability
 
 __all__ = ['RankedChart', 'Diffs']
 
@@ -23,13 +18,13 @@ class Diffs(enum.Enum):
 class RankedChart(schema.Base):
     __tablename__ = 'ranked_charts'
 
-    id                = Column(Integer, primary_key=True)
-    chartkey               = Column(String(255))
-    taps              = Column(Integer)
-    jumps              = Column(Integer)
-    hands              = Column(Integer)
-    diff          = Column(Integer)
-    rating = Column(Float)
+    id         = Column(Integer, primary_key=True)
+    chartkey   = Column(String(42))
+    taps       = Column(Integer)
+    jumps      = Column(Integer)
+    hands      = Column(Integer)
+    diff       = Column(Integer)
+    rating     = Column(Float)
 
     def __repr__(self):
         return "<RankedChart #%s (hash='%s')>" % (self.id, self.hash)

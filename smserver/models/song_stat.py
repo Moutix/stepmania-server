@@ -74,8 +74,10 @@ class SongStat(schema.Base):
     options    = Column(Text, default="")
     score      = Column(Integer, default=0)
     rate      = Column(Integer, default=0)
-    filehash      = Column(String(255))
-    chartkey      = Column(String(255))
+
+    chart_id      = Column(Integer, ForeignKey('charts.id'))
+    simfile_id    = Column(Integer, ForeignKey('simfiles.id'))
+
     migsp      = Column(Integer, default=0)
     toasty      = Column(Integer, default=0)
     grade      = Column(Integer, default=0)
@@ -205,30 +207,28 @@ class SongStat(schema.Base):
         return self.miss+self.flawless+self.bad+self.good+self.perfect+self.great
 
     def get_rank(self, user_id, song_id):
-        tbs = (object_session(self).query(SongStat)
-            .filter_by(chartkey = self.chartkey)
+        tbquery = (object_session(self).query(SongStat.id)
+            .filter_by(chart_id = self.chart_id)
             .filter_by(feet = self.feet)
             .filter_by(song_id = self.song_id)
-            .filter_by(difficulty = self.difficulty)
-            .order_by(SongStat.migsp.desc()).all())
-        pbs = (object_session(self).query(SongStat)
-            .filter_by(chartkey = self.chartkey)
+            .filter_by(difficulty = self.difficulty))
+        pbquery = (object_session(self).query(SongStat.id)
+            .filter_by(chart_id = self.chart_id)
             .filter_by(feet = self.feet)
             .filter_by(user_id = self.user_id)
             .filter_by(song_id = self.song_id)
-            .filter_by(difficulty = self.difficulty)
-            .order_by(SongStat.migsp.desc()).all())
-        
-        for count, tb in enumerate(tbs, 1):
-            if tb == self:
-                tbcount = count
-                break
-        for count, pb in enumerate(pbs, 1):
-            if pb == self:
-                pbcount = count
-                break
+            .filter_by(difficulty = self.difficulty))
+        tb_total = tbquery.count()
+        pb_total = pbquery.count()
+        tb = str(tb_total - tbquery.filter(SongStat.migsp < self.migsp).count())
+        pb = str(pb_total - pbquery.filter(SongStat.migsp < self.migsp).count())
+        # These are probably better but using the above existing scores are placed higher
+        # tb = str(tbquery.filter(SongStat.migsp < self.migsp).count() + 1)
+        # pb = str(pbquery.filter(SongStat.migsp < self.migsp).count() + 1)
+        tb_total = str(tb_total)
+        pb_total = str(pb_total)
+        return (" PB: " + with_color(pb + "/" + pb_total, "aaaa00") + " TB: " + with_color(tb + "/" + tb_total, "aaaa00"))
 
-        return (" PB: " + with_color(str(pbcount) + "/" + str(len(pbs)), "aaaa00") + " TB: " + with_color(str(tbcount) + "/" + str(len(tbs)), "aaaa00"))
 
 
 

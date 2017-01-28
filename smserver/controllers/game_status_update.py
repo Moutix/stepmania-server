@@ -69,6 +69,7 @@ class GameStatusUpdateController(StepmaniaController):
             self.conn.songstats[pid]["data"].append(stats)
             self.conn.songstats[pid]["dp"] += self.dp(stats["stepid"])
             self.conn.songstats[pid]["migsp"] += self.migsp(stats["stepid"])
+            #self.conn.songstats[pid]["wifep"] += self.wife(offset)
             self.conn.songstats[pid]["data"][-1]["grade"] = self.grade(self.conn.songstats[pid]["dp"] / (self.conn.songstats[pid]["taps"]*2), self.conn.songstats[pid]["data"])
 
             if best_score and self.conn.songstats[pid]["migsp"] > best_score:
@@ -169,3 +170,10 @@ class GameStatusUpdateController(StepmaniaController):
         elif score >= 0.45:
             return 5
         return 6
+
+    def wife(self, offset):
+        avedeviation = 95.0
+        maxms = offset*1000.0
+        y = 1.0 - float(pow(2, (-1) * maxms*maxms / 9025.0))
+        y = pow(y, 2)
+        return (2 + 8)*(1 - y) - 8

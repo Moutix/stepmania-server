@@ -5,6 +5,7 @@ import datetime
 
 from smserver import models
 from smserver.smutils import smpacket
+from smserver.models import song_stat
 from smserver.stepmania_controller import StepmaniaController
 from smserver.chathelper import with_color
 
@@ -38,15 +39,16 @@ class GameStatusUpdateController(StepmaniaController):
                 stats["stepid"] += 2
                 
             if not stats["note_size"] or stats["note_size"] <= 0:
-                notesize = self.notesize(stats["combo"], self.conn.songstats[pid]["data"])
+                notesize = self.notesize_from_combo(stats["combo"], self.conn.songstats[pid]["data"])
             else:
                 notesize = stats["note_size"]
 
             if stats["stepid"] > 3 and stats["stepid"] < 9:
-                stats["stepid"] = self.get_stepid(offset)
+                stats["stepid"] = models.SongStat.get_stepid(offset)
                 self.conn.songstats[pid]["taps"] += 1
                 if notesize > 1:
                     self.conn.songstats[pid]["jumps"] += 1
+                    self.conn.songstats[pid]["extranotes"].append({"size" : notesize-1, "stepid": stats["stepid"]})
                     if notesize > 2:
                         self.conn.songstats[pid]["hands"] += 1
 
@@ -67,10 +69,12 @@ class GameStatusUpdateController(StepmaniaController):
                         self.conn.songstats[pid]["hands"] += 1
 
             self.conn.songstats[pid]["data"].append(stats)
-            self.conn.songstats[pid]["dp"] += self.dp(stats["stepid"])
-            self.conn.songstats[pid]["migsp"] += self.migsp(stats["stepid"])
-            #self.conn.songstats[pid]["wifep"] += self.wife(offset)
-            self.conn.songstats[pid]["data"][-1]["grade"] = self.grade(self.conn.songstats[pid]["dp"] / (self.conn.songstats[pid]["taps"]*2), self.conn.songstats[pid]["data"])
+            self.conn.songstats[pid]["dp"] += models.SongStat.calc_dp(stats["stepid"])
+            self.conn.songstats[pid]["migsp"] += models.SongStat.calc_migsp(stats["stepid"])
+            #self.conn.songstats[pid]["wifep"] += models.SongStat.wifep(offset)
+            self.conn.songstats[pid]["data"][-1]["grade"] = models.SongStat.calc_grade_from_ratio(
+                self.conn.songstats[pid]["dp"] / (self.conn.songstats[pid]["taps"]*2), 
+                self.conn.songstats[pid]["data"])
 
             if best_score and self.conn.songstats[pid]["migsp"] > best_score:
                 self.conn.songstats[self.packet["player_id"]]["best_score"] = None
@@ -90,61 +94,7 @@ class GameStatusUpdateController(StepmaniaController):
 
         self.sendroom(self.conn.room, smpacket.SMPacketServerNSCSU(message=message))
 
-
-    def get_stepid(self, offset):
-        smarv  = 0.02259;
-        sperf  = 0.04509;
-        sgreat = 0.09009;
-        sgood  = 0.13509;
-        sboo   = 0.18909;
-        if (offset < smarv) and (offset > (smarv * -1.0)):
-            return 8
-        elif (offset < sperf) and (offset > (sperf * -1.0)):
-            return 7
-        elif (offset < sgreat) and (offset > (sgreat * -1.0)):
-            return 6
-        elif (offset < sgood) and (offset > (sgood * -1.0)):
-            return 5
-        else:
-            return 4
-
-
-    def dp(self, stepsid):
-        if stepsid == 8 or stepsid == 7:
-            return 2
-        elif stepsid == 6:
-            return 1
-        elif stepsid == 5:
-            return 0
-        elif stepsid == 4:
-            return -4
-        elif stepsid == 3:
-            return -8
-        elif stepsid == 10:
-            return 0
-        else:
-            return 0
-
-    def migsp(self, stepsid):
-        if stepsid == 8:
-            return 3
-        elif stepsid == 7:
-            return 2
-        elif stepsid == 6:
-            return 1
-        elif stepsid == 5:
-            return 0
-        elif stepsid == 4:
-            return -4
-        elif stepsid == 3:
-            return -8
-        elif stepsid == 10:
-            return 6
-        else:
-            return 0
-
-
-    def notesize(self, combo, data):
+    def notesize_from_combo(self, combo, data):
         if len(data) > 0:
             if combo > 0:
                 return combo - data[-1]["combo"]
@@ -152,28 +102,3 @@ class GameStatusUpdateController(StepmaniaController):
                 return 1
         else:
             return 1
-
-
-    def grade(self, score, data):
-        if score >= 1:
-            for note in data:
-                if note["stepid"] > 2 and note["stepid"] < 9:
-                    if note != 8:
-                        return 1
-            return 0
-        elif score >= 0.93:
-            return 2
-        elif score >= 0.80:
-            return 3
-        elif score >= 0.65:
-            return 4
-        elif score >= 0.45:
-            return 5
-        return 6
-
-    def wife(self, offset):
-        avedeviation = 95.0
-        maxms = offset*1000.0
-        y = 1.0 - float(pow(2, (-1) * maxms*maxms / 9025.0))
-        y = pow(y, 2)
-        return (2 + 8)*(1 - y) - 8

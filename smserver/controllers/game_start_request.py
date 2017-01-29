@@ -46,12 +46,13 @@ class StartGameRequestController(StepmaniaController):
                     "toasties": 0,
                     "perfect_combo": 0,
                     "dp": 0,
-                    "wifep": 0,
+                    #"wifep": 0,
                     "migsp": 0,
                     "holds": 0,
                     "taps": 0,
                     "jumps": 0,
-                    "hands": 0
+                    "hands": 0,
+                    "extranotes": []
                    },
                 1: {"data": [],
                     "feet": self.packet["second_player_feet"],
@@ -64,12 +65,13 @@ class StartGameRequestController(StepmaniaController):
                     "toasties": 0,
                     "perfect_combo": 0,
                     "dp": 0,
-                    "wifep": 0,
+                    #"wifep": 0,
                     "migsp": 0,
                     "holds": 0,
                     "taps": 0,
                     "jumps": 0,
-                    "hands": 0
+                    "hands": 0,
+                    "extranotes": []
                    },
                 "filehash": self.packet["filehash"],
                 "start_at": datetime.datetime.now(),

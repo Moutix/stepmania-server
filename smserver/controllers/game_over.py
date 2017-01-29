@@ -33,7 +33,7 @@ class GameOverController(StepmaniaController):
                 session=self.session)).id
             else:
                 simfile_id = None
-            if self.conn.songstats[user.pos]["chartkey"]:
+            if self.conn.songstats[user.pos]["chartkey"] and simfile_id:
                 chart_id = (models.Chart.find_or_create(
                 simfile_id=simfile_id, 
                 chartkey=self.conn.songstats[user.pos]["chartkey"], 
@@ -45,7 +45,7 @@ class GameOverController(StepmaniaController):
             with self.conn.mutex:
                 if self.conn.songstats[user.pos]["taps"] > 0:
                     self.conn.songstats[user.pos]["dppercent"] = (self.conn.songstats[user.pos]["dp"] * 100 
-                        / (self.conn.songstats[user.pos]["taps"] * 2))
+                        / (self.conn.songstats[user.pos]["taps"] * models.SongStat.calc_dp(8)))
                     #self.conn.songstats[user.pos]["wifepercent"] = (self.conn.songstats[user.pos]["wifep"] * 100 
                     #    / (self.conn.songstats[user.pos]["taps"] * 2))
                 else:
@@ -55,14 +55,14 @@ class GameOverController(StepmaniaController):
                 if rate == 100:
                     if self.conn.songstats[user.pos]["dppercent"] >= 93:
                         chartkey = self.conn.songstats[user.pos]["chartkey"]
-                        if chartkey != None:
+                        if chart_id != None:
                             rankedchart = (self.session.query(models.RankedChart)
                                 .filter_by(chartkey = chartkey).first())
                             if rankedchart:
                                 if (rankedchart.taps == self.conn.songstats[user.pos]["taps"] and 
                                 rankedchart.jumps == self.conn.songstats[user.pos]["jumps"] and 
                                 rankedchart.hands == self.conn.songstats[user.pos]["hands"]):
-                                    ssr = rankedchart.rating * self.conn.songstats[user.pos]["dppercent"] / 95
+                                    ssr = models.RankedChart.calc_ssr(rankedchart.rating,self.conn.songstats[user.pos]["dppercent"])
                 songstat = self.create_stats(user, self.conn.songstats[user.pos], song_duration, self.conn.songstats["filehash"], ssr, simfile_id, chart_id)
                 
                 if user.show_offset == True:
@@ -77,7 +77,7 @@ class GameOverController(StepmaniaController):
                     if query.first() and ssr > query[-1].ssr:
                         user.rating = user.updaterating(self.session)
                             
-            xp = songstat.calc_xp(self.server.config.score.get("xpWeight"))
+            xp = songstat.calc_xp(self.server.config.score.get("xpWeight"), self.conn.songstats[user.pos]["extranotes"])
             user.xp += xp
 
             self.session.commit()
@@ -127,33 +127,18 @@ class GameOverController(StepmaniaController):
                    )
 
         if raw_stats["taps"] > 0:
-            songstat.migs = songstat.migsp * 100 / (raw_stats["taps"] * 3 + raw_stats["holds"] * 6)
+            songstat.migs = songstat.migsp * 100 / (
+                raw_stats["taps"] * models.SongStat.calc_migsp(8) + 
+                raw_stats["holds"] * models.SongStat.calc_migsp(10))
         else:
             songstat.migs  = 0
 
         if raw_stats["data"]:
-            songstat.grade = self.grade(self.conn.songstats[user.pos]["dppercent"], raw_stats["data"])
+            songstat.grade = models.SongStat.calc_grade(self.conn.songstats[user.pos]["dppercent"], raw_stats["data"])
             songstat.score = raw_stats["data"][-1]["score"]
-
-        songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
+        if self.server.config.server.get("store_blobs") == True:
+            songstat.raw_stats = models.SongStat.encode_stats(raw_stats["data"])
 
         self.session.add(songstat)
 
         return songstat
-
-    def grade(self, score, data):
-        if score >= 100.00:
-            for note in data:
-                if note["stepid"] > 2 and note["stepid"] < 9:
-                    if note != 8:
-                        return 1
-            return 0
-        elif score >= 93.00:
-            return 2
-        elif score >= 80.00:
-            return 3
-        elif score >= 65.00:
-            return 4
-        elif score >= 45.00:
-            return 5
-        return 6

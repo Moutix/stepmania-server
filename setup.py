@@ -84,7 +84,7 @@ setup(
     options={
         "py2exe": {
             'packages': ['smserver'],
-            "bundle_files": 0,
+            "bundle_files": 2,
             "optimize": 2
         }
     },

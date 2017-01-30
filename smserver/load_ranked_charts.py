@@ -19,11 +19,6 @@ from smserver import conf, logger, models, sdnotify, __version__
 from smserver.chathelper import with_color
 from smserver.smutils import smthread, smpacket
 
-chartkey = ""
-radar = [0]
-msds = [0]
-foundsteps = False
-diff = ""
 
 config = conf.Conf(*sys.argv[3:])
 
@@ -80,9 +75,17 @@ if delete:
 if update:
     print("Updating table from cache file. ")
     update_users = []
+    chartkey = ""
+    radar = [0]
+    msds = [0]
+    foundsteps = False
+    diff = ""
     for filename in os.listdir(directory):
         print("Opening " + filename)
         datafile = open(os.path.join(directory,filename))
+        title = ""
+        subtitle = ""
+        artist = ""
         for line in datafile:
             if '#DIFFICULTY:' in line:
                 foundsteps = True
@@ -92,6 +95,18 @@ if update:
                 line = line[12:]
                 line = line[:line.rfind(";")]
                 diff = line
+            elif '#ARTIST:' in line:
+                line = line[8:]
+                line = line[:line.rfind(";")]
+                artist = line
+            elif '#TITLE:' in line:
+                line = line[7:]
+                line = line[:line.rfind(";")]
+                title = line
+            elif '#SUBTITLE:' in line:
+                line = line[10:]
+                line = line[:line.rfind(";")]
+                subtitle = line
             if foundsteps == True:
                 if '#MSDVALUES:' in line:
                     line = line[11:]
@@ -106,28 +121,24 @@ if update:
                     line = line[13:]
                     line = line[:line.rfind(";")]
                     radar = line.split(',')
+                song = models.Song.find_or_create(title, subtitle, artist, session)
                 if chartkey and len(radar) > 3 and len(msds) > 1 and diff:
-                    newsong = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]))
-                    newsong.rating = msds[0]
+                    newchart = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]), song_id=song.id)
+                    newchart.rating = msds[0]
                     exec("diff = Diffs." + diff + ".value")
-                    newsong.diff = diff
+                    newchart.diff = diff
                     exists = session.query(models.RankedChart).filter_by(chartkey = chartkey).first()
                     if exists:
-                        print("Updating "+ newsong.chartkey)
-                        update_users = exists.update(newsong, update_users, session)
-                        # exists.diff = newsong.diff
-                        # exists.taps = newsong.taps
-                        # exists.jumps = newsong.jumps
-                        # exists.hands = newsong.hands
-                        # exists.rating = newsong.rating
+                        print("Updating "+ newchart.chartkey)
+                        update_users = exists.update(newchart, update_users, session)
                     else:
-                        print("Adding "+ newsong.chartkey)
-                        session.add(newsong)
+                        print("Adding "+ newchart.chartkey)
+                        session.add(newchart)
                     foundsteps=False
     print("Recalculating user ratings")
     for user in update_users:
         print("Recalculating "+ user.name + "'s rating")
-        user.updaterating(session)
+        user.rating = user.updaterating(uer.topssrs(session))
     session.commit()
 if deletechart != "":
     exists = session.query(models.RankedChart).filter_by(chartkey = deletechart).first()

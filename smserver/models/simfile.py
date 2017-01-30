@@ -4,6 +4,7 @@
 import datetime
 
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from smserver.models import schema
 
@@ -14,7 +15,12 @@ class Simfile(schema.Base):
 
     id           = Column(Integer, primary_key=True)
     song_id     = Column(Integer, ForeignKey('songs.id'))
+    song = relationship("Song", back_populates="simfile")
     file_hash        = Column(String(42))
+
+    song_stats = relationship("SongStat", back_populates="simfile")
+
+    chart = relationship("Chart", back_populates="simfile")
 
     def __repr__(self):
         return "<Simfile #%s (file hash='%s')>" % (self.id, self.file_hash)

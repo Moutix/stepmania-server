@@ -76,7 +76,9 @@ class SongStat(schema.Base):
     rate      = Column(Integer, default=0)
 
     chart_id      = Column(Integer, ForeignKey('charts.id'))
+    chart         = relationship("Chart", back_populates="song_stats")
     simfile_id    = Column(Integer, ForeignKey('simfiles.id'))
+    simfile       = relationship("Simfile", back_populates="song_stats")
 
     migsp      = Column(Integer, default=0)
     toasty      = Column(Integer, default=0)
@@ -171,7 +173,7 @@ class SongStat(schema.Base):
             nb = getattr(self, note, 0)
             xp += nb*weight
         for note in extranotes:
-            xp+= note["size"]*config[stepid[note["stepid"]]]
+            xp+= note["size"]*config[SongStat.stepid[note["stepid"]]]
         return xp
 
 

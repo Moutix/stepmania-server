@@ -6,6 +6,8 @@ from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 from smserver import __version__
 
+from smserver.chathelper import with_color
+
 class LoginController(StepmaniaController):
     command = smpacket.SMOClientCommand.LOGIN
     require_login = False
@@ -106,9 +108,10 @@ class LoginController(StepmaniaController):
             self.server.send_friend_list(friendid, friendconn)
             frienduser = self.session.query(models.User).filter_by(id = friendid).first()
             if frienduser.online == True and frienduser.friend_notifications == True and friendconn:
-                self.send_message(
-                    "Your friend %s connected" % with_color(user.name),
-                    friendconn)
+
+                friendconn.send(smutils.smpacket.SMPacketServerNSCCM(
+                message="Your friend %s connected" % 
+                with_color(user.name)))
             if user.friend_notifications == True and frienduser.online == True and friendconn:
                 self.send_message(
                     "Your friend %s is online" % with_color(frienduser.name),

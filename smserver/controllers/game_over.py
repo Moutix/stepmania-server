@@ -9,6 +9,7 @@ from smserver import models
 from smserver.models import ranked_chart
 from smserver.models import song_stat
 
+
 from smserver.chathelper import with_color
 
 
@@ -30,14 +31,13 @@ class GameOverController(StepmaniaController):
                 simfile_id = (models.Simfile.find_or_create(
                 song_id=self.room.active_song.id, 
                 file_hash=self.conn.songstats["filehash"], 
-                session=self.session)).id
+                session=self.session).id)
             else:
                 simfile_id = None
             if self.conn.songstats[user.pos]["chartkey"] and simfile_id:
                 chart_id = (models.Chart.find_or_create(
-                simfile_id=simfile_id, 
                 chartkey=self.conn.songstats[user.pos]["chartkey"], 
-                session=self.session)).id
+                simfile_id=simfile_id, session=self.session).id)
             else:
                 chart_id = None
             user.status = 2
@@ -72,10 +72,11 @@ class GameOverController(StepmaniaController):
                             str(self.conn.songstats[user.pos]["offsetacum"] / 
                             self.conn.songstats[user.pos]["taps"])[:5],
                             to="me")
+                newrating = user.rating
                 if ssr > 0:
-                    query = self.session.query(models.SongStat).filter_by(user_id = user.id).order_by(models.SongStat.ssr.desc()).limit(25)
-                    if query.first() and ssr > query[-1].ssr:
-                        user.rating = user.updaterating(self.session)
+                    topssrs = user.topssrs(self.session)
+                    if len(topssrs) < 25 or ssr > topssrs[-1].ssr:
+                        newrating = user.calcrating(topssrs)
                             
             xp = songstat.calc_xp(self.server.config.score.get("xpWeight"), self.conn.songstats[user.pos]["extranotes"])
             user.xp += xp
@@ -85,9 +86,13 @@ class GameOverController(StepmaniaController):
                 (songstat.pretty_result(room_id=self.room.id,
                 color=True, date=False, toasty=True, points=self.room.show_points, userfirst=True) + 
                 songstat.get_rank(user.id, self.room.active_song.id) ) + 
-                " " + with_color(xp, "aaaa00") +" XP gained" + (" Score Rating : %12.2f" % ssr if ssr > 0 else ""))
+                " " + with_color(int(xp), "aaaa00") +" XP gained" + (" Score Rating : %12.2f" % ssr if ssr > 0 else ""))
             user.toastycount =+ self.conn.songstats[user.pos]["toasties"]
-
+            if user.rating != newrating:
+                self.send_message(
+                "%s's player rating changed: %12.2f" % 
+                (with_color(user.name), newrating))
+                user.rating = newrating
 
 
         with self.conn.mutex:

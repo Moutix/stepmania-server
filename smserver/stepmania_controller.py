@@ -292,7 +292,7 @@ class StepmaniaController(object):
         """
 
         self.send_message(
-            "%s %s" % (
+            "%s: %s" % (
                 self.colored_user_repr(self.conn.room),
                 message),
             to)

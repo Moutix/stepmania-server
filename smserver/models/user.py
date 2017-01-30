@@ -11,6 +11,7 @@ from smserver.models import schema
 from smserver.chathelper import with_color, nick_color
 from smserver.models.privilege import Privilege
 from smserver.models.song_stat import SongStat
+from smserver.models.chart import Chart
 from smserver import ability
 
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
@@ -118,17 +119,25 @@ class User(schema.Base):
         return 0
 
 
-    @classmethod
-    def updaterating(self, session):
-        ssrs = (session.query(func.max(SongStat.ssr))
-        .filter_by(user_id = self.id)
-        .group_by(SongStat.chartkey)
-        .order_by(SongStat.ssr.desc()).limit(25).all())
+    def calcrating(self, topssrs):
         rating = 0
-        for count, ssr in enumerate(ssrs):
+        for count, ssr in enumerate(topssrs):
             rating += ssr[0] / (2 + 2 * count)
         return rating
 
+
+    def topssrs(self, session):
+        # ssrs = (session.query(func.max(SongStat.ssr))
+        # .join(SongStat.chart)
+        # .group_by(Chart.chartkey)
+        # .order_by(func.max(SongStat.ssr).desc())
+        # .filter(SongStat.user_id == self.id).limit(25))
+        ssrs = (session.query(func.max(SongStat.ssr), Chart.chartkey, Chart.id, SongStat.migs)
+        .join(SongStat.chart)
+        .group_by(Chart.chartkey)
+        .order_by(func.max(SongStat.ssr).desc())
+        .filter(SongStat.user_id == self.id).limit(25).all())
+        return ssrs
 
     def room_privilege(self, room_id):
         if room_id in self._room_level:

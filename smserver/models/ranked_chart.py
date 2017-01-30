@@ -1,7 +1,8 @@
 
 import enum
 
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import relationship
 
 from smserver.models import schema
 from smserver.models.song_stat import SongStat
@@ -29,6 +30,9 @@ class RankedChart(schema.Base):
     diff       = Column(Integer)
     rating     = Column(Float)
 
+    song_id    = Column(Integer, ForeignKey('songs.id'))
+    song       = relationship("Song", back_populates="ranked_charts")
+
     def __repr__(self):
         return "<RankedChart #%s (hash='%s')>" % (self.id, self.hash)
 
@@ -51,6 +55,7 @@ class RankedChart(schema.Base):
         self.jumps = updated_obj.jumps
         self.taps = updated_obj.taps
         self.diff = updated_obj.diff
+        self.song_id = updated_obj.song_id
         chart = session.query(Chart).filter_by(chartkey=self.chartkey).first()
         if not users:
             users_to_recalc = []

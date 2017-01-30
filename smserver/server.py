@@ -358,7 +358,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.sendall(packet)
             return
 
-        packet["message"] = "#%s %s" % (with_color(room.name), message)
+        packet["message"] = message
         if not func:
             func = self.sendroom
 

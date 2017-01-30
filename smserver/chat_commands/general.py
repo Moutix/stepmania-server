@@ -79,11 +79,22 @@ class Profile(ChatPlugin):
 
     def __call__(self, serv, message):
 
-        for user in serv.active_users:
-            serv.send_message("Name: %s" % with_color(user.name), to="me")
-            serv.send_message("XP: %s" % user.xp, to="me")
-            serv.send_message("Rank: %s" % user.skillrank, to="me")
-            serv.send_message("Rating: %12.2f" % user.rating, to="me")
+        if not message:
+            for user in serv.active_users:
+                serv.send_message("Name: %s" % with_color(user.name), to="me")
+                serv.send_message("XP: %s" % user.xp, to="me")
+                serv.send_message("Rank: %s" % user.skillrank, to="me")
+                serv.send_message("Rating: %12.2f" % user.rating, to="me")
+        else:
+            user = serv.session.query(models.User).filter_by(name=message).first()
+            if not user:
+                serv.send_message("Could not find user %s" % with_color(message), to="me")
+            else:
+                serv.send_message("Name: %s" % with_color(user.name), to="me")
+                serv.send_message("XP: %s" % user.xp, to="me")
+                serv.send_message("Rank: %s" % user.skillrank, to="me")
+                serv.send_message("Rating: %12.2f" % user.rating, to="me")
+
             #for skillset in models.ranked_song.Skillsets:
             #    rating = eval("user.rating_" + skillset.name)
             #    serv.send_message(skillset.name.capitalize()+": %f" %  rating, to="me")
@@ -299,7 +310,7 @@ class PrivateMessage(ChatPlugin):
             return False
         serv.send_message("To %s : %s" % (with_color(receptor.name), message), to="me")
         receptor = serv.server.find_connection(receptor.id)
-        #if i do what's commented both players get the message for some reason
+        #if i do what's commented both players get the message
         #serv.send_message("From %s : %s" % (with_color(user.name), message), receptor)
         receptor.send(smutils.smpacket.SMPacketServerNSCCM(message="From %s : %s" % (with_color(user.name), message)))
         return True

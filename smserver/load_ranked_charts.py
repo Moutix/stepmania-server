@@ -75,39 +75,25 @@ if delete:
 if update:
     print("Updating table from cache file. ")
     update_users = []
-    chartkey = ""
-    radar = [0]
-    msds = [0]
-    foundsteps = False
-    diff = ""
     for filename in os.listdir(directory):
         print("Opening " + filename)
         datafile = open(os.path.join(directory,filename))
         title = ""
         subtitle = ""
         artist = ""
+        pack_name = ""
+        song = None
+        foundsteps=False
+        foundsub=False
+        foundtit=False
+        foundart=False
+        chartkey = ""
+        radar = [0]
+        msds = [0]
+        foundsteps = False
+        diff = ""
         for line in datafile:
-            if '#DIFFICULTY:' in line:
-                foundsteps = True
-                chartkey = ""
-                radar = [0]
-                msds = [0]
-                line = line[12:]
-                line = line[:line.rfind(";")]
-                diff = line
-            elif '#ARTIST:' in line:
-                line = line[8:]
-                line = line[:line.rfind(";")]
-                artist = line
-            elif '#TITLE:' in line:
-                line = line[7:]
-                line = line[:line.rfind(";")]
-                title = line
-            elif '#SUBTITLE:' in line:
-                line = line[10:]
-                line = line[:line.rfind(";")]
-                subtitle = line
-            if foundsteps == True:
+            if foundsteps == True and song and pack_name:
                 if '#MSDVALUES:' in line:
                     line = line[11:]
                     line = line[:line.rfind(";")]
@@ -121,20 +107,49 @@ if update:
                     line = line[13:]
                     line = line[:line.rfind(";")]
                     radar = line.split(',')
-                song = models.Song.find_or_create(title, subtitle, artist, session)
                 if chartkey and len(radar) > 3 and len(msds) > 1 and diff:
-                    newchart = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]), song_id=song.id)
+                    newchart = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]), song_id=song.id, pack_name=pack_name)
                     newchart.rating = msds[0]
-                    exec("diff = Diffs." + diff + ".value")
-                    newchart.diff = diff
+                    exec("diffnum = Diffs." + diff + ".value")
+                    newchart.diff = diffnum
                     exists = session.query(models.RankedChart).filter_by(chartkey = chartkey).first()
                     if exists:
-                        print("Updating "+ newchart.chartkey)
+                        print("Updating "+" Hash: "+newchart.chartkey+" Title: "+song.title+" Pack: "+pack_name+" Diff: "+diff)
                         update_users = exists.update(newchart, update_users, session)
                     else:
-                        print("Adding "+ newchart.chartkey)
+                        print("Adding "+" Hash: "+newchart.chartkey+" Title: "+song.title+" Pack: "+pack_name+" Diff: "+diff)
                         session.add(newchart)
-                    foundsteps=False
+                    foundsteps = False
+            elif '#DIFFICULTY:' in line:
+                foundsteps = True
+                chartkey = ""
+                radar = [0]
+                msds = [0]
+                line = line[12:]
+                line = line[:line.rfind(";")]
+                diff = line
+            elif '#ARTIST:' in line:
+                foundart = True
+                line = line[8:]
+                line = line[:line.rfind(";")]
+                artist = line
+            elif '#TITLE:' in line:
+                foundtit = True
+                line = line[7:]
+                line = line[:line.rfind(";")]
+                title = line
+            elif '#SUBTITLE:' in line:
+                foundsub = True
+                line = line[10:]
+                line = line[:line.rfind(";")]
+                subtitle = line
+            elif '#SONGFILENAME:' in line:
+                line = line[14:]
+                line = line[:line.rfind(";")]
+                line = line.split('/')
+                pack_name = line[-3]
+            if foundsub and foundtit and foundart:
+                song = models.Song.find_or_create(title, subtitle, artist, session)
     print("Recalculating user ratings")
     for user in update_users:
         print("Recalculating "+ user.name + "'s rating")

@@ -6,6 +6,8 @@ from smserver import models
 from smserver import smutils
 from smserver.chathelper import with_color
 from smserver.chatplugin import ChatPlugin
+from smserver.models import ranked_chart
+from smserver.models.ranked_chart import Diffs
 
 
 class ChatHelp(ChatPlugin):
@@ -113,6 +115,18 @@ class FriendNotification(ChatPlugin):
             else:
                 user.friend_notifications = True
                 serv.send_message("Friend notifications enabled", to="me")
+
+
+class RankedCharts(ChatPlugin):
+    command = "rankedcharts"
+    helper = "Show all ranked songs"
+
+    def __call__(self, serv, message):
+        charts = serv.session.query(models.RankedChart, models.Song.title).join(models.Song).all()
+        serv.send_message("Ranked Charts:", to="me")
+        for chart in charts:
+            serv.send_message("Title: " + chart[1] + " Pack: " + chart[0].pack_name + " Diff: " + Diffs(chart[0].diff).name, to="me")
+
 
 
 class AddFriend(ChatPlugin):

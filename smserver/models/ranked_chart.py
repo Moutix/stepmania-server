@@ -31,10 +31,11 @@ class RankedChart(schema.Base):
     rating     = Column(Float)
 
     song_id    = Column(Integer, ForeignKey('songs.id'))
+    pack_name   = Column(String(255))
     song       = relationship("Song", back_populates="ranked_charts")
 
     def __repr__(self):
-        return "<RankedChart #%s (hash='%s')>" % (self.id, self.hash)
+        return "<RankedChart #%s (chartkey='%s')>" % (self.id, self.chartkey)
 
     def remove(self, session):
         chart = session.query(Chart).filter_by(chartkey=self.chartkey).first()
@@ -56,6 +57,7 @@ class RankedChart(schema.Base):
         self.taps = updated_obj.taps
         self.diff = updated_obj.diff
         self.song_id = updated_obj.song_id
+        self.pack_name = updated_obj.pack_name
         chart = session.query(Chart).filter_by(chartkey=self.chartkey).first()
         if not users:
             users_to_recalc = []

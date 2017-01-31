@@ -408,7 +408,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
                     song_title=room.active_song.title,
                     song_subtitle=room.active_song.subtitle,
                     song_artist=room.active_song.artist,
-                    song_hash=room.active_song_hash
+                    song_hash=room.active_song_hash 
                     )
             nonhashpacket = smpacket.SMPacketServerNSCRSG(
                     usage=1,
@@ -421,10 +421,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
             else:
                 conn.send(hashpacket)
 
-        for conn in self.connections:
-            if conn.room == None:
-                conn.send(roomspacket)
-                self.send_user_list_lobby(conn, self.session)
         self.send_user_list(room)
 
     def leave_room(self, room, user_id=None, conn=None):

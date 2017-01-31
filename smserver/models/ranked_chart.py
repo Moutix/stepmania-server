@@ -78,5 +78,4 @@ class RankedChart(schema.Base):
                         * 100 / self.taps * SongStat.calc_dp(8))
                     if previoussr != songstat.ssr and songstat.user not in users_to_recalc:
                         users_to_recalc.append(songstat.user)
-        session.commit()
         return users_to_recalc

@@ -48,6 +48,9 @@ class RequestStartGameController(StepmaniaController):
             " Best scores:" if song.time_played > 0 and self.room.show_bests else ""
             ))
 
+        self.room.active_song = song
+        self.room.active_song_hash = self.packet["song_hash"]
+
         if song.time_played > 0 and self.room.show_bests:
             for song_stat in song.best_scores:
                 self.send_message(song_stat.pretty_result(room_id=self.room.id, color=True, toasty=True, points=self.room.show_points))
@@ -127,10 +130,28 @@ class RequestStartGameController(StepmaniaController):
         self.room.status = 2
         self.room.active_song = song
         self.room.active_song_hash = self.packet["song_hash"]
-        self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
-            usage=2,
-            song_title=song.title,
-            song_subtitle=song.subtitle,
-            song_artist=song.artist
-            ))
 
+        hashpacket = smpacket.SMPacketServerNSCRSG(
+                usage=2,
+                song_title=song.title,
+                song_subtitle=song.subtitle,
+                song_artist=song.artist,
+                song_hash=self.packet["song_hash"]
+                )
+        nonhashpacket = smpacket.SMPacketServerNSCRSG(
+                usage=2,
+                song_title=song.title,
+                song_subtitle=song.subtitle,
+                song_artist=song.artist
+                )
+        for conn in self.server.player_connections(self.room.id):
+            if conn.stepmania_version < 4:
+                conn.send(nonhashpacket)
+            else:
+                conn.send(hashpacket)
+        
+        roomspacket = models.Room.smo_list(self.session, self.active_users)
+        for conn in self.server.connections:
+            if conn.room == None:
+                conn.send(roomspacket)
+                self.server.send_user_list_lobby(conn, self.session)

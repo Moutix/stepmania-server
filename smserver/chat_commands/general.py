@@ -116,16 +116,16 @@ class FriendNotification(ChatPlugin):
                 user.friend_notifications = True
                 serv.send_message("Friend notifications enabled", to="me")
 
+#This lags a lot if there are many ranked charts
+# class RankedCharts(ChatPlugin):
+#     command = "rankedcharts"
+#     helper = "Show all ranked songs"
 
-class RankedCharts(ChatPlugin):
-    command = "rankedcharts"
-    helper = "Show all ranked songs"
-
-    def __call__(self, serv, message):
-        charts = serv.session.query(models.RankedChart, models.Song.title).join(models.Song).all()
-        serv.send_message("Ranked Charts:", to="me")
-        for chart in charts:
-            serv.send_message("Title: " + chart[1] + " Pack: " + chart[0].pack_name + " Diff: " + Diffs(chart[0].diff).name, to="me")
+#     def __call__(self, serv, message):
+#         charts = serv.session.query(models.RankedChart, models.Song.title).join(models.Song).all()
+#         serv.send_message("Ranked Charts:", to="me")
+#         for chart in charts:
+#             serv.send_message("Title: " + chart[1] + " Pack: " + chart[0].pack_name + " Diff: " + Diffs(chart[0].diff).name, to="me")
 
 
 

@@ -8,6 +8,7 @@ from optparse import OptionParser
 
 import sys
 import datetime
+import codecs
 
 from sqlalchemy.orm import object_session
 
@@ -52,7 +53,7 @@ if not update and not delete and deletechart == "":
     print("-c --deletechart CHARTKEY/HASH")
     print("Delete a chart from table")
 
-directory = os.path.join(os.getcwd(), 'Songs')
+directory = os.path.join(os.getcwd(), u'Songs')
 if not os.path.exists(directory):
     os.makedirs(directory)
 
@@ -69,90 +70,98 @@ db.create_tables()
 session = db.session()
 
 if delete:
-    print("Deleted " + str(session.query(models.RankedChart).delete()) + " rows.")
+    print("Deleted " + str(session.query(models.RankedChart).delete()) + " rows")
     session.commit()
-    print("Table deleted.")
+    print("Table deleted")
 if update:
-    print("Updating table from cache file. ")
+    print("Updating table from cache files ")
     update_users = []
     for filename in os.listdir(directory):
-        print("Opening " + filename)
-        datafile = open(os.path.join(directory,filename))
-        title = ""
-        subtitle = ""
-        artist = ""
-        pack_name = ""
-        song = None
-        foundsteps=False
-        foundsub=False
-        foundtit=False
-        foundart=False
-        chartkey = ""
-        radar = [0]
-        msds = [0]
-        foundsteps = False
-        diff = ""
-        for line in datafile:
-            if foundsteps == True and song and pack_name:
-                if '#MSDVALUES:' in line:
-                    line = line[11:]
-                    line = line[:line.rfind(";")]
-                    line = line.split(':')
-                    msds = (line[3]).split(',')
-                elif '#CHARTKEY:' in line:
-                    line = line[10:]
-                    line = line[:line.rfind(";")]
-                    chartkey = line
-                elif '#RADARVALUES:' in line:
-                    line = line[13:]
-                    line = line[:line.rfind(";")]
-                    radar = line.split(',')
-                if chartkey and len(radar) > 3 and len(msds) > 1 and diff:
-                    newchart = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]), song_id=song.id, pack_name=pack_name)
-                    newchart.rating = msds[0]
-                    exec("diffnum = Diffs." + diff + ".value")
-                    newchart.diff = diffnum
-                    exists = session.query(models.RankedChart).filter_by(chartkey = chartkey).first()
-                    if exists:
-                        print("Updating "+" Hash: "+newchart.chartkey+" Title: "+song.title+" Pack: "+pack_name+" Diff: "+diff)
-                        update_users = exists.update(newchart, update_users, session)
-                    else:
-                        print("Adding "+" Hash: "+newchart.chartkey+" Title: "+song.title+" Pack: "+pack_name+" Diff: "+diff)
-                        session.add(newchart)
-                    foundsteps = False
-            elif '#DIFFICULTY:' in line:
-                foundsteps = True
-                chartkey = ""
-                radar = [0]
-                msds = [0]
-                line = line[12:]
-                line = line[:line.rfind(";")]
-                diff = line
-            elif '#ARTIST:' in line:
-                foundart = True
-                line = line[8:]
-                line = line[:line.rfind(";")]
-                artist = line
-            elif '#TITLE:' in line:
-                foundtit = True
-                line = line[7:]
-                line = line[:line.rfind(";")]
-                title = line
-            elif '#SUBTITLE:' in line:
-                foundsub = True
-                line = line[10:]
-                line = line[:line.rfind(";")]
-                subtitle = line
-            elif '#SONGFILENAME:' in line:
-                line = line[14:]
-                line = line[:line.rfind(";")]
-                line = line.split('/')
-                pack_name = line[-3]
-            if foundsub and foundtit and foundart:
-                song = models.Song.find_or_create(title, subtitle, artist, session)
+        try:
+            #print("Opening " + filename)
+            datafile = codecs.open(os.path.join(directory,filename), mode='r', encoding="utf-8")
+            title = ""
+            subtitle = ""
+            artist = ""
+            pack_name = ""
+            song = None
+            foundsteps=False
+            foundsub=False
+            foundtit=False
+            foundart=False
+            chartkey = ""
+            radar = [0]
+            msds = [0]
+            foundsteps = False
+            diff = ""
+            try:
+                for line in datafile:
+                    if foundsteps == True and song and pack_name:
+                        if '#MSDVALUES:' in line:
+                            line = line[11:]
+                            line = line[:line.rfind(";")]
+                            line = line.split(':')
+                            msds = (line[3]).split(',')
+                        elif '#CHARTKEY:' in line:
+                            line = line[10:]
+                            line = line[:line.rfind(";")]
+                            chartkey = line
+                        elif '#RADARVALUES:' in line:
+                            line = line[13:]
+                            line = line[:line.rfind(";")]
+                            radar = line.split(',')
+                        if chartkey and len(radar) > 3 and len(msds) > 1 and diff:
+                            newchart = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]), song_id=song.id, pack_name=pack_name)
+                            newchart.rating = msds[0]
+                            exec("diffnum = Diffs." + diff + ".value")
+                            newchart.diff = diffnum
+                            exists = session.query(models.RankedChart).filter_by(chartkey = chartkey).first()
+                            if exists:
+                                #print("Updating "+" Hash: "+newchart.chartkey+" Title: "+song.title+" Pack: "+pack_name+" Diff: "+diff)
+                                update_users = exists.update(newchart, update_users, session)
+                            else:
+                                #print("Updating "+" Hash: "+newchart.chartkey+" Title: "+song.title+" Pack: "+pack_name+" Diff: "+diff)
+                                session.add(newchart)
+                            foundsteps = False
+                    elif '#DIFFICULTY:' in line:
+                        foundsteps = True
+                        chartkey = ""
+                        radar = [0]
+                        msds = [0]
+                        line = line[12:]
+                        line = line[:line.rfind(";")]
+                        diff = line
+                    elif '#ARTIST:' in line:
+                        foundart = True
+                        line = line[8:]
+                        line = line[:line.rfind(";")]
+                        artist = line
+                    elif '#TITLE:' in line:
+                        foundtit = True
+                        line = line[7:]
+                        line = line[:line.rfind(";")]
+                        title = line
+                    elif '#SUBTITLE:' in line:
+                        foundsub = True
+                        line = line[10:]
+                        line = line[:line.rfind(";")]
+                        subtitle = line
+                    elif '#SONGFILENAME:' in line:
+                        line = line[14:]
+                        line = line[:line.rfind(";")]
+                        line = line.split('/')
+                        pack_name = line[-3]
+                    if foundsub and foundtit and foundart:
+                        song = models.Song.find_or_create(title, subtitle, artist, session)
+            except UnicodeDecodeError:
+                print("Error in file "+ filename)
+                continue
+        except UnicodeEncodeError:
+            print("Error in filename ")
+            continue
     print("Recalculating user ratings")
     for user in update_users:
-        print("Recalculating "+ user.name + "'s rating")
+        #print("Recalculating "+ user.name + "'s rating")
         user.rating = user.updaterating(uer.topssrs(session))
     session.commit()
 if deletechart != "":
@@ -160,6 +169,7 @@ if deletechart != "":
     if exists:
         exists.remove(session)
         session.commit()
-        print(deletechart + " removed.")
+        #print(deletechart + " removed.")
     else:
         print("Could not find " + deletechart)
+print("There are " + str(session.query(models.RankedChart).count()) + " ranked charts")

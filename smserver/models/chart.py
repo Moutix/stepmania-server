@@ -13,6 +13,7 @@ __all__ = ['Chart']
 class Chart(schema.Base):
     __tablename__ = 'charts'
 
+
     id           = Column(Integer, primary_key=True)
     chartkey        = Column(String(42))
 

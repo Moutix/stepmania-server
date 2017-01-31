@@ -2,6 +2,7 @@ import os
 from smserver import models, conf
 from smserver.models import ranked_chart
 from smserver.models.ranked_chart import Diffs
+from smserver.models.pack import Pack
 from sqlalchemy.orm import object_session
 import sys, getopt
 from optparse import OptionParser
@@ -84,6 +85,7 @@ if update:
             subtitle = ""
             artist = ""
             pack_name = ""
+            pack = None
             song = None
             foundsteps=False
             foundsub=False
@@ -110,10 +112,10 @@ if update:
                             line = line[13:]
                             line = line[:line.rfind(";")]
                             radar = line.split(',')
-                        if chartkey and len(radar) > 3 and len(msds) > 1 and diff:
-                            newchart = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]), song_id=song.id, pack_name=pack_name)
+                        if chartkey and pack and len(radar) > 3 and len(msds) > 1 and diff:
+                            newchart = models.RankedChart(chartkey = chartkey, taps = float(radar[6]), jumps = float(radar[7]), hands = float(radar[8]), song_id=song.id, pack_id=pack.id)
                             newchart.rating = msds[0]
-                            exec("diffnum = Diffs." + diff + ".value")
+                            diffnum = Diffs[diff].value
                             newchart.diff = diffnum
                             exists = session.query(models.RankedChart).filter_by(chartkey = chartkey).first()
                             if exists:
@@ -151,6 +153,7 @@ if update:
                         line = line[:line.rfind(";")]
                         line = line.split('/')
                         pack_name = line[-3]
+                        pack = models.Pack.find_or_create(pack_name, session)
                     if foundsub and foundtit and foundart:
                         song = models.Song.find_or_create(title, subtitle, artist, session)
             except UnicodeDecodeError:

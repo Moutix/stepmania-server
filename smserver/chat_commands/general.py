@@ -84,7 +84,7 @@ class Profile(ChatPlugin):
         if not message:
             for user in serv.active_users:
                 serv.send_message("Name: %s" % with_color(user.name), to="me")
-                serv.send_message("XP: %s" % user.xp, to="me")
+                serv.send_message("XP: %20.0f" % user.xp, to="me")
                 serv.send_message("Rank: %s" % user.skillrank, to="me")
                 serv.send_message("Rating: %12.2f" % user.rating, to="me")
         else:

@@ -97,7 +97,7 @@ class SongStat(schema.Base):
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __repr__(self):
-        return "<SongStat #%s score=%s (%s%%)>" % (self.id, self.migsp, self.migs)
+        return "<SongStat #%s (points=%s percentage=%s)>" % (self.id, self.migsp, self.migs)
 
     @property
     def lit_difficulty(self):

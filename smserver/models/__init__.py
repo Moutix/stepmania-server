@@ -6,6 +6,8 @@ from smserver.models.privilege import Privilege
 from smserver.models.friendship import Friendship
 from smserver.models.ranked_chart import RankedChart
 from smserver.models.chart import Chart
+from smserver.models.pack import Pack
+from smserver.models.packsimfile import PackSimfile
 from smserver.models.simfile import Simfile
 from smserver.models.ban import Ban
 from smserver.models.game import Game

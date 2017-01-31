@@ -71,12 +71,13 @@ class Song(schema.Base):
         return "%s (%s)" % (self.title, self.artist)
 
     @classmethod
-    def find_or_create(cls, title, subtitle, artist, session):
+    def find_or_create(cls, title, subtitle, artist, session, commit=True):
         song = session.query(cls).filter_by(title=title, artist=artist, subtitle=subtitle).first()
         if not song:
             song = cls(title=title, artist=artist, subtitle=subtitle)
             session.add(song)
-            session.commit()
+            if commit:
+                session.commit()
 
         return song
 

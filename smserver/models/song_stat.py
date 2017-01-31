@@ -132,30 +132,6 @@ class SongStat(schema.Base):
         )
 
 
-    def calc_percentage(self, config=None):
-        if not config:
-            config = {
-                "not_held": 0,
-                "miss": 0,
-                "bad": 0,
-                "good": 0,
-                "held": 3,
-                "hit_mine": -2,
-                "great": 1,
-                "perfect": 2,
-                "flawless": 3
-            }
-
-        max_weight = max(config.values())
-        percentage = 0
-        nb_note = 0
-        for note, weight in config.items():
-            nb = getattr(self, note, 0)
-            percentage += nb*weight
-            nb_note += nb*max_weight
-
-        return round(percentage/nb_note*100, 2) if nb_note > 0 else 0
-
     def calc_xp(self, config=None, extranotes=None):
         if not config:
             config = {

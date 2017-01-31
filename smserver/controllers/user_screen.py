@@ -23,9 +23,10 @@ class UserStatusController(StepmaniaController):
                 user.room = None
             for room in self.session.query(models.Room):
                 if not room.online_users:
-                    self.server.log.info("No users deleteing Room: %s" % (room.name))
-                    self.session.delete(room)
-                    self.conn.room = None
+		    if not room.static:
+                        self.server.log.info("No users deleteing Room: %s" % (room.name))
+                        self.session.delete(room)
+                        self.conn.room = None
             roomspacket = models.Room.smo_list(self.session, self.active_users)
             for conn in self.server.connections:
                 if conn.room == None:

@@ -92,12 +92,17 @@ class User(schema.Base):
         return with_color(message=self.fullname(room_id), color=color)
 
     def can(self, action, room_id=None):
+        """ Return True if the user can do this action """
+
         return ability.Ability.can(action, self.level(room_id))
 
     def cannot(self, action, room_id=None):
+        """ Return True if the user cannot do this action """
+
         return ability.Ability.cannot(action, self.level(room_id))
 
     def level(self, room_id=None):
+        """ Return the level of the user, given his room """
         if not room_id:
             return self.rank
 
@@ -131,11 +136,16 @@ class User(schema.Base):
 
     @classmethod
     def _level_to_symbol(cls, level):
+        """ Return a symbol corresponding of the user level """
+
+        if not level:
+            return None
+
         symbol = cls.REPR.get(level)
         if symbol:
             return symbol
 
-        keys = sorted(cls.REPR.keys(), reverse=True)
+        keys = sorted(cls.REPR, reverse=True)
 
         for key in keys:
             if key < level:
@@ -208,7 +218,6 @@ class User(schema.Base):
                 return idx
 
         return 0
-
 
     @staticmethod
     def users_repr(users, room_id=None):

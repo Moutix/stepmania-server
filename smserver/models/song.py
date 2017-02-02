@@ -76,4 +76,3 @@ class Song(schema.Base):
             session.commit()
 
         return song
-

@@ -14,6 +14,8 @@ from smserver.smutils.smpacket import SMPacket, SMPayloadType
 __all__ = ['SongStat']
 
 class SongStat(schema.Base):
+    """ SongStat model, represent the score obtain by a user in a song """
+
     __tablename__ = 'song_stats'
 
     GRADES = {
@@ -91,6 +93,8 @@ class SongStat(schema.Base):
 
     @property
     def lit_difficulty(self):
+        """ Difficulty as a string (EASY, MEDIUM, HARD, ...) """
+
         if self.difficulty is None:
             return "Unknown"
 
@@ -98,27 +102,34 @@ class SongStat(schema.Base):
 
     @property
     def full_difficulty(self):
+        """ Difficulty with feet as a string. eg EASY (3) """
+
         return "%s (%s)" % (self.lit_difficulty, self.feet)
 
     @property
     def lit_grade(self):
+        """ Grade as a string (AA, E, F, B, ...)"""
         if self.grade is None:
             return "Unknown"
 
         return self.GRADES.get(self.grade, self.grade)
 
     def pretty_result(self, room_id=None, color=False):
-        color_func = with_color if color else lambda x, *_: x
+        """ Return a pretty result for the result """
 
-        return "{difficulty}: {user_name} {grade} ({percentage}%) on {date}".format(
+        color_func = with_color if color else lambda x, **_: x
+
+        return "{difficulty}: {user_name} {grade} ({percentage:.2f}%) on {date}".format(
             difficulty=color_func(self.full_difficulty, color=nick_color(self.lit_difficulty)),
             user_name=self.user.fullname_colored(room_id) if color else self.user.fullname(room_id),
             grade=color_func(self.lit_grade),
             percentage=self.percentage,
-            date=self.created_at.strftime("%x")
+            date=self.created_at.strftime("%d/%m/%y")
         )
 
     def calc_percentage(self, config=None):
+        """ Calculate the percentage given the input """
+
         if not config:
             config = {
                 "not_held": 0,

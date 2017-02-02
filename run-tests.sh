@@ -5,4 +5,4 @@ py.test --doctest-modules smserver
 
 
 echo "---------------- UNIT TEST --------------------"
-py.test tests
+py.test test

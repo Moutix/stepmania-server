@@ -41,4 +41,3 @@ class Privilege(schema.Base):
         priv.level = level
         session.commit()
         return priv
-

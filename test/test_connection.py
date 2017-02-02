@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-from helper import *
+from test.helper import *
 
 server_test = get_server_test()
 client_bin = ClientTestBinary(server_test)

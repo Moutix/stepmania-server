@@ -41,18 +41,18 @@ class EnterRoomController(StepmaniaController):
     def _can_enter_room(self, room):
         if not room:
             self.log.info(
-                "Player %s fail to enter in room %s" % (self.conn.ip, self.packet["room"]))
+                "Player %s failéd to enter in room %s" % (self.conn.ip, self.packet["room"]))
             return False
 
         if models.Ban.is_ban(self.session, ip=self.conn.ip, room_id=room.id):
-            self.log.info("Ban ip %s fail to enter in room %s" % (self.conn.ip, room.name))
-            self.send_message("IP %s is ban from this room." % (with_color(self.conn.ip)), to="me")
+            self.log.info("Banned ip %s failed to enter in room %s" % (self.conn.ip, room.name))
+            self.send_message("IP %s is banned from this room." % (with_color(self.conn.ip)), to="me")
             return False
 
         for user in self.active_users:
             if models.Ban.is_ban(self.session, user_id=user.id, room_id=room.id):
-                self.log.info("Ban player %s fail to enter in room %s" % (user.name, room.name))
-                self.send_message("Player %s is ban from this room." % (user.fullname_colored()), to="me")
+                self.log.info("Banned player %s failed to enter in room %s" % (user.name, room.name))
+                self.send_message("Player %s is banned from this room." % (user.fullname_colored()), to="me")
                 return False
 
         if room.nb_players >= room.max_users:

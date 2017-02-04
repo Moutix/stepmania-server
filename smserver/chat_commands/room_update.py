@@ -77,10 +77,64 @@ class ChatRoomFree(ChatPlugin):
     def __call__(self, serv, message):
         if serv.room.free:
             serv.room.free = False
-            msg = "The room is no more free"
+            msg = "This room is no longer free"
         else:
             serv.room.free = True
-            msg = "The room is free"
+            msg = "This room is now free"
+
+        serv.session.commit()
+        serv.send_message(msg)
+
+
+class ChatRoomReqSong(ChatPlugin):
+    command = "reqsong"
+    helper = "Enable/Disable song requirement"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        if serv.room.reqsong:
+            serv.room.reqsong = False
+            msg = "This room now does not require all players to have the song"
+        else:
+            serv.room.reqsong = True
+            msg = "This room now requires all players to have the song"
+
+        serv.session.commit()
+        serv.send_message(msg)
+
+
+class ChatRoomShowPoints(ChatPlugin):
+    command = "showpoints"
+    helper = "Enable/Disable score points message"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        if serv.room.show_points:
+            serv.room.show_points = False
+            msg = "This room now doesnt show each score's MIGS points"
+        else:
+            serv.room.show_points = True
+            msg = "This room now shows each score's MIGS points"
+
+        serv.session.commit()
+        serv.send_message(msg)
+
+
+class ChatRoomShowBests(ChatPlugin):
+    command = "showbests"
+    helper = "Enable/disable showing best scores on song select"
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    def __call__(self, serv, message):
+        if serv.room.show_bests:
+            serv.room.show_bests = False
+            msg = "This room now does not show best scores on song select"
+        else:
+            serv.room.show_bests = True
+            msg = "This room now shows best scores on song select"
 
         serv.session.commit()
         serv.send_message(msg)
@@ -93,7 +147,7 @@ class ChatSpectate(ChatPlugin):
 
     def __call__(self, serv, message):
         if serv.conn.spectate:
-            msg = "You are no more in spectator mode"
+            msg = "You are no longer in spectator mode"
             for user in serv.active_users:
                 user.status = 1
 
@@ -124,7 +178,7 @@ class ChatDeleteRoom(ChatPlugin):
     permission = ability.Permissions.delete_room
 
     def __call__(self, serv, message):
-        serv.send_message("!! %s delete this room !!" % serv.colored_user_repr(serv.conn.room))
+        serv.send_message("!! %s deleted this room !!" % serv.colored_user_repr(serv.conn.room))
 
         room = serv.room
 

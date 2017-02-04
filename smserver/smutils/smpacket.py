@@ -80,6 +80,7 @@ class SMClientCommand(SMCommand):
     NSCFormatted = 13
     NSCAttack    = 14
     XMLPacket    = 15
+    FLU    = 16
 
 class SMServerCommand(SMCommand):
     """
@@ -102,6 +103,7 @@ class SMServerCommand(SMCommand):
     NSCFormatted = 141
     NSCAttack    = 142
     XMLPacket    = 143
+    FLU    = 144
 
 class SMOCommand(ParentCommand):
     pass
@@ -1059,6 +1061,10 @@ class SMPacketClientNSCGSR(SMPacket):
         (SMPayloadType.NT, "song_options", None),
         (SMPayloadType.NT, "first_player_options", None),
         (SMPayloadType.NT, "second_player_options", None),
+        (SMPayloadType.NT, "first_player_chartkey", None),
+        (SMPayloadType.NT, "second_player_chartkey", None),
+        (SMPayloadType.INT, "rate", 0),
+        (SMPayloadType.NT, "filehash", None)
     ]
 
 
@@ -1099,7 +1105,7 @@ class SMPacketClientNSCGSU(SMPacket):
         (SMPayloadType.MSN, "player_id", None),
         (SMPayloadType.LSN, "step_id", None),
         (SMPayloadType.MSN, "grade", None),
-        (SMPayloadType.LSN, "reserved", None),
+        (SMPayloadType.LSN, "note_size", None),
         (SMPayloadType.INT, "score", 4),
         (SMPayloadType.INT, "combo", 2),
         (SMPayloadType.INT, "health", 2),
@@ -1188,6 +1194,7 @@ class SMPacketClientNSCRSG(SMPacket):
         (SMPayloadType.NT, "song_title", None),
         (SMPayloadType.NT, "song_artist", None),
         (SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_hash", None)
     ]
 
 
@@ -1309,6 +1316,36 @@ class SMPacketServerNSCPing(SMPacket):
     """
 
     command = SMServerCommand.NSCPing
+
+
+class SMPacketClientFLU(SMPacket):
+    """
+        Client command 16 (FLU)
+
+        RESERVED
+
+    """
+
+    command = SMClientCommand.FLU
+    _payload = [
+    ]
+
+class SMPacketServerNSCPing(SMPacket):
+    """
+        Server command 128 (Ping)
+
+        This command will cause client to respond with a PingR command
+
+        :Example:
+
+        >>> from smserver.smutils import smpacket
+        >>> packet = smpacket.SMPacketServerNSCPing()
+        >>> print(packet.binary)
+        b'\\x00\\x00\\x00\\x01\\x80'
+    """
+
+    command = SMServerCommand.NSCPing
+
 
 class SMPacketServerNSCPingR(SMPacket):
     """
@@ -1526,6 +1563,7 @@ class SMPacketServerNSCRSG(SMPacket):
         (SMPayloadType.NT, "song_title", None),
         (SMPayloadType.NT, "song_artist", None),
         (SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_hash", None)
     ]
 
 
@@ -1669,6 +1707,29 @@ class SMPacketServerXMLPacket(SMPacket):
     ]
 
 
+
+class SMPacketServerFLU(SMPacket):
+    """
+        Server command 144 (FLU)
+
+        This packet contains friendlist data.
+
+        :param str usernames : usernames
+        :param str userstates : usertates
+    """
+
+    command = SMServerCommand.FLU
+    _payload = [
+        (SMPayloadType.INT, "nb_players", 1),
+        (SMPayloadType.LIST, "players", ("nb_players", [
+            (SMPayloadType.INT, "status", 1),
+            (SMPayloadType.NT, "name", None),
+            ])
+        )
+    ]
+
+
+
 def main():
     import doctest
     doctest.testmod()
@@ -1714,6 +1775,16 @@ def main():
         SMServerCommand.NSCCUUL,
         max_players=255,
         nb_players=5,
+        players=[{"status": 5, "name": "machin"}, {"status": 1, "name": "bidule"}]
+    )
+
+    print(packet)
+    print(packet.payload)
+    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
+
+    packet = SMPacket.new(
+        SMServerCommand.FLU,
+        nb_players=2,
         players=[{"status": 5, "name": "machin"}, {"status": 1, "name": "bidule"}]
     )
 

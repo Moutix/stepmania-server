@@ -25,6 +25,9 @@ class Room(schema.Base):
     ingame         = Column(Boolean, default=False)
     hidden         = Column(Boolean, default=False)
     free           = Column(Boolean, default=True)
+    reqsong        = Column(Boolean, default=True)
+    show_points    = Column(Boolean, default=False)
+    show_bests     = Column(Boolean, default=False)
 
     mode           = Column(String(255), default="normal")
 
@@ -39,6 +42,7 @@ class Room(schema.Base):
     bans           = relationship("Ban", back_populates="room")
 
     active_song_id = Column(Integer, ForeignKey('songs.id', ondelete="SET NULL"))
+    active_song_hash = Column(String(255))
     active_song    = relationship("Song", back_populates="active_rooms")
 
     created_at     = Column(DateTime, default=datetime.datetime.now)
@@ -128,7 +132,6 @@ class Room(schema.Base):
         """ Return the NSCCUUL packets listing users in the room """
 
         users = self.online_users
-
         return smpacket.SMPacketServerNSCCUUL(
             max_players=self.max_users,
             nb_players=len(users),

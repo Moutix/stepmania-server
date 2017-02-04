@@ -23,6 +23,9 @@ class Song(schema.Base):
 
     stats        = relationship("SongStat", back_populates="song")
     games        = relationship("Game", back_populates="song")
+    simfile = relationship("Simfile", back_populates="song")
+    ranked_charts = relationship("RankedChart", back_populates="song")
+
 
     time_played  = column_property(
         select([func.count(song_stat.SongStat.id)]).\
@@ -51,7 +54,7 @@ class Song(schema.Base):
                 .query(song_stat.SongStat)
                 .filter_by(feet=feet)
                 .filter_by(song_id=self.id)
-                .order_by(desc(song_stat.SongStat.score))
+                .order_by(desc(song_stat.SongStat.migsp))
                 .first())
 
     def best_score_value(self, feet):
@@ -61,18 +64,19 @@ class Song(schema.Base):
         if not stat:
             return None
 
-        return stat.score
+        return stat.migsp
 
     @property
     def fullname(self):
         return "%s (%s)" % (self.title, self.artist)
 
     @classmethod
-    def find_or_create(cls, title, subtitle, artist, session):
+    def find_or_create(cls, title, subtitle, artist, session, commit=True):
         song = session.query(cls).filter_by(title=title, artist=artist, subtitle=subtitle).first()
         if not song:
             song = cls(title=title, artist=artist, subtitle=subtitle)
             session.add(song)
-            session.commit()
+            if commit:
+                session.commit()
 
         return song

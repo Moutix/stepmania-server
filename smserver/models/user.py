@@ -4,12 +4,14 @@
 
 import datetime
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func, Float
 from sqlalchemy.orm import relationship, reconstructor, object_session
 
 from smserver.models import schema
 from smserver.chathelper import with_color, nick_color
 from smserver.models.privilege import Privilege
+from smserver.models.song_stat import SongStat
+from smserver.models.chart import Chart
 from smserver import ability
 
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
@@ -49,15 +51,20 @@ class User(schema.Base):
     email             = Column(String(255))
     rank              = Column(Integer, default=1)
     xp                = Column(Integer, default=0)
+    toastycount       = Column(Integer, default=0)
     last_ip           = Column(String(255))
     stepmania_version = Column(Integer)
     stepmania_name    = Column(String(255))
     online            = Column(Boolean)
     status            = Column(Integer, default=1)
+    rating            = Column(Float, default=0)
     chat_timestamp    = Column(Boolean, default=False)
+    show_offset       = Column(Boolean, default=False)
+    friend_notifications = Column(Boolean, default=False)
 
     room_id           = Column(Integer, ForeignKey('rooms.id'))
     room              = relationship("Room", back_populates="users")
+    has_song          = Column(Boolean, default=False)
 
     connection_token  = Column(Integer, ForeignKey('connections.token'))
     connection        = relationship("Connection", back_populates="users")
@@ -80,6 +87,10 @@ class User(schema.Base):
     def enum_status(self):
         return UserStatus(self.status)
 
+    @property
+    def skillrank(self):
+        return object_session(self).query(User).filter(User.rating > self.rating).count() + 1
+
     def fullname(self, room_id=None):
         """ Return user name with level prefix (~, &, ...) """
 
@@ -88,7 +99,7 @@ class User(schema.Base):
             self.name)
 
     def fullname_colored(self, room_id=None):
-        """ Retun user fullname with chat_color """
+        """ Return user fullname with chat_color """
 
         color = nick_color(self.name)
         if not self.online:
@@ -119,6 +130,27 @@ class User(schema.Base):
             return priv.level
 
         return 0
+
+
+    def calcrating(self, topssrs):
+        rating = 0
+        for count, ssr in enumerate(topssrs):
+            rating += ssr[0] / (2 + 2 * count)
+        return rating
+
+
+    def topssrs(self, session):
+        # ssrs = (session.query(func.max(SongStat.ssr))
+        # .join(SongStat.chart)
+        # .group_by(Chart.chartkey)
+        # .order_by(func.max(SongStat.ssr).desc())
+        # .filter(SongStat.user_id == self.id).limit(25))
+        ssrs = (session.query(func.max(SongStat.ssr), Chart.chartkey, Chart.id, SongStat.migs)
+        .join(SongStat.chart)
+        .group_by(Chart.chartkey)
+        .order_by(func.max(SongStat.ssr).desc())
+        .filter(SongStat.user_id == self.id).limit(25).all())
+        return ssrs
 
     def room_privilege(self, room_id):
         if room_id in self._room_level:

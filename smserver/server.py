@@ -233,7 +233,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
             func = getattr(app, "on_%s" % packet.command.name.lower(), None)
             if not func:
                 continue
-
             try:
                 func(session, serv, packet)
             except Exception as err:
@@ -256,7 +255,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         room_id = conn.room
         smthread.StepmaniaServer.on_disconnect(self, conn)
 
-        models.Connection.remove(conn.token)
+        models.Connection.remove(conn.token, session)
 
         self.send_sd_running_status()
 
@@ -268,7 +267,20 @@ class StepmaniaServer(smthread.StepmaniaServer):
         for user in users:
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected", user.name)
-
+            friends = session.query(models.Friendship).filter_by(state = 1).filter((models.Friendship.user1_id == user.id) | (models.Friendship.user2_id == user.id)).all()
+            for friend in friends:
+                if friend.user1_id == user.id:
+                    friendid = friend.user2_id
+                else:
+                    friendid = friend.user1_id
+                friendconn = self.find_connection(friendid)
+                self.send_friend_list(friendid, friendconn)
+                frienduser = session.query(models.User).filter_by(id = friendid).first()
+                if frienduser.online == True and frienduser.friend_notifications == True and not friendconn == None:
+                    self.send_message(
+                        "Your friend %s disconnected" % with_color(user.name),
+                        conn=friendconn
+                    )
         if room_id:
             room = session.query(models.Room).get(room_id)
             self.send_message(
@@ -277,13 +289,61 @@ class StepmaniaServer(smthread.StepmaniaServer):
             )
 
             self.send_user_list(room)
+        else:
+            for conn in self.connections:
+                if conn.room == None:
+                    self.send_user_list_lobby(conn, session)
+
 
     def send_user_list(self, room):
         """
-            Send a NSCUUL packet to update the use list for a given room
+            Send a NSCUUL packet to update the user list for a given room
         """
-
         self.sendroom(room.id, room.nsccuul)
+
+    def send_user_list_lobby(self, conn, session):
+        """
+            Send a NSCUUL packet to update the user list for the lobby
+        """
+        users = session.query(models.User).filter_by(online = 1).filter_by(room_id = None).all()
+        packet =  smpacket.SMPacketServerNSCCUUL(
+            max_players=255,
+            nb_players=len(users),
+            players=[{"status": u.enum_status.value, "name": u.name}
+                     for u in users]
+            )
+        conn.send(packet)
+
+
+    def send_friend_list(self, userid, conn):
+        """
+            Send a FLU packet to update the friend list for a user
+        """
+        if conn == None:
+            return
+        usernames = []
+        userstates = []
+        with self.db.session_scope() as session:
+            friends = session.query(models.Friendship).filter_by(state = 1).filter((models.Friendship.user1_id == userid) | (models.Friendship.user2_id == userid)).all()
+
+            for friend in friends:
+                if friend.user1_id == userid:
+                    frienduser = session.query(models.User).filter_by(id = friend.user2_id).first()
+                else:
+                    frienduser = session.query(models.User).filter_by(id = friend.user1_id).first()
+                usernames.append(frienduser.name)
+                if frienduser.online == True:
+                    userstates.append(1 + frienduser.status)
+                else:
+                    userstates.append(0)
+
+
+        packet = smpacket.SMPacketServerFLU(
+            nb_players=len(usernames),
+            players=[{"name": name, "status": state}
+                     for name, state in zip(usernames, userstates)]
+            )
+        conn.send(packet)
 
     def send_message(self, message, room=None, conn=None, func=None):
         """
@@ -308,7 +368,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.sendall(packet)
             return
 
-        packet["message"] = "#%s %s" % (with_color(room.name), message)
+        packet["message"] = message
         if not func:
             func = self.sendroom
 
@@ -344,8 +404,29 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.send_message("%s joined the room" % (
                 user.fullname_colored(room.id)
             ), room=room)
+            user.has_song = False
 
         self.add_to_room(token, room.id)
+
+        #Ask client if they have the selected song
+        if room.active_song:
+            hashpacket = smpacket.SMPacketServerNSCRSG(
+                    usage=1,
+                    song_title=room.active_song.title,
+                    song_subtitle=room.active_song.subtitle,
+                    song_artist=room.active_song.artist,
+                    song_hash=room.active_song_hash 
+                    )
+            nonhashpacket = smpacket.SMPacketServerNSCRSG(
+                    usage=1,
+                    song_title=room.active_song.title,
+                    song_subtitle=room.active_song.subtitle,
+                    song_artist=room.active_song.artist
+                    )
+            if conn.stepmania_version < 4:
+                conn.send(nonhashpacket)
+            else:
+                conn.send(hashpacket)
 
         self.send_user_list(room)
 

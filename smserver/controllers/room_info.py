@@ -11,6 +11,5 @@ class RoomInfoController(StepmaniaController):
 
     def handle(self):
         room = self.session.query(models.Room).filter_by(name=self.packet["room"]).first()
-
         self.send(room.room_info)
 

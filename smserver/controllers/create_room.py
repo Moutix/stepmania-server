@@ -41,6 +41,11 @@ class CreateRoomController(StepmaniaController):
             user.set_level(room.id, 10)
             self.log.info("Player %s enter in room %s" % (user.name, room.name))
 
+        roomspacket = models.Room.smo_list(self.session, self.active_users)
+        for conn in self.server.connections:
+            if conn.room == None:
+                conn.send(roomspacket)
+                self.server.send_user_list_lobby(conn, self.session)
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))

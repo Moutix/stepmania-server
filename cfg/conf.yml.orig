@@ -7,6 +7,7 @@ server:
     readtimeout: 250
     max_users: -1
     type: "async"
+    store_blobs: False
 
 additional_servers:
 #    - ip: 0.0.0.0
@@ -43,11 +44,12 @@ score:
         # hit_mine: 0
         # not_held: 0
         miss: 0
-        bad: 1
-        good: 2
-        great: 3
-        perfect: 4
-        flawless: 5
+        bad: 0.2
+        good: 0.4
+        great: 0.8
+        perfect: 1
+        flawless: 1.2
+        toasty: 100
 
 logger:
     stderr:

@@ -6,6 +6,8 @@ from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 from smserver import __version__
 
+from smserver.chathelper import with_color
+
 class LoginController(StepmaniaController):
     command = smpacket.SMOClientCommand.LOGIN
     require_login = False
@@ -26,11 +28,11 @@ class LoginController(StepmaniaController):
         nb_onlines = models.User.nb_onlines(self.session)
         max_users = self.server.config.server.get("max_users", -1)
         if max_users > 0 and nb_onlines >= max_users:
-            self.log.info("Player %s cannot login, nb max of user reaches", self.packet["username"])
+            self.log.info("Player %s cannot login, nb max of user reached", self.packet["username"])
             self.send(smpacket.SMPacketServerNSSMONL(
                 packet=smpacket.SMOPacketServerLogin(
                     approval=1,
-                    text="Can't login, nb max users reaches (%s/%s)" % (nb_onlines, max_users)
+                    text="Can't login, server is full (%s/%s)" % (nb_onlines, max_users)
                 )
             ))
             return
@@ -66,9 +68,9 @@ class LoginController(StepmaniaController):
         user.last_ip = self.conn.ip
         user.stepmania_name = self.conn.stepmania_name
         user.stepmania_version = self.conn.stepmania_version
+
         user.connection_token = self.conn.token
 
-        self.session.commit()
 
         self.conn.chat_timestamp = user.chat_timestamp
 
@@ -96,7 +98,26 @@ class LoginController(StepmaniaController):
 
         self.send(models.Room.smo_list(self.session, self.active_users))
         self.server.send_sd_running_status()
+        friends = self.session.query(models.Friendship).filter_by(state = 1).filter((models.Friendship.user1_id == user.id) | (models.Friendship.user2_id == user.id)).all()
+        for friend in friends:
+            if friend.user1_id == user.id:
+                friendid = friend.user2_id
+            else:
+                friendid = friend.user1_id
+            friendconn = self.server.find_connection(friendid)
+            self.server.send_friend_list(friendid, friendconn)
+            frienduser = self.session.query(models.User).filter_by(id = friendid).first()
+            if frienduser.online == True and frienduser.friend_notifications == True and friendconn:
 
+                friendconn.send(smutils.smpacket.SMPacketServerNSCCM(
+                message="Your friend %s connected" % 
+                with_color(user.name)))
+            if user.friend_notifications == True and frienduser.online == True and friendconn:
+                self.send_message(
+                    "Your friend %s is online" % with_color(frienduser.name),
+                    self.conn)
+        self.server.send_friend_list(user.id, self.conn)
+        
     def _send_server_resume(self, nb_onlines, max_users):
         self.send_message(self.server.config.server.get("motd", ""), to="me")
         self.send_message(

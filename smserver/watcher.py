@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
 from threading import Thread, Lock
@@ -72,7 +71,7 @@ class StepmaniaWatcher(Thread):
 
                     session.commit()
 
-            time.sleep(self.fps)
+            time.sleep(float(1)/self.fps)
 
         self.server.log.info("Successfully close thread: %s", self)
 
@@ -107,11 +106,12 @@ class StepmaniaWatcher(Thread):
 
     @periodicmethod(2)
     def check_end_game(self, session):
+        sendrooms = False
         for room in session.query(models.Room).filter_by(status=2):
             if self.room_still_in_game(room):
                 continue
 
-            self.server.log.info("Room %s finish is last song: %s" % (room.name, room.active_song_id))
+            self.server.log.info("Room %s finish song, last song: %s" % (room.name, room.active_song_id))
             room.status = 1
             room.ingame = False
 
@@ -123,6 +123,13 @@ class StepmaniaWatcher(Thread):
                 "Game ended %s" % with_color(room.active_song.fullname),
                 room
             )
+            sendrooms = True
+        if sendrooms:
+            roomspacket = models.Room.smo_list(session)
+            for conn in self.server.connections:
+                if conn.room == None:
+                    conn.send(roomspacket)
+                    self.server.send_user_list_lobby(conn, session)
 
     def room_still_in_game(self, room):
         for conn in self.server.player_connections(room.id):

@@ -39,22 +39,46 @@ class StartGameRequestController(StepmaniaController):
                     "feet": self.packet["first_player_feet"],
                     "difficulty": self.packet["first_player_difficulty"],
                     "options": self.packet["first_player_options"],
-                    "best_score": song.best_score_value(self.packet["first_player_feet"])
+                    "best_score": song.best_score_value(self.packet["first_player_feet"]),
+                    "chartkey": self.packet["first_player_chartkey"],
+                    "rate": self.packet["rate"],
+                    "offsetacum": 0,
+                    "toasties": 0,
+                    "perfect_combo": 0,
+                    "dp": 0,
+                    #"wifep": 0,
+                    "migsp": 0,
+                    "holds": 0,
+                    "taps": 0,
+                    "jumps": 0,
+                    "hands": 0,
+                    "extranotes": []
                    },
                 1: {"data": [],
                     "feet": self.packet["second_player_feet"],
                     "difficulty": self.packet["second_player_difficulty"],
                     "options": self.packet["second_player_options"],
-                    "best_score": song.best_score_value(self.packet["second_player_feet"])
+                    "best_score": song.best_score_value(self.packet["second_player_feet"]),
+                    "chartkey": self.packet["second_player_chartkey"],
+                    "rate": self.packet["rate"],
+                    "offsetacum": 0,
+                    "toasties": 0,
+                    "perfect_combo": 0,
+                    "dp": 0,
+                    #"wifep": 0,
+                    "migsp": 0,
+                    "holds": 0,
+                    "taps": 0,
+                    "jumps": 0,
+                    "hands": 0,
+                    "extranotes": []
                    },
+                "filehash": self.packet["filehash"],
                 "start_at": datetime.datetime.now(),
                 "options": self.packet["song_options"],
                 "course_title": self.packet["course_title"]
                 }
-
-
             self.conn.wait_start = True
-
         for player in self.server.player_connections(self.room.id):
             with player.mutex:
                 if player.wait_start is False:
@@ -75,6 +99,7 @@ class StartGameRequestController(StepmaniaController):
                 player.songstats["start_at"] = datetime.datetime.now()
                 player.wait_start = False
                 player.ingame = True
+                player.dp = 0
 
             player.send(smpacket.SMPacketServerNSCGSR())
 

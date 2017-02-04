@@ -52,12 +52,17 @@ class Game(schema.Base):
 
         for songstat in (session.query(song_stat.SongStat)
                          .filter_by(game_id=self.id)
-                         .order_by(desc(song_stat.SongStat.score))):
+                         .order_by(desc(song_stat.SongStat.migsp)).all()):
 
             packet["nb_players"] += 1
             packet["ids"].append(user.User.user_index(songstat.user.id, self.room_id, session))
             for option in options:
-                packet[option].append(getattr(songstat, option, None))
+                if option == "score":
+                    packet[option].append(getattr(songstat, option, None) if getattr(songstat, option, None) > 0 else 0)
+                elif option == "options":
+                    packet[option].append("%12.2f, " % songstat.migs + getattr(songstat, option, None))
+                else:
+                    packet[option].append(getattr(songstat, option, None))
 
         return packet
 

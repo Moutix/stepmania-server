@@ -16,10 +16,12 @@ from smserver import ability
 
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
 
+
 class AlreadyConnectError(Exception):
     def __init__(self, user):
         self.user = user
         Exception()
+
 
 class UserStatus(enum.Enum):
     spectator       = 0
@@ -28,7 +30,10 @@ class UserStatus(enum.Enum):
     option          = 3
     evaluation      = 4
 
+
 class User(schema.Base):
+    """ User model. """
+
     __tablename__ = 'users'
 
     REPR = {
@@ -60,6 +65,9 @@ class User(schema.Base):
     room_id           = Column(Integer, ForeignKey('rooms.id'))
     room              = relationship("Room", back_populates="users")
     has_song          = Column(Boolean, default=False)
+
+    connection_token  = Column(Integer, ForeignKey('connections.token'))
+    connection        = relationship("Connection", back_populates="users")
 
     song_stats        = relationship("SongStat", back_populates="user")
     privileges        = relationship("Privilege", back_populates="user")
@@ -103,12 +111,17 @@ class User(schema.Base):
         return with_color(message=self.fullname(room_id), color=color)
 
     def can(self, action, room_id=None):
+        """ Return True if the user can do this action """
+
         return ability.Ability.can(action, self.level(room_id))
 
     def cannot(self, action, room_id=None):
+        """ Return True if the user cannot do this action """
+
         return ability.Ability.cannot(action, self.level(room_id))
 
     def level(self, room_id=None):
+        """ Return the level of the user, given his room """
         if not room_id:
             return self.rank
 
@@ -163,11 +176,16 @@ class User(schema.Base):
 
     @classmethod
     def _level_to_symbol(cls, level):
+        """ Return a symbol corresponding of the user level """
+
+        if not level:
+            return None
+
         symbol = cls.REPR.get(level)
         if symbol:
             return symbol
 
-        keys = sorted(cls.REPR.keys(), reverse=True)
+        keys = sorted(cls.REPR, reverse=True)
 
         for key in keys:
             if key < level:
@@ -184,6 +202,16 @@ class User(schema.Base):
 
         return session.query(cls).filter(cls.id.in_(ids))
 
+
+    @classmethod
+    def from_connection_token(cls, token, session):
+        """ Return a list of online user assiociated with the connection token """
+
+        if not token:
+            return []
+
+        return cls.onlines(session).filter_by(connection_token=token)
+
     @classmethod
     def online_from_ids(cls, ids, session):
         """ Return a list of online users from the ids list """
@@ -191,7 +219,7 @@ class User(schema.Base):
         if not ids:
             return []
 
-        return session.query(cls).filter(cls.id.in_(ids)).filter_by(online=True)
+        return cls.onlines(session).filter(cls.id.in_(ids))
 
     @classmethod
     def get_from_pos(cls, ids, pos, session):
@@ -231,7 +259,7 @@ class User(schema.Base):
         if room_id:
             users = users.filter_by(room_id=room_id)
 
-        return users.all()
+        return users
 
     @classmethod
     def user_index(cls, user_id, room_id, session):
@@ -240,7 +268,6 @@ class User(schema.Base):
                 return idx
 
         return 0
-
 
     @staticmethod
     def users_repr(users, room_id=None):
@@ -281,4 +308,3 @@ class User(schema.Base):
             user.room_id = None
 
         session.commit()
-

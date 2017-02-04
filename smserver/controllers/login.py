@@ -68,7 +68,9 @@ class LoginController(StepmaniaController):
         user.last_ip = self.conn.ip
         user.stepmania_name = self.conn.stepmania_name
         user.stepmania_version = self.conn.stepmania_version
-        self.session.commit()
+
+        user.connection_token = self.conn.token
+
 
         self.conn.chat_timestamp = user.chat_timestamp
 
@@ -85,7 +87,7 @@ class LoginController(StepmaniaController):
 
         self.session.commit()
 
-        self.server.enter_room(self.room, conn=self.conn)
+        self.server.enter_room(self.room, self.conn.token)
 
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=smpacket.SMOPacketServerLogin(
@@ -93,8 +95,6 @@ class LoginController(StepmaniaController):
                 text="Player %s successfully login" % self.packet["username"]
             )
         ))
-
-
 
         self.send(models.Room.smo_list(self.session, self.active_users))
         self.server.send_sd_running_status()
@@ -128,4 +128,3 @@ class LoginController(StepmaniaController):
                 max_users if max_users > 0 else "--"
                 ),
             to="me")
-

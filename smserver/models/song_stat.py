@@ -14,6 +14,8 @@ from smserver.smutils.smpacket import SMPacket, SMPayloadType
 __all__ = ['SongStat']
 
 class SongStat(schema.Base):
+    """ SongStat model, represent the score obtain by a user in a song """
+
     __tablename__ = 'song_stats'
 
     GRADES = {
@@ -101,6 +103,8 @@ class SongStat(schema.Base):
 
     @property
     def lit_difficulty(self):
+        """ Difficulty as a string (EASY, MEDIUM, HARD, ...) """
+
         if self.difficulty is None:
             return "Unknown"
 
@@ -108,10 +112,13 @@ class SongStat(schema.Base):
 
     @property
     def full_difficulty(self):
+        """ Difficulty with feet as a string. eg EASY (3) """
+
         return "%s (%s)" % (self.lit_difficulty, self.feet)
 
     @property
     def lit_grade(self):
+        """ Grade as a string (AA, E, F, B, ...)"""
         if self.grade is None:
             return "Unknown"
 
@@ -131,6 +138,21 @@ class SongStat(schema.Base):
             points=" Points: " + str(self.migsp) if points else ""
         )
 
+    def calc_percentage(self, config=None):
+        """ Calculate the percentage given the input """
+
+        if not config:
+            config = {
+                "not_held": 0,
+                "miss": 0,
+                "bad": 0,
+                "good": 0,
+                "held": 3,
+                "hit_mine": -2,
+                "great": 1,
+                "perfect": 2,
+                "flawless": 3
+            }
 
     def calc_xp(self, config=None, extranotes=None):
         if not config:
@@ -138,9 +160,9 @@ class SongStat(schema.Base):
                 "miss": 0,
                 "bad": 0.2,
                 "good": 0.4,
-                "great": 0.8,
-                "perfect": 1,
-                "flawless": 1.2,
+                "great": 0.6,
+                "perfect": 0.8,
+                "flawless": 1,
                 "toasty": 100
             }
 

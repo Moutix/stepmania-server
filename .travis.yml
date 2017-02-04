@@ -5,6 +5,7 @@ python:
   - "3.5"
 install:
   - pip install .
+  - pip install -r test_requirements.txt
 script:
   - py.test --doctest-modules smserver
-  - py.test tests
+  - py.test test

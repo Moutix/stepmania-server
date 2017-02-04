@@ -35,7 +35,7 @@ class CreateRoomController(StepmaniaController):
         if self.room:
             self.server.leave_room(self.room, conn=self.conn)
 
-        self.conn.room = room.id
+        self.server.add_to_room(self.conn.token, room.id)
         for user in self.active_users:
             user.room = room
             user.set_level(room.id, 10)
@@ -54,5 +54,3 @@ class CreateRoomController(StepmaniaController):
         self.send_message(
             "Welcome to your new room! Type /help for options", to="me"
         )
-
-

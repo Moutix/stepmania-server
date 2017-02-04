@@ -36,6 +36,7 @@ class Room(schema.Base):
     max_users      = Column(Integer, default=255)
 
     users          = relationship("User", back_populates="room")
+    connections    = relationship("Connection", back_populates="room")
     games          = relationship("Game", back_populates="room")
     privileges     = relationship("Privilege", back_populates="room")
     bans           = relationship("Ban", back_populates="room")

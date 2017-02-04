@@ -4,7 +4,7 @@
 from smserver import models
 from smserver.smutils import smpacket
 
-from helper import *
+from test.helper import *
 
 server_test = get_server_test()
 client_bin = server_test.add_bin_connection()

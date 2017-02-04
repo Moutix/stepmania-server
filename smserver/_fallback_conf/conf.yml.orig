@@ -8,7 +8,6 @@ server:
     max_users: -1
     type: "async"
     store_blobs: False
-    autoregister: True
 
 additional_servers:
 #    - ip: 0.0.0.0

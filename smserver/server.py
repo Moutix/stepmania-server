@@ -188,10 +188,17 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
     @with_session
     def add_connection(self, session, conn):
+        """ Add a new connection """
         if models.Ban.is_ban(session, conn.ip):
             self.log.info("Reject connection from ban ip %s", conn.ip)
             conn.close()
             return
+
+        session.add(models.Connection(
+            ip=conn.ip,
+            port=conn.port,
+            token=conn.token,
+        ))
 
         smthread.StepmaniaServer.add_connection(self, conn)
         self.send_sd_running_status()
@@ -235,7 +242,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
 
     @with_session
-    def on_disconnect(self, session, serv):
+    def on_disconnect(self, session, conn):
         """
             Action to be done when someone is disconected.
 
@@ -245,13 +252,16 @@ class StepmaniaServer(smthread.StepmaniaServer):
             :type serv: smserver.smutils.smconn.StepmaniaConn
         """
 
-        room_id = serv.room
-        smthread.StepmaniaServer.on_disconnect(self, serv)
+        room_id = conn.room
+        smthread.StepmaniaServer.on_disconnect(self, conn)
+
+        models.Connection.remove(conn.token, session)
+
         self.send_sd_running_status()
 
-        users = models.User.online_from_ids(serv.users, session)
+        users = models.User.online_from_ids(conn.users, session)
         if not users:
-            self.log.info("Player %s disconnected", serv.ip)
+            self.log.info("Player %s disconnected", conn.ip)
             return
 
         for user in users:
@@ -364,7 +374,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         func(room.id, packet)
 
-    def enter_room(self, room, user_id=None, conn=None):
+    def enter_room(self, room, token=None):
         """
             Make a user enter in a given room
 
@@ -375,15 +385,12 @@ class StepmaniaServer(smthread.StepmaniaServer):
             :type conn: smserver.smutils.smconn.StepmaniaConnection
         """
 
-        if not user_id and not conn or not room:
+        if not token or not room:
             return
-
-        if not conn:
-            conn = self.find_connection(user_id)
 
         session = object_session(room)
 
-        users = models.User.online_from_ids(conn.users, session)
+        users = models.User.from_connection_token(token, session)
 
         for user in users:
             if user.room == room:
@@ -399,7 +406,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             ), room=room)
             user.has_song = False
 
-        conn.room = room.id
+        self.add_to_room(token, room.id)
 
         #Ask client if they have the selected song
         if room.active_song:
@@ -452,8 +459,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             room=room
         )
 
-
-        conn.room = None
+        self.del_from_room(conn.token, room.id)
         conn.song = None
 
         for user in users:

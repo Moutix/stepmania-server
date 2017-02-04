@@ -1,3 +1,5 @@
+""" Add the available models here. To have a nice interface """
+
 from smserver.models.user import User, UserStatus, AlreadyConnectError
 from smserver.models.room import Room
 from smserver.models.song import Song
@@ -11,3 +13,4 @@ from smserver.models.packsimfile import PackSimfile
 from smserver.models.simfile import Simfile
 from smserver.models.ban import Ban
 from smserver.models.game import Game
+from smserver.models.connection import Connection

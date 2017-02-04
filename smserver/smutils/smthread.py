@@ -1,30 +1,39 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" SMThread module
+
+This module handle the orchestration between all the servers and connections.
+"""
+
 
 import sys
 import datetime
 import logging
 from threading import Lock
+from collections import defaultdict
 
 from smserver.smutils import smpacket
 from smserver.smutils.smconnections import smtcpsocket, udpsocket
-
 if sys.version_info[1] > 2:
     from smserver.smutils.smconnections import asynctcpserver, websocket
 
 class StepmaniaServer(object):
+    """ Main class of the server """
+
     _logger = logging.getLogger('stepmania')
 
     SERVER_TYPE = {
         "classic": smtcpsocket.SocketServer,
         "udp": udpsocket.UDPServer,
-        "async": asynctcpserver.AsyncSocketServer if sys.version_info[1] > 2 else None,
+        "async": asynctcpserver.AsyncSocketServer,
         "websocket": websocket.WebSocketServer if sys.version_info[1] > 2 else None
     }
 
     def __init__(self, servers):
         self.mutex = Lock()
-        self._connections = []
+        self._connections = {}
+
+        #FIXME: Handle this in a redis server if available
+        self._room_connections = defaultdict(set)
+
         self._servers = []
         for ip, port, server_type in servers:
             self._servers.append(self.SERVER_TYPE[server_type](self, ip, port))
@@ -39,6 +48,8 @@ class StepmaniaServer(object):
         return True
 
     def start(self):
+        """ Start all the server in the list of servers """
+
         for server in self._servers:
             server.start()
 
@@ -47,32 +58,63 @@ class StepmaniaServer(object):
 
     @property
     def connections(self):
+        """ List al the connections of this server """
         with self.mutex:
-            return self._connections
+            return self._connections.values()
 
     def add_connection(self, conn):
+        """ Add a new connection to the server """
         self._logger.info("New connection: %s on port %s", conn.ip, conn.port)
 
         with self.mutex:
-            self._connections.append(conn)
+            self._connections[conn.token] = conn
 
-    def find_connection(self, user_id):
+    def add_to_room(self, token, room_id):
+        """ Add a connection to a new room """
+
+        with self.mutex:
+            if token not in self._connections:
+                self._logger.error("Tring to add delete connection %s in a room %s", token, room_id)
+                return None
+
+            conn = self._connections[token]
+            conn.room = room_id
+
+            self._room_connections[room_id].add(token)
+
+    def del_from_room(self, token, room_id=None):
+        """ remove a token from a room """
+
+        with self.mutex:
+            if token not in self._connections:
+                self._logger.error("Tring to add delete connection %s in a room %s", token, room_id)
+                return None
+
+            conn = self._connections[token]
+            if not room_id:
+                room_id = conn.room
+
+            if token not in self._room_connections[room_id]:
+                return
+
+            self._room_connections[room_id].remove(token)
+            conn.room = None
+
+    def find_connection(self, token):
         """ Find the connection where a specific user is """
 
-        for conn in self.connections:
-            if user_id in conn.users:
-                return conn
-
-        return None
+        with self.mutex:
+            return self._connections.get(token)
 
     def room_connections(self, room_id):
         """ Iterator of all the connections in a given room """
 
-        for conn in self.connections:
-            if conn.room != room_id:
-                continue
+        with self.mutex:
+            for token in self._room_connections.get(room_id, ()):
+                if token not in self._connections:
+                    continue
 
-            yield conn
+                yield self._connections[token]
 
     def player_connections(self, room_id):
         """ Iterator of all the connection's player (not spectator) """
@@ -92,6 +134,13 @@ class StepmaniaServer(object):
 
             yield conn
 
+    def sendconnection(self, token, packet):
+        """ Send a packet to the given connection token """
+
+        conn = self.find_connection(token)
+        if conn:
+            conn.send(packet)
+
     def sendall(self, packet):
         """
             Send a packet to all the connections in the server
@@ -100,7 +149,7 @@ class StepmaniaServer(object):
             :type packet: smserver.smutils.smpacket.SMPacket
         """
 
-        for conn in self._connections:
+        for conn in self.connections:
             conn.send(packet)
 
     def sendroom(self, room_id, packet):
@@ -141,14 +190,16 @@ class StepmaniaServer(object):
         for conn in self.player_connections(room_id):
             conn.send(packet)
 
-    def on_disconnect(self, serv):
-        with self.mutex:
-            if serv not in self._connections:
-                return
+    def on_disconnect(self, conn):
+        """ Remove a connection from the list of connections """
 
-            self._connections.remove(serv)
+        with self.mutex:
+            self._connections.pop(conn.token, None)
+            if conn.token in self._connections.get(conn.room, ()):
+                self._connections[conn.room].remove(conn.token)
 
     def on_packet(self, serv, packet):
+        """ Action to perform on each new packet """
         PacketHandler(self, serv, packet).handle()
 
 
@@ -240,4 +291,3 @@ class PacketHandler(object):
 
     def sendroom(self, room, packet):
         self.server.sendroom(room, packet)
-

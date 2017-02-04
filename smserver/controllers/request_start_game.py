@@ -55,9 +55,8 @@ class RequestStartGameController(StepmaniaController):
             for song_stat in song.best_scores:
                 self.send_message(song_stat.pretty_result(room_id=self.room.id, color=True, toasty=True, points=self.room.show_points))
 
-        with self.conn.mutex:
-            self.conn.song = song.id
-            self.conn.songs[song.id] = True
+        self.conn.song = song.id
+        self.conn.songs[song.id] = True
 
         hashpacket = smpacket.SMPacketServerNSCRSG(
                 usage=1,
@@ -145,15 +144,13 @@ class RequestStartGameController(StepmaniaController):
                 song_artist=song.artist
                 )
         for conn in self.server.player_connections(self.room.id):
-            with conn.mutex
-                if conn.stepmania_version < 4:
-                    conn.send(nonhashpacket)
-                else:
-                    conn.send(hashpacket)
+            if conn.stepmania_version < 4:
+                conn.send(nonhashpacket)
+            else:
+                conn.send(hashpacket)
         
         roomspacket = models.Room.smo_list(self.session, self.active_users)
         for conn in self.server.connections:
             if conn.room == None:
-                with conn.mutex
-                    conn.send(roomspacket)
+                conn.send(roomspacket)
                 self.server.send_user_list_lobby(conn, self.session)

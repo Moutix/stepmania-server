@@ -66,6 +66,7 @@ class AsyncSocketClient(smconn.StepmaniaConn):
         self._serv.on_disconnect(self)
         self.writer.close()
 
+
 class AsyncSocketServer(smconn.SMThread):
     def __init__(self, server, ip, port):
         smconn.SMThread.__init__(self, server, ip, port)
@@ -111,4 +112,3 @@ class AsyncSocketServer(smconn.SMThread):
 
         self.loop.stop()
         self._serv.close()
-

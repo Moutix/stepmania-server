@@ -30,7 +30,7 @@ class UserProfilController(StepmaniaController):
 
         user.online = True
         self.session.commit()
-        self.server.enter_room(self.room, conn=self.conn)
+        self.server.enter_room(self.room, self.conn.token)
         self.log.info("User %s connected" % user.name)
 
     def disconnect_user(self, user):
@@ -42,4 +42,3 @@ class UserProfilController(StepmaniaController):
         user.room = None
         if self.room:
             self.send_message("%s leave the room" % user.fullname_colored(self.room.id))
-

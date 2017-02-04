@@ -1,5 +1,7 @@
 """ Module to test user model """
 
+from smserver import models
+
 from test.factories import user_factory
 from test import utils
 
@@ -50,3 +52,50 @@ class UserTest(utils.DBTest):
 
         user.rank = 9
         self.assertEqual(user.level(), 9)
+
+    def test_from_ids(self):
+        """ Test getting the users from list of ids """
+
+        self.assertEqual(models.User.from_ids([], self.session), [])
+
+        user1 = user_factory.UserFactory()
+        user2 = user_factory.UserFactory()
+
+        users = models.User.from_ids([user1.id, user2.id], self.session)
+        self.assertIn(user1, users)
+        self.assertIn(user2, users)
+
+
+        self.assertEqual(list(models.User.from_ids(["reg"], self.session)), [])
+
+    def test_online_from_ids(self):
+        """ Test getting the online users from list of ids """
+
+        self.assertEqual(models.User.online_from_ids([], self.session), [])
+
+        user1 = user_factory.UserFactory()
+        user2 = user_factory.UserFactory()
+
+        self.assertEqual(list(models.User.online_from_ids([user1.id, user2.id], self.session)), [])
+
+        self.assertEqual(list(models.User.online_from_ids(["reg"], self.session)), [])
+
+        user1.online = True
+        self.session.commit()
+
+        users = models.User.online_from_ids([user1.id, user2.id], self.session)
+        self.assertIn(user1, users)
+        self.assertNotIn(user2, users)
+
+    def test_from_connection_token(self):
+        """ Test getting the online users assiociated with a connection_token """
+
+        self.assertEqual(models.User.from_connection_token(None, self.session), [])
+
+        user1 = user_factory.UserFactory(online=True, connection_token="aa")
+        user2 = user_factory.UserFactory(connection_token="aa")
+
+
+        users = models.User.from_connection_token("aa", self.session)
+        self.assertIn(user1, users)
+        self.assertNotIn(user2, users)

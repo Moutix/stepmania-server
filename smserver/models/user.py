@@ -14,10 +14,12 @@ from smserver import ability
 
 __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
 
+
 class AlreadyConnectError(Exception):
     def __init__(self, user):
         self.user = user
         Exception()
+
 
 class UserStatus(enum.Enum):
     spectator       = 0
@@ -26,7 +28,10 @@ class UserStatus(enum.Enum):
     option          = 3
     evaluation      = 4
 
+
 class User(schema.Base):
+    """ User model. """
+
     __tablename__ = 'users'
 
     REPR = {
@@ -53,6 +58,9 @@ class User(schema.Base):
 
     room_id           = Column(Integer, ForeignKey('rooms.id'))
     room              = relationship("Room", back_populates="users")
+
+    connection_token  = Column(Integer, ForeignKey('connections.token'))
+    connection        = relationship("Connection", back_populates="users")
 
     song_stats        = relationship("SongStat", back_populates="user")
     privileges        = relationship("Privilege", back_populates="user")
@@ -162,6 +170,16 @@ class User(schema.Base):
 
         return session.query(cls).filter(cls.id.in_(ids))
 
+
+    @classmethod
+    def from_connection_token(cls, token, session):
+        """ Return a list of online user assiociated with the connection token """
+
+        if not token:
+            return []
+
+        return cls.onlines(session).filter_by(connection_token=token)
+
     @classmethod
     def online_from_ids(cls, ids, session):
         """ Return a list of online users from the ids list """
@@ -169,7 +187,7 @@ class User(schema.Base):
         if not ids:
             return []
 
-        return session.query(cls).filter(cls.id.in_(ids)).filter_by(online=True)
+        return cls.onlines(session).filter(cls.id.in_(ids))
 
     @classmethod
     def get_from_pos(cls, ids, pos, session):
@@ -209,7 +227,7 @@ class User(schema.Base):
         if room_id:
             users = users.filter_by(room_id=room_id)
 
-        return users.all()
+        return users
 
     @classmethod
     def user_index(cls, user_id, room_id, session):
@@ -258,4 +276,3 @@ class User(schema.Base):
             user.room_id = None
 
         session.commit()
-

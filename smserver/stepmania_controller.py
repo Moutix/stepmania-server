@@ -296,4 +296,3 @@ class StepmaniaController(object):
                 self.colored_user_repr(self.conn.room),
                 message),
             to)
-

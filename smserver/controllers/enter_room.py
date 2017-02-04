@@ -34,7 +34,7 @@ class EnterRoomController(StepmaniaController):
             return
 
         self.server.leave_room(self.room, conn=self.conn)
-        self.server.enter_room(room, conn=self.conn)
+        self.server.enter_room(room, self.conn.token)
 
         self.send_room_resume(self.server, self.conn, room)
 

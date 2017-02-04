@@ -82,7 +82,7 @@ class SongStat(schema.Base):
 
     migsp      = Column(Integer, default=0)
     toasty      = Column(Integer, default=0)
-    grade      = Column(Integer, default=0)
+    grade      = Column(Integer, default=7)
     difficulty = Column(Integer, default=0)
     feet       = Column(Integer, default=0)
 
@@ -136,11 +136,11 @@ class SongStat(schema.Base):
         if not config:
             config = {
                 "miss": 0,
-                "bad": 1,
-                "good": 2,
-                "great": 3,
-                "perfect": 4,
-                "flawless": 5,
+                "bad": 0.2,
+                "good": 0.4,
+                "great": 0.8,
+                "perfect": 1,
+                "flawless": 1.2,
                 "toasty": 100
             }
 

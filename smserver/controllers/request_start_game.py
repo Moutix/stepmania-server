@@ -145,13 +145,15 @@ class RequestStartGameController(StepmaniaController):
                 song_artist=song.artist
                 )
         for conn in self.server.player_connections(self.room.id):
-            if conn.stepmania_version < 4:
-                conn.send(nonhashpacket)
-            else:
-                conn.send(hashpacket)
+            with conn.mutex
+                if conn.stepmania_version < 4:
+                    conn.send(nonhashpacket)
+                else:
+                    conn.send(hashpacket)
         
         roomspacket = models.Room.smo_list(self.session, self.active_users)
         for conn in self.server.connections:
             if conn.room == None:
-                conn.send(roomspacket)
+                with conn.mutex
+                    conn.send(roomspacket)
                 self.server.send_user_list_lobby(conn, self.session)

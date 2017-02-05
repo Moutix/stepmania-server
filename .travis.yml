@@ -8,4 +8,4 @@ install:
   - pip install .
   - pip install -r test_requirements.txt
 script:
-  - pytest --pylint --doctest-modules --pylint-error-types=WEF --cov=smserver smserver test
+  - py.test --pylint --doctest-modules --pylint-error-types=WEF --cov=smserver smserver test

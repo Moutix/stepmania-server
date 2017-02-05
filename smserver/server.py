@@ -12,7 +12,7 @@ from smserver import conf
 from smserver import logger
 from smserver import models
 from smserver import sdnotify
-from smserver import profile
+from smserver import profiling
 
 from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
@@ -198,7 +198,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.send_sd_running_status()
 
     @with_session
-    @profile.profile("packet")
+    @profiling.profile("packet")
     def on_packet(self, session, serv, packet): #pylint: disable=arguments-differ
         self.handle_packet(session, serv, packet)
 

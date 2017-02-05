@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Create room controller module """
 
 import hashlib
 
@@ -11,6 +10,8 @@ from smserver.controllers import enter_room
 from smserver import models
 
 class CreateRoomController(StepmaniaController):
+    """ Create Room controller"""
+
     command = smpacket.SMOClientCommand.CREATEROOM
     require_login = True
 
@@ -33,8 +34,9 @@ class CreateRoomController(StepmaniaController):
         self.log.info("New room %s created by player %s" % (room.name, self.conn.ip))
 
         if self.room:
-            self.server.leave_room(self.room, conn=self.conn)
+            self.server.leave_room(self.room, self.conn.token)
 
+        self.connection.room = room
         self.server.add_to_room(self.conn.token, room.id)
         for user in self.active_users:
             user.room = room

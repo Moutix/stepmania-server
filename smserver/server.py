@@ -189,17 +189,19 @@ class StepmaniaServer(smthread.StepmaniaServer):
     @with_session
     def add_connection(self, session, conn):
         """ Add a new connection """
+
+        print("nouvelle connection de %s" % conn.token) 
         if models.Ban.is_ban(session, conn.ip):
             self.log.info("Reject connection from ban ip %s", conn.ip)
             conn.close()
             return
 
-        session.add(models.Connection(
+        models.Connection.create(
+            session=session,
             ip=conn.ip,
             port=conn.port,
             token=conn.token,
-        ))
-
+        )
         smthread.StepmaniaServer.add_connection(self, conn)
         self.send_sd_running_status()
 
@@ -256,7 +258,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         room_id = conn.room
         smthread.StepmaniaServer.on_disconnect(self, conn)
 
-        models.Connection.remove(conn.token)
+        models.Connection.remove(conn.token, session)
 
         self.send_sd_running_status()
 
@@ -330,9 +332,10 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         session = object_session(room)
 
-        users = models.User.from_connection_token(token, session)
+        connection = models.Connection.by_token(token, session)
+        connection.room = room
 
-        for user in users:
+        for user in connection.users:
             if user.room == room:
                 continue
 
@@ -349,7 +352,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.send_user_list(room)
 
-    def leave_room(self, room, user_id=None, conn=None):
+    def leave_room(self, room, token=None):
         """
             Make a user leave a given room
 
@@ -360,26 +363,24 @@ class StepmaniaServer(smthread.StepmaniaServer):
             :type conn: smserver.smutils.smconn.StepmaniaConnection
         """
 
-        if not user_id and not conn or not room:
-            return
-
-        if not conn:
-            conn = self.find_connection(user_id)
-
-        if not conn or conn.room != room.id:
+        if not token or not room:
             return
 
         session = object_session(room)
 
-        users = models.User.online_from_ids(conn.users, session)
+        connection = models.Connection.by_token(token, session)
+        connection.room = room
+
+        users = connection.users
 
         self.send_message(
             "%s leave the room" % models.User.colored_users_repr(users, room.id),
             room=room
         )
 
-        self.del_from_room(conn.token, room.id)
-        conn.song = None
+        self.del_from_room(token, room.id)
+        connection.song = None
+        connection.room = None
 
         for user in users:
             user.room = None

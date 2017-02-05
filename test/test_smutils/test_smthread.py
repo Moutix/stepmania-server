@@ -11,8 +11,6 @@ class BaseStepmaniaServerTest(unittest.TestCase):
     """ Test Stepmania Server class """
 
     def setUp(self):
-        # Prepare a new, clean session
-
         self.server = smthread.StepmaniaServer([])
         self.smthread = smconn.SMThread(self.server, "127.0.0.1", 888)
         self.server._servers.append(self.smthread)

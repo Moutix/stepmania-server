@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
-
+""" Chat ban module """
 
 from smserver import models, ability
 from smserver.chathelper import with_color
@@ -76,7 +74,7 @@ class ChatKick(ChatPlugin):
         if not room:
             return server.disconnect_user(user.id)
 
-        return server.leave_room(room, user.id)
+        return server.leave_room(room, user.connection_token)
 
 
 class ChatUnBan(ChatPlugin):

@@ -128,8 +128,8 @@ class ChatDeleteRoom(ChatPlugin):
 
         room = serv.room
 
-        for conn in serv.server.room_connections(serv.conn.room):
-            serv.server.leave_room(room, conn=conn)
+        for connection in serv.room.connections:
+            serv.server.leave_room(room, conn=connection.token)
 
         serv.session.delete(room)
 
@@ -140,5 +140,4 @@ class ChatLeaveRoom(ChatPlugin):
     room = True
 
     def __call__(self, serv, message):
-        serv.server.leave_room(serv.room, conn=serv.conn)
-
+        serv.server.leave_room(serv.room, conn=serv.conn.token)

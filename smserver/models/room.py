@@ -1,5 +1,4 @@
-#usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Model Room module """
 
 import datetime
 import hashlib
@@ -14,6 +13,8 @@ from smserver.models import schema, game, user, privilege
 __all__ = ['Room']
 
 class Room(schema.Base):
+    """ Room class."""
+
     __tablename__ = 'rooms'
 
     id             = Column(Integer, primary_key=True)

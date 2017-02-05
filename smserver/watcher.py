@@ -1,5 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Watcher module.
+
+This module is responsible of executing regular task
+"""
 
 from threading import Thread, Lock
 import time
@@ -230,4 +232,3 @@ class StepmaniaWatcher(Thread):
                 datetime.datetime.now() - wait_since < datetime.timedelta(seconds=3)):
 
             StartGameRequestController.launch_song(room, song, self.server)
-

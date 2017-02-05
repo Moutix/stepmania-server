@@ -17,7 +17,7 @@ class Connection(schema.Base):
     __tablename__ = 'connections'
 
     id          = Column(Integer, primary_key=True)
-    token       = Column(String(255), index=True)
+    token       = Column(String(255), index=True, unique=True, nullable=False)
 
     ip          = Column(String(255))
     port        = Column(Integer)
@@ -27,13 +27,16 @@ class Connection(schema.Base):
     room_id     = Column(Integer, ForeignKey('rooms.id'))
     room        = relationship("Room", back_populates="connections")
 
+    song_id     = Column(Integer, ForeignKey('songs.id'))
+    song        = relationship("Song")
+
     created_at  = Column(DateTime, default=datetime.datetime.now)
     updated_at  = Column(DateTime, onupdate=datetime.datetime.now)
     close_at    = Column(DateTime)
 
     def __repr__(self):
         return "<Connection #%s (ip='%s', port='%s')>" % (
-            self.id, self.ip, self.port)
+            self.token, self.ip, self.port)
 
     @property
     def alive(self):
@@ -48,3 +51,17 @@ class Connection(schema.Base):
                 .query(cls)
                 .filter_by(token=token)
                 .delete(synchronize_session=False))
+
+    @classmethod
+    def by_token(cls, token, session):
+        """ Get the connection with the given token """
+        return session.query(cls).filter_by(token=token).first()
+
+    @classmethod
+    def create(cls, session, **kwargs):
+        """ Create a new connection object """
+
+        connection = cls(**kwargs)
+        session.add(connection)
+        session.commit()
+        return connection

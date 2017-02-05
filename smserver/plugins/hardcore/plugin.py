@@ -97,14 +97,16 @@ class HardcorePlugin(pluginmanager.StepmaniaPlugin):
         if not step:
             return
 
-        serv.songstats[player_id]["attack_metter"] += self.conf_weight.get(step, 0)
+        with serv.mutex:
+            serv.songstats[player_id]["attack_metter"] += self.conf_weight.get(step, 0)
 
     def send_attack(self, serv, player_id, session):
         """
             Send an attack to every players except the current one
         """
 
-        serv.songstats[player_id]["attack_metter"] = 0
+        with serv.mutex:
+            serv.songstats[player_id]["attack_metter"] = 0
 
         attack = random.choice(list(smattack.SMAttack))
 
@@ -151,5 +153,6 @@ class HardcoreStartControllerPlugin(stepmania_controller.StepmaniaController):
         if self.room.status != 2 or self.room.mode != "hardcore":
             return
 
-        self.conn.songstats[0]["attack_metter"] = 0
-        self.conn.songstats[1]["attack_metter"] = 0
+        with serv.mutex:
+            self.conn.songstats[0]["attack_metter"] = 0
+            self.conn.songstats[1]["attack_metter"] = 0

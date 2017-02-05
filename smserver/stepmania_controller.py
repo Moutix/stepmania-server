@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
-
 """
     This module add the class use to handle smpacket.
 
@@ -20,11 +17,9 @@
                 serv.send_message("Hello world", to="me")
 """
 
-from datetime import datetime
+from smserver import models
+from smserver import ability
 
-from smserver.smutils import smpacket
-from smserver import models, ability
-from smserver.chathelper import with_color
 
 class StepmaniaController(object):
     """
@@ -63,12 +58,21 @@ class StepmaniaController(object):
         self.conn = conn
         self.packet = packet
         self.session = session
+
         self.log = self.server.log
 
-        self._room = None
-        self._users = None
+        self._connection = None
         self._room_users = None
-        self._song = None
+
+    @property
+    def connection(self):
+        """ The connection object in the database """
+
+        if self._connection:
+            return self._connection
+
+        self._connection = models.Connection.by_token(self.conn.token, self.session)
+        return self._connection
 
     @property
     def room(self):
@@ -78,14 +82,9 @@ class StepmaniaController(object):
             Return None if the user is not in a room
         """
 
-        if not self.conn.room:
-            return None
+        return self.connection.room
 
-        if not self._room:
-            self._room = self.session.query(models.Room).get(self.conn.room)
-
-        return self._room
-
+    @property
     def song(self):
         """
             Return the song object the last song the user have selected.
@@ -93,24 +92,14 @@ class StepmaniaController(object):
             Return None if there is no such song.
         """
 
-        if not self.conn.song:
-            return None
-
-        if not self._song:
-            self._song = self.session.query(models.Song).get(self.conn.song)
-
-        return self._song
+        return self.connection.song
 
     @property
     def users(self):
         """
             Return the list of connected user's object.
         """
-
-        if not self._users:
-            self._users = models.User.from_ids(self.conn.users, self.session)
-
-        return self._users
+        return self.connection.users
 
     @property
     def active_users(self):
@@ -126,10 +115,7 @@ class StepmaniaController(object):
             Return the list of user currently in the same room
         """
 
-        if not self._room_users:
-            self._room_users = self.session.query(models.User).filter_by(romm_id=self.conn.room)
-
-        return self._room_users
+        return self.room.users
 
     def user_repr(self, room_id=None):
         """
@@ -293,6 +279,6 @@ class StepmaniaController(object):
 
         self.send_message(
             "%s %s" % (
-                self.colored_user_repr(self.conn.room),
+                self.colored_user_repr(self.connection.room_id),
                 message),
             to)

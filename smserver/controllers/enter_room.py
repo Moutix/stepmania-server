@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Enter room controller module """
 
 from smserver.smutils import smpacket
 
@@ -9,6 +8,8 @@ from smserver import models
 from smserver.chathelper import with_color
 
 class EnterRoomController(StepmaniaController):
+    """ Enter room controller"""
+
     command = smpacket.SMOClientCommand.ENTERROOM
     require_login = True
 
@@ -33,7 +34,7 @@ class EnterRoomController(StepmaniaController):
         if self.conn.room == room.id:
             return
 
-        self.server.leave_room(self.room, conn=self.conn)
+        self.server.leave_room(self.room, self.conn.token)
         self.server.enter_room(room, self.conn.token)
 
         self.send_room_resume(self.server, self.conn, room)

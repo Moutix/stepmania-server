@@ -1,5 +1,6 @@
 mock
 factory_boy
+pytest>=2.7
 pytest-sugar
 pytest-pylint
 pytest-cov

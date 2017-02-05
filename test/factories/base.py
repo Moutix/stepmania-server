@@ -8,7 +8,7 @@ from test import common
 class BaseMeta:
     """ Parent meta class for all factories"""
     model = None
-    sqlalchemy_session = common.Session
+    sqlalchemy_session = common.db.session
 
 
 class BaseFactory(factory.alchemy.SQLAlchemyModelFactory):

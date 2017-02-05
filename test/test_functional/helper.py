@@ -70,10 +70,9 @@ class FunctionalTest(utils.DBTest):
 
     def setUp(self):
         super().setUp()
-        self.server = ServerTest(conf.Conf("--update_schema", "-c", ""))
+        self.server = ServerTest()
         self.client_bin = ClientTestBinary(self.server)
         self.client_json = ClientTestJSON(self.server)
-        self.session = self.server.db.session()
 
     def tearDown(self):
         super().tearDown()

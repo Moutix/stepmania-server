@@ -9,10 +9,10 @@ class DBTest(unittest.TestCase):
 
     def setUp(self):
         # Prepare a new, clean session
-        self.session = common.Session()
+        self.session = common.db.session()
 
     def tearDown(self):
         # Rollback the session => no changes to the database
-        self.session.rollback()
+        common.db.recreate_tables()
         # Remove it, so that the next test gets a new Session()
-        common.Session.remove()
+        common.db.session.remove()

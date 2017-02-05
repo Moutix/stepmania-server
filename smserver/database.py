@@ -1,12 +1,16 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Database module
+
+To get the current database use `get_current_db`
+"""
 
 from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 
 from smserver.models import schema
+
 
 class DataBase(object):
     """
@@ -35,27 +39,9 @@ class DataBase(object):
         self._host = host
         self._port = port
         self._driver = driver
-        self._engine = None
 
-    @property
-    def engine(self):
-        """
-            SQLAlchemy engine assosiate with the DataBase
-        """
-
-        if self._engine:
-            return self._engine
-
-        self._engine = create_engine(self._database_url)
-        return self.engine
-
-    @property
-    def session(self):
-        """
-            Return a new SQLAlchemy Session
-        """
-
-        return sessionmaker(bind=self.engine)
+        self.engine = create_engine(self._database_url)
+        self.session = scoped_session(sessionmaker(bind=self.engine))
 
     @contextmanager
     def session_scope(self):
@@ -128,16 +114,27 @@ class DataBase(object):
         schema.Base.metadata.drop_all(self.engine)
         schema.Base.metadata.create_all(self.engine)
 
-    @classmethod
-    def test_db(cls):
-        """
-            Return a inmemory database
-        """
 
-        db = cls()
-        db.create_tables()
-        return db
+class _Database:
+    db = None
 
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+
+def setup_db(type="sqlite", database=None, user=None, password=None,
+             host=None, port=None, driver=None):
+    """ Initalize the database"""
+
+    _Database.db = DataBase(
+        type=type,
+        database=database,
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+        driver=driver
+    )
+
+    return _Database.db
+
+def get_current_db():
+    """ Get the current database """
+    return _Database.db

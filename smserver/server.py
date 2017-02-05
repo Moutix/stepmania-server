@@ -5,11 +5,16 @@ import datetime
 
 from sqlalchemy.orm import object_session
 
+from smserver import __version__
+from smserver import database
+from smserver import conf
+from smserver import logger
+from smserver import models
+from smserver import sdnotify
+
 from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
-from smserver.database import DataBase
 from smserver.watcher import StepmaniaWatcher
-from smserver import conf, logger, models, sdnotify, __version__
 from smserver.chathelper import with_color
 from smserver.smutils import smthread, smpacket
 
@@ -46,8 +51,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
     def __init__(self, config=None):
         """
             Take a configuration and initialize the server:
-
-            * Load the database and create the tables if needed
             * Load the plugins
             * Load the controllers
             * Load the chat command available
@@ -56,7 +59,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             If no configuration are passed, it will use the default one.
         """
 
-        self.sd_notify = sdnotify.SDNotify()
+        self.sd_notify = sdnotify.get_notifier()
 
         if not config:
             config = conf.Conf()
@@ -64,21 +67,9 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.config = config
 
         self.log = logger.get_logger()
-
         self.log.debug("Configuration loaded")
 
-        self.log.debug("Init database")
-        self.sd_notify.status("Init database")
-
-        self.db = DataBase(
-            type=config.database.get("type", 'sqlite'),
-            database=config.database.get("database"),
-            user=config.database.get("user"),
-            password=config.database.get("password"),
-            host=config.database.get("host"),
-            port=config.database.get("port"),
-            driver=config.database.get("driver"),
-        )
+        self.db = database.get_current_db()
 
         self._init_database()
 
@@ -400,11 +391,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
         return True
 
     def _init_database(self):
-        if self.config.database["update_schema"]:
-            self._update_schema()
-        else:
-            self.db.create_tables()
-
         with self.db.session_scope() as session:
             models.User.disconnect_all(session)
             models.Room.init_from_hashes(self.config.get("rooms", []), session)
@@ -481,9 +467,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
             force_reload=force_reload
         )
 
-    def _update_schema(self):
-        self.log.info("DROP all the database tables")
-        self.db.recreate_tables()
 
 def main():
     config = conf.Conf(*sys.argv[1:])

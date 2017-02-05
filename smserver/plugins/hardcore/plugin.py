@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
 
 """
     The hardcore plugin add a hardcore mode in the room.

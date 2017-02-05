@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
 
 """
     The Ability module provide helper for checking the permission

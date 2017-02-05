@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
 
 """ Import the list of available attacks in stepmania """
 

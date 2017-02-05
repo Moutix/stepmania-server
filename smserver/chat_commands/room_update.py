@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
 
 from smserver import ability
 from smserver.chatplugin import ChatPlugin

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
 
 """
     Provide sd_notify wrapper to notify service manager about start-up

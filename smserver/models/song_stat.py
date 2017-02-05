@@ -75,9 +75,9 @@ class SongStat(schema.Base):
     max_combo  = Column(Integer, default=0)
     options    = Column(Text, default="")
     score      = Column(Integer, default=0)
-    grade      = Column(Integer, default=0)
+    grade      = Column(Integer, default=0, index=True)
     difficulty = Column(Integer, default=0)
-    feet       = Column(Integer, default=0)
+    feet       = Column(Integer, default=0, index=True)
 
     percentage = Column(Float(precision=5))
 

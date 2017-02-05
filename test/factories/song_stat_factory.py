@@ -53,4 +53,4 @@ class SongFinishFactory(SongStatFactory):
     difficulty = 3
     feet       = 9
 
-    time       = 121
+    duration   = 121

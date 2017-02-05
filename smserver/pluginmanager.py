@@ -1,3 +1,7 @@
+""" Plugin manager module
+
+Provide class to dynamically load new module
+"""
 
 import inspect
 import os
@@ -87,6 +91,7 @@ class PluginManager(list):
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
     def __init__(self, plugin_class, paths=None, directory=None, plugin_file=None, force_reload=False):
+        super().__init__()
         if not isinstance(plugin_class, list):
             plugin_class = [plugin_class]
 

@@ -1,7 +1,6 @@
-
+""" General Chat command to handle """
 
 from smserver import models
-from smserver.chathelper import with_color
 from smserver.chatplugin import ChatPlugin
 
 

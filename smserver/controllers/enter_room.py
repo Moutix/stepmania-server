@@ -52,12 +52,12 @@ class EnterRoomController(StepmaniaController):
 
         for user in self.active_users:
             if models.Ban.is_ban(self.session, user_id=user.id, room_id=room.id):
-                self.log.info("Ban player %s fail to enter in room %s" % (user.name, room.name))
+                self.log.info("Ban player %s fail to enter in room %s", user.name, room.name)
                 self.send_message("Player %s is ban from this room." % (user.fullname_colored()), to="me")
                 return False
 
         if room.nb_players >= room.max_users:
-            self.log.info("Player %s can't enter in room %s, the room is full" % (user.name, room.name))
+            self.log.info("Player %s can't enter in room %s, the room is full", self.user_repr(room.id), room.name)
             self.send_message("Room %s is full (%s/%s) players" % (with_color(room.name), room.nb_players, room.max_users), to="me")
             return False
 
@@ -100,4 +100,3 @@ class EnterRoomController(StepmaniaController):
 
         for message in messages:
             server.send_message(message, conn=conn)
-

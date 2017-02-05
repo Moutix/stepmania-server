@@ -180,7 +180,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         )
 
     @with_session
-    def add_connection(self, session, conn):
+    def add_connection(self, session, conn): #pylint: disable=arguments-differ
         """ Add a new connection """
 
         if models.Ban.is_ban(session, conn.ip):
@@ -199,7 +199,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
     @with_session
     @profile.profile("packet")
-    def on_packet(self, session, serv, packet):
+    def on_packet(self, session, serv, packet): #pylint: disable=arguments-differ
         self.handle_packet(session, serv, packet)
 
     def handle_packet(self, session, serv, packet):
@@ -214,14 +214,14 @@ class StepmaniaServer(smthread.StepmaniaServer):
             app = controller(self, serv, packet, session)
 
             if app.require_login and not app.active_users:
-                self.log.info("Action forbidden %s for user %s" % (packet.command, serv.ip))
+                self.log.info("Action forbidden %s for user %s", packet.command, serv.ip)
                 continue
 
             try:
                 app.handle()
-            except Exception as err:
+            except Exception as err: #pylint: disable=broad-except
                 self.log.exception("Message %s %s %s",
-                                          type(controller).__name__, controller.__module__, err)
+                                   type(controller).__name__, controller.__module__, err)
             session.commit()
 
         for app in self.plugins:
@@ -231,14 +231,14 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
             try:
                 func(session, serv, packet)
-            except Exception as err:
+            except Exception as err: #pylint: disable=broad-except
                 self.log.exception("Message %s %s %s",
-                                          type(app).__name__, app.__module__, err)
+                                   type(app).__name__, app.__module__, err)
             session.commit()
 
 
     @with_session
-    def on_disconnect(self, session, conn):
+    def on_disconnect(self, session, conn): #pylint: disable=arguments-differ
         """
             Action to be done when someone is disconected.
 

@@ -180,7 +180,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
     def add_connection(self, session, conn):
         """ Add a new connection """
 
-        print("nouvelle connection de %s" % conn.token) 
         if models.Ban.is_ban(session, conn.ip):
             self.log.info("Reject connection from ban ip %s", conn.ip)
             conn.close()

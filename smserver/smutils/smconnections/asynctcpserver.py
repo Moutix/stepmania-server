@@ -1,3 +1,4 @@
+""" Asyncio client module """
 
 import socket
 
@@ -34,7 +35,7 @@ class AsyncSocketClient(smconn.StepmaniaConn):
 
             if not size:
                 if len(data) < 5:
-                    self.logger.info("packet %s drop: to short" % (data))
+                    self.log.info("packet %s drop: to short", data)
                     continue
 
                 full_data = data[:4]

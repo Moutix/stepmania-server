@@ -30,6 +30,7 @@ class UserTest(utils.DBTest):
         """ Test user fullname with room """
 
         user = user_factory.user_with_room_privilege(level=10)
+
         self.assertEqual(user.fullname(user.room.id), "~%s" % user.name)
 
         user = user_factory.user_with_room_privilege(level=9)

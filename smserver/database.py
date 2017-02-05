@@ -19,7 +19,7 @@ class DataBase(object):
         It's a wrapper around SQLAlchemy database creation.
         By default, it create a in memory sqlite database.
 
-        :param str type: Type of database (sqlite, mysql, postgresql, ...)
+        :param str type_: Type of database (sqlite, mysql, postgresql, ...)
         :param str database: Name of the database (file for sqlite)
         :param str user: User of the database
         :param str password: Password of the database
@@ -28,10 +28,10 @@ class DataBase(object):
         :param str driver: Driver for communication with the database.
     """
 
-    def __init__(self, type="sqlite", database=None, user=None,
+    def __init__(self, type_="sqlite", database=None, user=None,
                  password=None, host=None, port=None, driver=None):
-        self._type = type
-        if not type:
+        self._type = type_
+        if not type_:
             self._type = "sqlite"
         self._database = database
         self._user = user
@@ -70,7 +70,7 @@ class DataBase(object):
             Provide a transactional scope around a series of operations.
         """
 
-        session = self.session()
+        session = self.session() #pylint: disable=not-callable
         try:
             yield session
             session.commit()
@@ -92,7 +92,7 @@ class DataBase(object):
             sqlite:///stepmania.db
 
             >>> DataBase(
-            ...     type="postgresql",
+            ...     type_="postgresql",
             ...     user="u/se//r",
             ...     password="password",
             ...     host="127.0.0.1",
@@ -101,7 +101,7 @@ class DataBase(object):
             postgresql://u%2Fse%2F%2Fr:***@127.0.0.1/stepmania
 
             >>> DataBase(
-            ...     type="mysql",
+            ...     type_="mysql",
             ...     user="user@mail.fr",
             ...     password="password",
             ...     host="localhost",
@@ -140,12 +140,12 @@ class _Database:
     db = None
 
 
-def setup_db(type="sqlite", database=None, user=None, password=None,
+def setup_db(type_="sqlite", database=None, user=None, password=None,
              host=None, port=None, driver=None):
     """ Initalize the database"""
 
     _Database.db = DataBase(
-        type=type,
+        type_=type_,
         database=database,
         user=user,
         password=password,

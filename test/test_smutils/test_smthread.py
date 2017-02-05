@@ -13,14 +13,14 @@ class BaseStepmaniaServerTest(unittest.TestCase):
     def setUp(self):
         self.server = smthread.StepmaniaServer([])
         self.smthread = smconn.SMThread(self.server, "127.0.0.1", 888)
-        self.server._servers.append(self.smthread)
+        self.server._servers.append(self.smthread) #pylint: disable=protected-access
 
         self.conn1 = smconn.StepmaniaConn(self.server, "8.8.8.8", 42)
         self.conn2 = smconn.StepmaniaConn(self.server, "8.8.8.9", 42)
 
     def tearDown(self):
         self.server.__init__([])
-        self.server._servers.append(self.smthread)
+        self.server._servers.append(self.smthread) #pylint: disable=protected-access
         self.conn1 = smconn.StepmaniaConn(self.server, "8.8.8.8", 42)
         self.conn2 = smconn.StepmaniaConn(self.server, "8.8.8.9", 42)
 

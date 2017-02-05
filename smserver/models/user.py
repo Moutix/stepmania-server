@@ -1,4 +1,4 @@
-
+""" User model module """
 
 import datetime
 import enum
@@ -16,7 +16,7 @@ __all__ = ['UserStatus', 'User', 'AlreadyConnectError']
 class AlreadyConnectError(Exception):
     def __init__(self, user):
         self.user = user
-        Exception()
+        super().__init__()
 
 
 class UserStatus(enum.Enum):
@@ -76,6 +76,7 @@ class User(schema.Base):
 
     @property
     def enum_status(self):
+        """ Return the enum associate with the user status """
         return UserStatus(self.status)
 
     def fullname(self, room_id=None):

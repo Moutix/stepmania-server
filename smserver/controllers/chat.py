@@ -1,9 +1,9 @@
+""" Chat controller main class """
 
 import re
 
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
-from smserver import ability
 
 
 class ChatController(StepmaniaController):
@@ -40,4 +40,3 @@ class ChatController(StepmaniaController):
             value = None
 
         return key, value
-

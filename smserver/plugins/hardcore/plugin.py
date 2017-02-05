@@ -151,6 +151,6 @@ class HardcoreStartControllerPlugin(stepmania_controller.StepmaniaController):
         if self.room.status != 2 or self.room.mode != "hardcore":
             return
 
-        with serv.mutex:
+        with self.conn.mutex:
             self.conn.songstats[0]["attack_metter"] = 0
             self.conn.songstats[1]["attack_metter"] = 0

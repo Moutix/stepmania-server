@@ -1,7 +1,8 @@
+""" SongStat model module """
 
 import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Float, LargeBinary
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, Text, Float, LargeBinary
 
 from sqlalchemy.orm import relationship
 
@@ -212,4 +213,3 @@ class BinaryStats(SMPacket):
             ])
         )
     ]
-

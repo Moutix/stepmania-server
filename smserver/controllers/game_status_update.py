@@ -1,10 +1,11 @@
+""" GameStatusUpdate controller module """
 
 import datetime
 
 from smserver import models
 from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
-from smserver.chathelper import with_color
+
 
 class GameStatusUpdateController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCGSU
@@ -48,4 +49,3 @@ class GameStatusUpdateController(StepmaniaController):
             )
 
         self.sendroom(self.conn.room, smpacket.SMPacketServerNSCSU(message=message))
-

@@ -1,3 +1,4 @@
+""" Classic socket client module """
 
 import socket
 from threading import Thread
@@ -34,7 +35,7 @@ class SocketConn(smconn.StepmaniaConn, Thread):
 
             if not size:
                 if len(data) < 5:
-                    self.logger.info("packet %s drop: to short" % (data))
+                    self.log.info("packet %s drop: to short", data)
                     continue
 
                 full_data = data[:4]
@@ -95,4 +96,3 @@ class SocketServer(smconn.SMThread):
         smconn.SMThread.stop(self)
         self._continue = False
         self._socket.shutdown(socket.SHUT_RDWR)
-

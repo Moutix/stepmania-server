@@ -1,3 +1,4 @@
+""" Game start request controller module """
 
 import datetime
 
@@ -5,7 +6,6 @@ from smserver.smutils import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 
-from sqlalchemy.orm import object_session
 
 class StartGameRequestController(StepmaniaController):
     command = smpacket.SMClientCommand.NSCGSR
@@ -75,4 +75,3 @@ class StartGameRequestController(StepmaniaController):
                 player.ingame = True
 
             player.send(smpacket.SMPacketServerNSCGSR())
-

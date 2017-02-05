@@ -9,7 +9,6 @@ import uuid
 from threading import Lock, Thread
 
 from smserver import logger
-from smserver import profile
 from smserver.smutils import smpacket
 
 

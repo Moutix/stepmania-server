@@ -1,4 +1,3 @@
-
 """
     The ```SMpacket`` module
     ========================
@@ -46,7 +45,7 @@ class ParentCommand(Enum):
         except ValueError:
             pass
 
-        for klass in cls.__subclasses__():
+        for klass in cls.__subclasses__(): #pylint: disable=maybe-no-member
             try:
                 return klass(value)
             except ValueError:
@@ -133,7 +132,7 @@ class SMPayloadTypeAbstract(object):
     DEFAULT = None
 
     @staticmethod
-    def encode(data, opt=None):
+    def encode(_data, _opt=None):
         """
             Define here how the data is encoded.
 
@@ -143,7 +142,7 @@ class SMPayloadTypeAbstract(object):
         return b''
 
     @staticmethod
-    def decode(payload, opt=None):
+    def decode(payload, _opt=None):
         """
             Define here how the data is dedoced.
 
@@ -294,7 +293,7 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
     DEFAULT = ""
 
     @staticmethod
-    def encode(data, opt=None):
+    def encode(data, _opt=None):
         """
             Encode unicode string into null terminated string.
 
@@ -313,7 +312,7 @@ class SMPayloadTypeNT(SMPayloadTypeAbstract):
         return data.replace('\x00', '').encode('utf-8') + b'\x00'
 
     @staticmethod
-    def decode(payload, opt=None):
+    def decode(payload, _opt=None):
         """
             Decode null terminated string into unicode string
 
@@ -483,7 +482,7 @@ class SMPayloadTypePacket(SMPayloadTypeAbstract):
     """
 
     @staticmethod
-    def encode(data, opt=None):
+    def encode(data, _opt=None):
         if not data:
             return b''
 
@@ -568,6 +567,7 @@ class SMPacket(object):
             <SMPacketServerNSCCM message="msg">
         """
 
+        #pylint: disable=maybe-no-member
         klasses = [klass for klass in cls.__subclasses__() if klass.command == command]
         if not klasses:
             return None
@@ -586,6 +586,7 @@ class SMPacket(object):
             <class 'smserver.smutils.smpacket.SMPacketServerNSCCM'>
         """
 
+        #pylint: disable=maybe-no-member
         klasses = [klass for klass in cls.__subclasses__() if klass.command == command]
         if not klasses:
             return None
@@ -744,6 +745,7 @@ class SMPacket(object):
 
     @classmethod
     def parse_json(cls, data):
+        """ Parse a JSON packet """
         try:
             opts = json.loads(data)
         except ValueError:
@@ -757,6 +759,8 @@ class SMPacket(object):
 
     @classmethod
     def parse_data(cls, data):
+        """ Parse a binary packet """
+
         if not data:
             return None
 
@@ -768,6 +772,8 @@ class SMPacket(object):
 
     @classmethod
     def parse_binary(cls, binary):
+        """ Parse a binary payload """
+
         if len(binary) < 4:
             return None
 
@@ -775,6 +781,7 @@ class SMPacket(object):
 
     @classmethod
     def encode(cls, values, payload_option):
+        """ Encode data in binary format """
         payload = b""
         byte = ""
 
@@ -799,6 +806,8 @@ class SMPacket(object):
 
     @classmethod
     def decode(cls, payload, payload_option):
+        """ Decode data in binary format """
+
         opts = {}
         for size, name, opt in payload_option:
             if size == SMPayloadType.MSN:
@@ -1665,105 +1674,3 @@ class SMPacketServerXMLPacket(SMPacket):
     _payload = [
         (SMPayloadType.NT, "xml", None),
     ]
-
-
-def main():
-    import doctest
-    doctest.testmod()
-
-    packet = SMPacket.new(
-        SMClientCommand.NSCGSR,
-        second_player_feet=8,
-        first_player_feet=12,
-        song_title="Wouhou whouhouhou",
-        song_subtitle="super sous titer"
-    )
-
-    print(packet)
-    print(packet.payload)
-    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
-
-    packet = SMPacket.new(
-        SMServerCommand.NSSMONL,
-        packet=SMOPacketServer.new(
-            SMOServerCommand.ROOMINFO,
-            song_title="song_title",
-            num_players=3,
-            players=["bidule", "machin", "truc"]
-        )
-    )
-
-    print(packet)
-    print(packet.payload)
-    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
-
-    packet = SMPacket.new(
-        SMServerCommand.NSCGON,
-        nb_players=3,
-        ids=[5, 2, 8],
-        scores=[1550, 1786, 1632],
-    )
-
-    print(packet)
-    print(packet.payload)
-    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
-
-    packet = SMPacket.new(
-        SMServerCommand.NSCCUUL,
-        max_players=255,
-        nb_players=5,
-        players=[{"status": 5, "name": "machin"}, {"status": 1, "name": "bidule"}]
-    )
-
-    print(packet)
-    print(packet.payload)
-    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
-
-    packet = SMPacket.new(
-        SMServerCommand.NSCGSU,
-        section=1,
-        nb_players=3,
-        options=[1, 3, 5]
-    )
-
-    print(packet)
-    print(packet.payload)
-    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
-
-    packet = SMPacket.new(
-        SMServerCommand.NSSMONL,
-        packet=SMOPacketServer.new(
-            SMOServerCommand.ROOMUPDATE,
-            type=0,
-            room_title="Super Room",
-            subroom=1,
-            room_description="description de la salle",
-        )
-    )
-    print(packet)
-    print(packet.payload)
-    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
-
-    packet = SMPacket.new(
-        SMServerCommand.NSSMONL,
-        packet=SMOPacketServer.new(
-            SMOServerCommand.ROOMUPDATE,
-            type=1,
-            nb_rooms=3,
-            rooms=[
-                {"title": "salle1", "description": "description1"},
-                {"title": "salle2", "description": "description2"},
-                {"title": "salle3", "description": "description3"},
-            ],
-            room_description="description de la salle",
-        )
-    )
-
-    print(packet)
-    print(packet.payload)
-    assert packet.binary == SMPacket.parse_binary(packet.binary).binary
-
-    assert packet.binary == SMPacket.from_("json", packet.to_("json")).binary
-
-if __name__ == "__main__":
-    main()

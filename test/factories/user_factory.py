@@ -19,7 +19,7 @@ class UserFactory(base.BaseFactory):
 
     @classmethod
     def _after_postgeneration(cls, obj, _create, _results):
-        obj._room_level = {}
+        obj._room_level = {} #pylint: disable=protected-access
 
 
 class AdminFactory(UserFactory):

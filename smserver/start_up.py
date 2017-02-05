@@ -22,7 +22,7 @@ def start_up(*args):
     sd_notify.status("Init database")
 
     db = database.setup_db(
-        type=config.database.get("type", 'sqlite'),
+        type_=config.database.get("type", 'sqlite'),
         database=config.database.get("database"),
         user=config.database.get("user"),
         password=config.database.get("password"),

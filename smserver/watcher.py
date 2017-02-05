@@ -104,7 +104,7 @@ class StepmaniaWatcher(Thread):
         self._sock.sendto(packet.binary, (self.UDP_IP, self.UDP_PORT))
 
     @periodicmethod(1)
-    def send_ping(self, session):
+    def send_ping(self, _session):
         self.server.sendall(smpacket.SMPacketServerNSCPing())
 
     @periodicmethod(2)

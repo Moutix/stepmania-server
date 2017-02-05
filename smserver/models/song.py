@@ -1,3 +1,4 @@
+""" Song model module """
 
 import datetime
 
@@ -9,6 +10,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from smserver.models import schema, song_stat
 
 __all__ = ['Song']
+
 
 class Song(schema.Base):
     __tablename__ = 'songs'

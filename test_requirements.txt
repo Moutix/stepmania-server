@@ -1,3 +1,5 @@
 mock
 factory_boy
 pytest-sugar
+pytest-pylint
+pytest-cov

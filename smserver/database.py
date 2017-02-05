@@ -40,8 +40,29 @@ class DataBase(object):
         self._port = port
         self._driver = driver
 
-        self.engine = create_engine(self._database_url)
-        self.session = scoped_session(sessionmaker(bind=self.engine))
+        self._engine = None
+        self._session = None
+
+    @property
+    def engine(self):
+        """ SQLAlchemy engine assosiate with the DataBase """
+
+
+        if self._engine:
+            return self._engine
+
+        self._engine = create_engine(self._database_url)
+        return self._engine
+
+    @property
+    def session(self):
+        """ Return a SQLAlchemy Session maker """
+
+        if self._session:
+            return self._session
+
+        self._session = scoped_session(sessionmaker(bind=self.engine))
+        return self._session
 
     @contextmanager
     def session_scope(self):

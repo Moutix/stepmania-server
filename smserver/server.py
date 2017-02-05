@@ -2,6 +2,7 @@
 
 import sys
 import datetime
+from functools import wraps
 
 from sqlalchemy.orm import object_session
 
@@ -11,6 +12,7 @@ from smserver import conf
 from smserver import logger
 from smserver import models
 from smserver import sdnotify
+from smserver import profile
 
 from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
@@ -29,9 +31,10 @@ def with_session(func):
 
     Only work with instance methods of StepmaniaServer class """
 
-    def wrapper(self, *opt):
+    @wraps(func)
+    def wrapper(self, *arg, **kwargs):
         with self.db.session_scope() as session:
-            func(self, session, *opt)
+            func(self, session, *arg, **kwargs)
     return wrapper
 
 class StepmaniaServer(smthread.StepmaniaServer):
@@ -195,6 +198,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.send_sd_running_status()
 
     @with_session
+    @profile.profile("packet")
     def on_packet(self, session, serv, packet):
         self.handle_packet(session, serv, packet)
 

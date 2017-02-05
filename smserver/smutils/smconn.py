@@ -9,6 +9,7 @@ import uuid
 from threading import Lock, Thread
 
 from smserver import logger
+from smserver import profile
 from smserver.smutils import smpacket
 
 
@@ -75,7 +76,7 @@ class StepmaniaConn(object):
         if packet.command == smpacket.SMClientCommand.NSCPingR:
             self.last_ping = datetime.datetime.now()
 
-        self._serv.on_packet(self, packet)
+        self._serv.on_packet(self, packet=packet)
 
     def send(self, packet):
         """ How to send a new packet """

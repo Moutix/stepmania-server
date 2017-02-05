@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Configuration module.
 
-from io import open
+Merge a yaml confniguration file with argument passed to argparse
+"""
+
 import argparse
 import sys
 import os
@@ -66,6 +67,12 @@ class Conf(dict):
                         action='store_true',
                         help="Drop all the db tables and recreate them")
 
+    parser.add_argument('--profile_path',
+                        dest='profile_path',
+                        type=str,
+                        help="Write pofiling data in the given repository")
+
+
     def __init__(self, *args):
         self._raw_args = args
 
@@ -101,10 +108,17 @@ class Conf(dict):
         if not self.additional_servers:
             self.additional_servers = []
 
+    def load(self, *args):
+        """ Load the configuration file """
+
+        self.__init__(*args)
+        return self
+
     def reload(self):
         """ Reload the configuration file """
 
         self.__init__(*self._raw_args)
+        return self
 
     @staticmethod
     def add_to_conf(conf, arg, value, replace=True):
@@ -173,6 +187,8 @@ class Conf(dict):
 
         return "conf.yml"
 
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+config = Conf()
+
+def load_config(*args):
+    """ Load the config with the given parameters """
+    return config.load(*args)

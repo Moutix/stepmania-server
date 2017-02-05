@@ -9,11 +9,10 @@ from smserver import logger
 from smserver import database
 
 
-def start_up(config):
+def start_up(*args):
     """ Initalize all the stepmania environment """
 
-    if not config:
-        config = conf.Conf()
+    config = conf.load_config(*args)
 
     sd_notify = sdnotify.get_notifier()
 

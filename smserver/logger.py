@@ -1,11 +1,16 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Logger module.
+
+Use `get_logger` to get the current stepmania logger
+"""
 
 import logging
 import logging.handlers
 import sys
 
 class Logger(object):
+    """ Logger object use to configure the loggin handler """
+    NAME = "stepmania"
+
     _LEVEL = {
         "debug": logging.DEBUG,
         "info": logging.INFO,
@@ -18,7 +23,7 @@ class Logger(object):
         if not options:
             options = {"stderr": {}}
 
-        self._logger = logging.getLogger('stepmania')
+        self._logger = logging.getLogger(self.NAME)
         self._logger.setLevel(logging.DEBUG)
 
         for type_handler, log_options in options.items():
@@ -35,16 +40,28 @@ class Logger(object):
 
     @property
     def logger(self):
+        """ Return the logger associated with this object """
+
         return self._logger
 
-    def _get_stderr_handler(self, **kwargs):
+    @staticmethod
+    def _get_stderr_handler(**_kwargs):
         return logging.StreamHandler(sys.stderr)
 
-    def _get_file_handler(self, **kwargs):
+    @staticmethod
+    def _get_file_handler(**kwargs):
         return logging.handlers.TimedRotatingFileHandler(
             kwargs.get("file", "log/stepmania.log"),
             when="midnight",
             backupCount=3
         )
 
+def get_logger():
+    """ Get the stepmania logger """
 
+    return logging.getLogger('stepmania')
+
+def set_logger_options(options):
+    """ Set the logger options """
+
+    return Logger(options).logger

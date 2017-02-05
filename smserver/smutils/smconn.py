@@ -4,15 +4,16 @@ Base module for handling all type of connection
 """
 
 import datetime
-import logging
 import uuid
 
 from threading import Lock, Thread
 
+from smserver import logger
 from smserver.smutils import smpacket
 
+
 class StepmaniaConn(object):
-    logger = logging.getLogger('stepmania')
+    log = logger.get_logger()
     ENCODING = "binary"
     ALLOWED_PACKET = []
 
@@ -62,13 +63,13 @@ class StepmaniaConn(object):
 
         packet = smpacket.SMPacket.from_(self.ENCODING, data)
         if not packet:
-            self.logger.info("packet %s drop from %s", data, self.ip)
+            self.log.info("packet %s drop from %s", data, self.ip)
             return None
 
-        self.logger.debug("Packet received from %s: %s", self.ip, packet)
+        self.log.debug("Packet received from %s: %s", self.ip, packet)
 
         if self.ALLOWED_PACKET and packet.command not in self.ALLOWED_PACKET:
-            self.logger.debug("packet %s ignored from %s", data, self.ip)
+            self.log.debug("packet %s ignored from %s", data, self.ip)
             return None
 
         if packet.command == smpacket.SMClientCommand.NSCPingR:
@@ -85,7 +86,7 @@ class StepmaniaConn(object):
                 packet["message"]
             )
 
-        self.logger.debug("packet send to %s: %s", self.ip, packet)
+        self.log.debug("packet send to %s: %s", self.ip, packet)
         self._send_data(packet.to_(self.ENCODING))
 
     def _send_data(self, data):
@@ -97,7 +98,7 @@ class StepmaniaConn(object):
 
 
 class SMThread(Thread):
-    logger = logging.getLogger('stepmania')
+    log = logger.get_logger()
 
     def __init__(self, server, ip, port):
         Thread.__init__(self)
@@ -107,7 +108,7 @@ class SMThread(Thread):
         self.port = port
 
     def run(self):
-        self.logger.info("Successfully close thread: %s", self)
+        self.log.info("Successfully close thread: %s", self)
 
     def stop(self):
-        self.logger.debug("Closing thread: %s", self)
+        self.log.debug("Closing thread: %s", self)

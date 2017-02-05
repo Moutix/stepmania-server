@@ -2,6 +2,10 @@
 
 import sqlalchemy
 from smserver.models import schema
+from smserver import start_up
+from smserver import conf
+
+start_up.start_up(conf.Conf())
 
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 

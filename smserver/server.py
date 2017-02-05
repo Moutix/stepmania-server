@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf8 -*-
+""" Server module """
 
 import sys
 import datetime
@@ -64,7 +63,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.config = config
 
-        self.log = logger.Logger(config.logger).logger
+        self.log = logger.get_logger()
 
         self.log.debug("Configuration loaded")
 
@@ -486,7 +485,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.log.info("DROP all the database tables")
         self.db.recreate_tables()
 
-
 def main():
     config = conf.Conf(*sys.argv[1:])
 
@@ -494,4 +492,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

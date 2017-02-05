@@ -6,10 +6,10 @@ This module handle the orchestration between all the servers and connections.
 
 import sys
 import datetime
-import logging
 from threading import Lock
 from collections import defaultdict
 
+from smserver import logger
 from smserver.smutils import smpacket
 from smserver.smutils.smconnections import smtcpsocket, udpsocket
 if sys.version_info[1] > 2:
@@ -18,7 +18,7 @@ if sys.version_info[1] > 2:
 class StepmaniaServer(object):
     """ Main class of the server """
 
-    _logger = logging.getLogger('stepmania')
+    _logger = logger.get_logger()
 
     SERVER_TYPE = {
         "classic": smtcpsocket.SocketServer,

@@ -4,10 +4,15 @@
 import sys
 import signal
 
-from smserver import conf, server
+from smserver import conf
+from smserver import server
+from smserver import start_up
 
 def main():
     config = conf.Conf(*sys.argv[1:])
+
+    start_up.start_up(config)
+
     serv = server.StepmaniaServer(config)
 
     try:

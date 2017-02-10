@@ -1,7 +1,5 @@
 """ Module to test room model """
 
-from smserver import models
-
 from test.factories.user_factory import UserFactory, user_with_room_privilege
 from test.factories.room_factory import RoomFactory
 from test import utils

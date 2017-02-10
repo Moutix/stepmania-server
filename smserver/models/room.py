@@ -45,11 +45,6 @@ class Room(schema.Base):
     created_at     = Column(DateTime, default=datetime.datetime.now)
     updated_at     = Column(DateTime, onupdate=datetime.datetime.now)
 
-    def __init__(self, **kwargs):
-        self._nb_players = None
-
-        schema.Base.__init__(self, **kwargs)
-
     @reconstructor
     def _init_on_load(self):
         self._nb_players = None
@@ -75,6 +70,7 @@ class Room(schema.Base):
 
     @property
     def nb_players(self):
+        """ Get the numer of users in the room """
         if self._nb_players:
             return self._nb_players
 
@@ -88,16 +84,15 @@ class Room(schema.Base):
 
     @property
     def online_users(self):
+        """ Get the onlines user in this room """
+
         return (object_session(self)
                 .query(user.User)
-                .filter_by(online=True, room_id=self.id)
-                .all())
+                .filter_by(online=True, room_id=self.id))
 
     @property
     def moderators(self):
-        """
-            Get all the moderators in this room
-        """
+        """ Get all the moderators in this room """
 
         return (object_session(self)
                 .query(user.User)
@@ -128,14 +123,13 @@ class Room(schema.Base):
     def nsccuul(self):
         """ Return the NSCCUUL packets listing users in the room """
 
-        users = self.online_users
-
-        return smpacket.SMPacketServerNSCCUUL(
+        packet = smpacket.SMPacketServerNSCCUUL(
             max_players=self.max_users,
-            nb_players=len(users),
             players=[{"status": u.enum_status.value, "name": u.name}
-                     for u in users]
+                     for u in self.online_users]
             )
+
+        packet["nb_players"] = len(packet["players"])
 
     @staticmethod
     def list_to_smopacket(rooms):
@@ -286,4 +280,3 @@ class Room(schema.Base):
             rooms.append(room)
 
         return rooms
-

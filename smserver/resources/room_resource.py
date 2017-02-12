@@ -16,7 +16,7 @@ class RoomResource(base.BaseResource):
         """ Create a new room """
 
         if not self.connection.can(ability.Permissions.create_room):
-            raise exceptions.Unauthorized(self.token, "Create room %s" % name)
+            raise exceptions.Forbidden(self.token, "Create room %s" % name)
 
         if password:
             password = hashlib.sha256(password.encode('utf-8')).hexdigest()
@@ -51,32 +51,43 @@ class RoomResource(base.BaseResource):
         """ List all the room """
         pass
 
-    def get(self):
+    def get(self, room_id):
         """ Get the details of a room """
-        pass
 
-    def enter(self, room_id):
+        room = self.session.query(models.Room).get(room_id)
+        if not room:
+            raise exceptions.NotFound(self.token, "Room %s don't exist" % room_id)
+
+        return room
+
+    def enter(self, room):
         """ Enter in a room """
+
+        if not self.connection.can(ability.Permissions.enter_room, room.id):
+            raise exceptions.Forbidden(self.token, "Enter room %s" % room.id)
+
+        if room.is_full():
+            raise exceptions.Unauthorized(self.token, "Room %s is full" % room.id)
 
         old_room = self.connection.room
         if old_room:
             self.serv.del_from_room(self.token, old_room.id)
             self.log.info("%s leave the room %s", self.token, old_room.id)
 
-        self.connection.room_id = room_id
+        self.connection.room = room
         self.connection.song = None
 
         for user in self.connection.active_users:
-            if user.room_id == room_id:
+            if user.room == room:
                 continue
 
-            user.room_id = room_id
-            if not user.room_privilege(room_id):
-                user.set_level(room_id, 1)
+            user.room = room
+            if not user.room_privilege(room.id):
+                user.set_level(room.id, 1)
 
-        self.log.info("%s enter in room %s", self.token, room_id)
+        self.log.info("%s enter in room %s", self.token, room.id)
 
-        self.serv.add_to_room(self.token, room_id)
+        self.serv.add_to_room(self.token, room.id)
 
     def leave(self):
         """ Leave a room """

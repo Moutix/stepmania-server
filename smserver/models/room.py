@@ -107,6 +107,11 @@ class Room(schema.Base):
                     privilege.Privilege.level >= 5
                 ))
 
+    def is_full(self):
+        """ Return True if the room is full """
+
+        return self.nb_players >= self.max_users
+
     @property
     def room_info(self):
         packet = smpacket.SMOPacketServerRoomInfo(
@@ -135,6 +140,7 @@ class Room(schema.Base):
             )
 
         packet["nb_players"] = len(packet["players"])
+
     @staticmethod
     def list_to_smopacket(rooms):
         """ Take a list of rooms and return the formatted SMO packet"""

@@ -50,3 +50,14 @@ class RoomTest(utils.DBTest):
         self.assertEqual(len(moderators), 2)
         self.assertIn(mod1, moderators)
         self.assertIn(mod2, moderators)
+
+    def test_is_full(self):
+        """ Test checking if the room is full """
+
+        room = RoomFactory(max_users=2)
+        self.assertEqual(room.is_full(), False)
+
+        UserFactory(room=room, online=True)
+        UserFactory(room=room, online=True)
+        self.session.commit()
+        self.assertEqual(room.is_full(), True)

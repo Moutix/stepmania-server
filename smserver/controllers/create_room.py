@@ -27,7 +27,7 @@ class CreateRoomController(StepmaniaController):
                 description=self.packet["description"],
                 type_=1
             )
-        except exceptions.Unauthorized:
+        except exceptions.Forbidden:
             self.send_message(
                 "Unauthorized to create the room {name}".format(
                     name=with_color(self.packet["title"])
@@ -42,7 +42,7 @@ class CreateRoomController(StepmaniaController):
             )
             return
 
-        room_resource.enter(room.id)
+        room_resource.enter(room)
 
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()

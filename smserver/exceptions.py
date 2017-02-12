@@ -31,8 +31,7 @@ class Unauthorized(StepmaniaUserException):
 
 
 class Forbidden(StepmaniaUserException):
-    """ Exception for unauthorized queries
-    """
+    """ Exception for unauthorized queries """
 
     status_code = 403
     message = "Foridden"
@@ -45,6 +44,15 @@ class ValidationError(StepmaniaUserException):
 
     status_code = 400
     message = "Validation error"
+
+    def __init__(self, token, details):
+        super().__init__(self, token, self.message, details=details)
+
+class NotFound(StepmaniaUserException):
+    """ Exception for not found queries """
+
+    status_code = 404
+    message = "Not Found"
 
     def __init__(self, token, details):
         super().__init__(self, token, self.message, details=details)

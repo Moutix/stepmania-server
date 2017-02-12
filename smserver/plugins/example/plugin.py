@@ -1,6 +1,7 @@
+""" Plugin example """
 
 from smserver import pluginmanager, chatplugin, stepmania_controller
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
 
 class ExampleChatPlugin(chatplugin.ChatPlugin):
     command = "coucou"
@@ -13,8 +14,7 @@ class ExampleGenericPlugin(pluginmanager.StepmaniaPlugin):
         print(packet)
 
 class ExampleControllerPlugin(stepmania_controller.StepmaniaController):
-    command = smpacket.SMClientCommand.NSCCM
+    command = smcommand.SMClientCommand.NSCCM
 
     def handle(self):
         print(self.packet)
-

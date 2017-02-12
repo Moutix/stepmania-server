@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Bool
 from sqlalchemy import func, or_, and_, desc
 from sqlalchemy.orm import reconstructor, relationship, object_session
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
 from smserver.models import schema, game, user, privilege
 
 __all__ = ['Room']

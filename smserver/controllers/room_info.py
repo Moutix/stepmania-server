@@ -1,13 +1,13 @@
 """ Room info controller module """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 
 class RoomInfoController(StepmaniaController):
     """ Room Info controller """
 
-    command = smpacket.SMOClientCommand.ROOMINFO
+    command = smcommand.SMOClientCommand.ROOMINFO
     require_login = True
 
     def handle(self):

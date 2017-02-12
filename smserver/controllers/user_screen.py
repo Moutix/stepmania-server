@@ -1,10 +1,11 @@
+""" User status controller """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 
 class UserStatusController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSSCSMS
+    command = smcommand.SMClientCommand.NSSCSMS
     require_login = True
 
     def handle(self):
@@ -27,4 +28,3 @@ class UserStatusController(StepmaniaController):
 
         if self.conn.room:
             self.server.send_user_list(self.room)
-

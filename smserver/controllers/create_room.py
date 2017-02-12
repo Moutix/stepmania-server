@@ -2,7 +2,9 @@
 
 import hashlib
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
+
 from smserver.chathelper import with_color
 
 from smserver.stepmania_controller import StepmaniaController
@@ -12,7 +14,7 @@ from smserver import models
 class CreateRoomController(StepmaniaController):
     """ Create Room controller"""
 
-    command = smpacket.SMOClientCommand.CREATEROOM
+    command = smcommand.SMOClientCommand.CREATEROOM
     require_login = True
 
     def handle(self):

@@ -2,12 +2,12 @@
 
 import re
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 
 
 class ChatController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCCM
+    command = smcommand.SMClientCommand.NSCCM
     require_login = True
 
     def handle(self):

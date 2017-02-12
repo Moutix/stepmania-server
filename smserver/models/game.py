@@ -1,3 +1,4 @@
+""" Game controller """
 
 import datetime
 
@@ -5,7 +6,7 @@ from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean, desc
 from sqlalchemy.orm import relationship, object_session
 
 from smserver.models import schema, song_stat, user
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
 
 __all__ = ['Game']
 

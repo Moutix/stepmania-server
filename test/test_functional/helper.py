@@ -2,8 +2,9 @@
 
 from smserver import server
 from smserver import models
-from smserver.smutils.smconnections import smtcpsocket, websocket
-from smserver.smutils import smpacket
+from smserver.smutils.smconnections import websocket
+from smserver.smutils.smconnections import smtcpsocket
+from smserver.smutils.smpacket import smpacket
 
 from test import utils
 

@@ -8,7 +8,8 @@ from sqlalchemy.orm import relationship
 
 from smserver.models import schema
 from smserver.chathelper import with_color, nick_color
-from smserver.smutils.smpacket import SMPacket, SMPayloadType
+from smserver.smutils.smpacket.smpacket import SMPacket
+from smserver.smutils.smpacket import smencoder
 
 __all__ = ['SongStat']
 
@@ -202,14 +203,14 @@ class SongStat(schema.Base):
 
 class BinaryStats(SMPacket):
     _payload = [
-        (SMPayloadType.INT, "nb_notes", 8),
-        (SMPayloadType.LIST, "stats", ("nb_notes", [
-            (SMPayloadType.MSN, "grade", None),
-            (SMPayloadType.LSN, "stepid", None),
-            (SMPayloadType.INT, "score", 4),
-            (SMPayloadType.INT, "combo", 2),
-            (SMPayloadType.INT, "health", 2),
-            (SMPayloadType.INT, "time", 4)
+        (smencoder.SMPayloadType.INT, "nb_notes", 8),
+        (smencoder.SMPayloadType.LIST, "stats", ("nb_notes", [
+            (smencoder.SMPayloadType.MSN, "grade", None),
+            (smencoder.SMPayloadType.LSN, "stepid", None),
+            (smencoder.SMPayloadType.INT, "score", 4),
+            (smencoder.SMPayloadType.INT, "combo", 2),
+            (smencoder.SMPayloadType.INT, "health", 2),
+            (smencoder.SMPayloadType.INT, "time", 4)
             ])
         )
     ]

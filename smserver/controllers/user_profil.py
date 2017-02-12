@@ -1,9 +1,10 @@
+""" User profile controller """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 
 class UserProfilController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCSU
+    command = smcommand.SMClientCommand.NSCSU
     require_login = False
 
     def handle(self):

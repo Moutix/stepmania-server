@@ -1,10 +1,12 @@
+""" Discovery controller """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
+from smserver.smutils.smpacket import smpacket
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 
 class DiscoveryController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCFormatted
+    command = smcommand.SMClientCommand.NSCFormatted
     require_login = False
 
     def handle(self):
@@ -13,4 +15,3 @@ class DiscoveryController(StepmaniaController):
             server_name=self.server.config.server["name"],
             nb_players=models.User.nb_onlines(self.session)
         ))
-

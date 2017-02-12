@@ -8,8 +8,14 @@
 
 import random
 
-from smserver import pluginmanager, chatplugin, stepmania_controller, models, ability
-from smserver.smutils import smpacket, smattack
+from smserver import pluginmanager
+from smserver import chatplugin
+from smserver import stepmania_controller
+from smserver import models
+from smserver import ability
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
+from smserver.smutils import smattack
 
 class HardcoreChatPlugin(chatplugin.ChatPlugin):
     """
@@ -136,7 +142,7 @@ class HardcoreStartControllerPlugin(stepmania_controller.StepmaniaController):
         Custom controller for Game Start Request packet
     """
 
-    command = smpacket.SMClientCommand.NSCGSR
+    command = smcommand.SMClientCommand.NSCGSR
     require_login = True
 
     def handle(self):

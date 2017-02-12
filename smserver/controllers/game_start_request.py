@@ -2,13 +2,14 @@
 
 import datetime
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 
 
 class StartGameRequestController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCGSR
+    command = smcommand.SMClientCommand.NSCGSR
     require_login = True
 
     def handle(self):

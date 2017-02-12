@@ -10,7 +10,7 @@ import itertools
 import socket
 
 from smserver import models
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
 from smserver.chathelper import with_color
 from smserver.controllers.game_start_request import StartGameRequestController
 

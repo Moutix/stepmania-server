@@ -55,7 +55,6 @@ class SMPacketTest(unittest.TestCase):
 
     def test_all_packet(self):
         """ Test all basic packet (with string and integer) """
-
         for command in smcommand.SMClientCommand:
             self.packet_testing(command)
 

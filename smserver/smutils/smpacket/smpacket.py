@@ -39,11 +39,23 @@ import json
 from smserver.smutils.smpacket import smcommand
 from smserver.smutils.smpacket import smencoder
 
-class SMPacket(object):
+class _SMPacketMetaclass(type):
+    """Metaclass that implements PEP 487 protocol"""
+
+    def __init__(cls, name, bases, attrs, **kw):
+        super().__init__(name, bases, attrs, **kw)
+        parent_class = super(cls, cls)
+        if hasattr(parent_class, '__init_subclass__'):
+            parent_class.__init_subclass__(cls, **kw)
+
+
+class SMPacket(metaclass=_SMPacketMetaclass):
     """ Main class for declare/parse packet """
 
     _command_type = smcommand.SMCommand
     _payload = []
+    _subclasses = {}
+
     command = None
 
     def __init__(self, **kwargs):
@@ -52,6 +64,17 @@ class SMPacket(object):
             kwargs.pop("_command")
 
         self.opts = kwargs
+
+    def __init_subclass__(cls, **_kwargs): #pylint: disable=no-self-argument
+        command = cls.command
+
+        if not command:
+            return
+
+        if command in cls._subclasses:
+            raise ValueError("Command already defined")
+
+        cls._subclasses[command] = cls
 
     def __len__(self):
         return 1 + len(self.payload)
@@ -89,12 +112,10 @@ class SMPacket(object):
             <SMPacketServerNSCCM message="msg">
         """
 
-        #pylint: disable=maybe-no-member
-        klasses = [klass for klass in cls.__subclasses__() if klass.command == command]
-        if not klasses:
+        if command not in cls._subclasses:
             return None
 
-        return klasses[0](**kwargs)
+        return cls._subclasses[command](**kwargs)
 
     @classmethod
     def get_class(cls, command):
@@ -108,12 +129,8 @@ class SMPacket(object):
             <class 'smserver.smutils.smpacket.smpacket.SMPacketServerNSCCM'>
         """
 
-        #pylint: disable=maybe-no-member
-        klasses = [klass for klass in cls.__subclasses__() if klass.command == command]
-        if not klasses:
-            return None
 
-        return klasses[0]
+        return cls._subclasses.get(command, None)
 
     @property
     def binarycommand(self):

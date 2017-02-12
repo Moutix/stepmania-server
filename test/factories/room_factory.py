@@ -14,3 +14,9 @@ class RoomFactory(base.BaseFactory):
     name = factory.Sequence(lambda n: "Room %s" %n)
     motd = factory.Faker('text')
     description = factory.Faker('sentence')
+
+    @classmethod
+    def _after_postgeneration(cls, obj, _create, _results):
+        obj._nb_players = None #pylint: disable=protected-access
+
+

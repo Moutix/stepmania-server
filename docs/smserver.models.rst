@@ -12,6 +12,14 @@ smserver.models.ban module
     :undoc-members:
     :show-inheritance:
 
+smserver.models.connection module
+---------------------------------
+
+.. automodule:: smserver.models.connection
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 smserver.models.game module
 ---------------------------
 

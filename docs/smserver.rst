@@ -80,6 +80,14 @@ smserver.pluginmanager module
     :undoc-members:
     :show-inheritance:
 
+smserver.profiling module
+-------------------------
+
+.. automodule:: smserver.profiling
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 smserver.sdnotify module
 ------------------------
 
@@ -92,6 +100,14 @@ smserver.server module
 ----------------------
 
 .. automodule:: smserver.server
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+smserver.start_up module
+------------------------
+
+.. automodule:: smserver.start_up
     :members:
     :undoc-members:
     :show-inheritance:

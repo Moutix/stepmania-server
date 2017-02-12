@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     smserver.smutils.smconnections
+    smserver.smutils.smpacket
 
 Submodules
 ----------
@@ -23,14 +24,6 @@ smserver.smutils.smconn module
 ------------------------------
 
 .. automodule:: smserver.smutils.smconn
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-smserver.smutils.smpacket module
---------------------------------
-
-.. automodule:: smserver.smutils.smpacket
     :members:
     :undoc-members:
     :show-inheritance:

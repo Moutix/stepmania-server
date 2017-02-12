@@ -1,14 +1,15 @@
+""" Game over controller """
 
 import datetime
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 
 from smserver.chathelper import with_color
 
 class GameOverController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCGON
+    command = smcommand.SMClientCommand.NSCGON
     require_login = True
 
     def handle(self):

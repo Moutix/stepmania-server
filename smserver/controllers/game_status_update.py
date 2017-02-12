@@ -3,12 +3,13 @@
 import datetime
 
 from smserver import models
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 
 
 class GameStatusUpdateController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCGSU
+    command = smcommand.SMClientCommand.NSCGSU
     require_login = False
 
     def handle(self):

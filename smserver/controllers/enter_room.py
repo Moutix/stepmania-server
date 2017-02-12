@@ -1,6 +1,7 @@
 """ Enter room controller module """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
 
 from smserver.stepmania_controller import StepmaniaController
 
@@ -10,7 +11,7 @@ from smserver.chathelper import with_color
 class EnterRoomController(StepmaniaController):
     """ Enter room controller"""
 
-    command = smpacket.SMOClientCommand.ENTERROOM
+    command = smcommand.SMOClientCommand.ENTERROOM
     require_login = True
 
     def handle(self):

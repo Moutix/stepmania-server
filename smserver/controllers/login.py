@@ -1,11 +1,13 @@
+""" Login controller """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 from smserver import models
 from smserver import __version__
 
 class LoginController(StepmaniaController):
-    command = smpacket.SMOClientCommand.LOGIN
+    command = smcommand.SMOClientCommand.LOGIN
     require_login = False
 
     def handle(self):

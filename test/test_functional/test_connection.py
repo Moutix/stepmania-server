@@ -1,6 +1,6 @@
 """ Module to test the connections of client """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
 
 from test.test_functional.helper import FunctionalTest
 

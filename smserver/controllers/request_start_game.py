@@ -1,11 +1,13 @@
+""" Request start game controller """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 from smserver.chathelper import with_color
 from smserver import models, ability
 
 class RequestStartGameController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCRSG
+    command = smcommand.SMClientCommand.NSCRSG
     require_login = True
 
     def handle(self):

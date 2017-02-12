@@ -1,10 +1,12 @@
+""" Hello controller """
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
+from smserver.smutils.smpacket import smpacket
 
 from smserver.stepmania_controller import StepmaniaController
 
 class HelloController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSCHello
+    command = smcommand.SMClientCommand.NSCHello
     require_login = False
 
     def handle(self):
@@ -14,4 +16,3 @@ class HelloController(StepmaniaController):
         self.conn.send(smpacket.SMPacketServerNSCHello(
             version=128,
             name=self.server.config.server["name"]))
-

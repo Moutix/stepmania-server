@@ -18,7 +18,8 @@ from smserver.pluginmanager import PluginManager
 from smserver.authplugin import AuthPlugin
 from smserver.watcher import StepmaniaWatcher
 from smserver.chathelper import with_color
-from smserver.smutils import smthread, smpacket
+from smserver.smutils import smthread
+from smserver.smutils.smpacket import smpacket
 
 def with_session(func):
     """ Wrap the function with a sqlalchemy session.

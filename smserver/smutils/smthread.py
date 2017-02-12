@@ -10,7 +10,7 @@ from threading import Lock
 from collections import defaultdict
 
 from smserver import logger
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
 from smserver.smutils.smconnections import smtcpsocket, udpsocket
 if sys.version_info[1] > 2:
     from smserver.smutils.smconnections import asynctcpserver, websocket

@@ -9,7 +9,8 @@ import uuid
 from threading import Lock, Thread
 
 from smserver import logger
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
+from smserver.smutils.smpacket import smcommand
 
 
 class StepmaniaConn(object):
@@ -72,7 +73,7 @@ class StepmaniaConn(object):
             self.log.debug("packet %s ignored from %s", data, self.ip)
             return None
 
-        if packet.command == smpacket.SMClientCommand.NSCPingR:
+        if packet.command == smcommand.SMClientCommand.NSCPingR:
             self.last_ping = datetime.datetime.now()
 
         self._serv.on_packet(self, packet=packet)
@@ -80,7 +81,7 @@ class StepmaniaConn(object):
     def send(self, packet):
         """ How to send a new packet """
 
-        if packet.command == smpacket.SMServerCommand.NSCCM and self.chat_timestamp:
+        if packet.command == smcommand.SMServerCommand.NSCCM and self.chat_timestamp:
             packet["message"] = "[%s] %s" % (
                 datetime.datetime.now().strftime("%X"),
                 packet["message"]

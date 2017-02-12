@@ -1,9 +1,10 @@
+""" Stepmania online controller"""
 
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
 
 class SMOController(StepmaniaController):
-    command = smpacket.SMClientCommand.NSSMONL
+    command = smcommand.SMClientCommand.NSSMONL
     require_login = False
 
     def handle(self):
@@ -11,4 +12,3 @@ class SMOController(StepmaniaController):
             return None
 
         self.server.handle_packet(self.session, self.conn, self.packet["packet"])
-

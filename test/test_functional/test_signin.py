@@ -1,7 +1,7 @@
 """ Module to test the login of client """
 
 from smserver import models
-from smserver.smutils import smpacket
+from smserver.smutils.smpacket import smpacket
 
 from test.test_functional.helper import ConnectedFunctionalTest
 

@@ -18,7 +18,7 @@ class Room(schema.Base):
     __tablename__ = 'rooms'
 
     id             = Column(Integer, primary_key=True)
-    name           = Column(String(255))
+    name           = Column(String(255), unique=True, index=True)
     motd           = Column(String(255))
     password       = Column(String(255))
     description    = Column(Text, default="")
@@ -44,6 +44,11 @@ class Room(schema.Base):
 
     created_at     = Column(DateTime, default=datetime.datetime.now)
     updated_at     = Column(DateTime, onupdate=datetime.datetime.now)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._nb_players = None
+
 
     @reconstructor
     def _init_on_load(self):
@@ -130,7 +135,6 @@ class Room(schema.Base):
             )
 
         packet["nb_players"] = len(packet["players"])
-
     @staticmethod
     def list_to_smopacket(rooms):
         """ Take a list of rooms and return the formatted SMO packet"""

@@ -363,7 +363,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
         session = object_session(room)
 
         connection = models.Connection.by_token(token, session)
-        connection.room = room
 
         users = connection.users
 

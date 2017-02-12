@@ -151,7 +151,7 @@ def setup_db(type_="sqlite", database=None, user=None, password=None,
         password=password,
         host=host,
         port=port,
-        driver=driver
+        driver=driver,
     )
 
     return _Database.db

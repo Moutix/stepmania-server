@@ -6,6 +6,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
 from smserver.models import schema
+from smserver import ability
 
 __all__ = ['Connection']
 
@@ -65,3 +66,39 @@ class Connection(schema.Base):
         session.add(connection)
         session.commit()
         return connection
+
+    @property
+    def active_users(self):
+        """
+            Return the list of connected user's object which are still online.
+        """
+
+        return [user for user in self.users if user.online]
+
+    def level(self, room_id=None):
+        """
+            The maximum level of the users in this connection
+
+            :param room_id: The ID of the room.
+            :type room_id: int
+            :return: Level of the user
+            :rtype: int
+        """
+
+        if not self.active_users:
+            return 0
+
+        return max(user.level(room_id) for user in self.active_users)
+
+    def can(self, action, room_id=None):
+        """
+            Return True if this connection can do the specified action
+
+            :param action: The action to do
+            :param room_id: The ID of the room where the action take place.
+            :type action: smserver.ability.Permissions
+            :type room_id: int
+            :return: True if the action in authorized
+        """
+
+        return ability.Ability.can(action, self.level(room_id))

@@ -3,10 +3,11 @@
 from smserver.smutils.smpacket import smpacket
 from smserver.smutils.smpacket import smcommand
 
-from smserver.stepmania_controller import StepmaniaController
-
-from smserver import models
 from smserver.chathelper import with_color
+from smserver.stepmania_controller import StepmaniaController
+from smserver.resources.room_resource import RoomResource
+from smserver import models
+from smserver import exceptions
 
 class EnterRoomController(StepmaniaController):
     """ Enter room controller"""
@@ -15,54 +16,34 @@ class EnterRoomController(StepmaniaController):
     require_login = True
 
     def handle(self):
+        room_resource = RoomResource(self.server, self.conn.token, self.session)
+
         if self.packet["enter"] == 0:
+            room_resource.leave()
             self.send(models.Room.smo_list(self.session, self.active_users))
-            self.conn.room = None
-            for user in self.active_users:
-                user.room = None
 
             return
 
-        room = models.Room.login(self.packet["room"], self.packet["password"], self.session)
-
-        if not self._can_enter_room(room):
-            return
+        try:
+            room = room_resource.login(self.packet["room"], self.packet["password"])
+        except exceptions.Forbidden:
+            self.send_message(
+                "Unauthorized to enter in the room {name}".format(
+                    name=with_color(self.packet["name"])
+                )
+            )
+        except exceptions.Unauthorized:
+            self.send_message(
+                "The room {name} is full".format(
+                    name=with_color(self.packet["name"])
+                )
+            )
 
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()
         ))
 
-        if self.conn.room == room.id:
-            return
-
-        self.server.leave_room(self.room, self.conn.token)
-        self.server.enter_room(room, self.conn.token)
-
         self.send_room_resume(self.server, self.conn, room)
-
-    def _can_enter_room(self, room):
-        if not room:
-            self.log.info(
-                "Player %s fail to enter in room %s" % (self.conn.ip, self.packet["room"]))
-            return False
-
-        if models.Ban.is_ban(self.session, ip=self.conn.ip, room_id=room.id):
-            self.log.info("Ban ip %s fail to enter in room %s" % (self.conn.ip, room.name))
-            self.send_message("IP %s is ban from this room." % (with_color(self.conn.ip)), to="me")
-            return False
-
-        for user in self.active_users:
-            if models.Ban.is_ban(self.session, user_id=user.id, room_id=room.id):
-                self.log.info("Ban player %s fail to enter in room %s", user.name, room.name)
-                self.send_message("Player %s is ban from this room." % (user.fullname_colored()), to="me")
-                return False
-
-        if room.nb_players >= room.max_users:
-            self.log.info("Player %s can't enter in room %s, the room is full", self.user_repr(room.id), room.name)
-            self.send_message("Room %s is full (%s/%s) players" % (with_color(room.name), room.nb_players, room.max_users), to="me")
-            return False
-
-        return True
 
     @staticmethod
     def send_room_resume(server, conn, room):

@@ -117,7 +117,7 @@ class User(schema.Base):
         if priv:
             return priv.level
 
-        return 0
+        return 1
 
     def room_privilege(self, room_id):
         if room_id in self._room_level:

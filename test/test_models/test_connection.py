@@ -1,11 +1,12 @@
 """ Module to test connection model """
 
-
 import sqlalchemy
 
+from smserver import ability
 from smserver import models
 
 from test.factories.connection_factory import ConnectionFactory
+from test.factories.user_factory import user_with_room_privilege, UserFactory
 from test import utils
 
 class ConnectionTest(utils.DBTest):
@@ -46,3 +47,43 @@ class ConnectionTest(utils.DBTest):
 
         with self.assertRaises(sqlalchemy.exc.IntegrityError):
             models.Connection.create(self.session, ip="aaa")
+
+
+    def test_active_users(self):
+        """ Test getting the active users in a connection """
+        conn = ConnectionFactory()
+        self.assertEqual(conn.active_users, [])
+
+        user1 = UserFactory(connection=conn, online=True)
+        user2 = UserFactory(connection=conn, online=False)
+
+        self.assertEqual(conn.active_users, [user1])
+
+        user3 = UserFactory(connection=conn, online=True)
+
+        self.assertEqual(len(conn.active_users), 2)
+        self.assertIn(user1, conn.active_users)
+        self.assertIn(user3, conn.active_users)
+        self.assertNotIn(user2, conn.active_users)
+
+    def test_level(self):
+        """ Test getting the level of a connection  """
+
+        conn = ConnectionFactory()
+        self.assertEqual(conn.level(), 0)
+
+        user = user_with_room_privilege(level=2, connection=conn, online=True)
+        room = user.room
+        user_with_room_privilege(level=5, connection=conn, online=False, room=room)
+
+        self.assertEqual(conn.level(room.id), 2)
+
+    def test_can(self):
+        """ Test connection can """
+
+        conn = ConnectionFactory()
+        self.assertEqual(conn.can(ability.Permissions.delete_room), False)
+
+        user = user_with_room_privilege(level=10, connection=conn, online=True)
+        room = user.room
+        self.assertEqual(conn.can(ability.Permissions.delete_room, room.id), True)

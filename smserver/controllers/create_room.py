@@ -1,7 +1,5 @@
 """ Create room controller module """
 
-import hashlib
-
 from smserver.smutils.smpacket import smpacket
 from smserver.smutils.smpacket import smcommand
 
@@ -9,7 +7,9 @@ from smserver.chathelper import with_color
 
 from smserver.stepmania_controller import StepmaniaController
 from smserver.controllers import enter_room
-from smserver import models
+from smserver.resources.room_resource import RoomResource
+from smserver import exceptions
+
 
 class CreateRoomController(StepmaniaController):
     """ Create Room controller"""
@@ -18,32 +18,31 @@ class CreateRoomController(StepmaniaController):
     require_login = True
 
     def handle(self):
-        room = self.session.query(models.Room).filter_by(name=self.packet["title"]).first()
-        if room:
-            self.send_message("The room %s already exist! Try another name." % (with_color(self.packet["title"])))
+        room_resource = RoomResource(self.server, self.conn.token, self.session)
+
+        try:
+            room = room_resource.create(
+                name=self.packet["title"],
+                password=self.packet["password"],
+                description=self.packet["description"],
+                type_=1
+            )
+        except exceptions.Forbidden:
+            self.send_message(
+                "Unauthorized to create the room {name}".format(
+                    name=with_color(self.packet["title"])
+                )
+            )
+            return
+        except exceptions.ValidationError:
+            self.send_message(
+                "The room {name} already exist!".format(
+                    name=with_color(self.packet["title"])
+                )
+            )
             return
 
-        room = models.Room(
-            name=self.packet["title"],
-            description=self.packet["description"],
-            type=self.packet["type"],
-            password=hashlib.sha256(self.packet["password"].encode('utf-8')).hexdigest() if self.packet["password"] else None,
-            status=1,
-        )
-        self.session.add(room)
-        self.session.commit()
-
-        self.log.info("New room %s created by player %s" % (room.name, self.conn.ip))
-
-        if self.room:
-            self.server.leave_room(self.room, self.conn.token)
-
-        self.connection.room = room
-        self.server.add_to_room(self.conn.token, room.id)
-        for user in self.active_users:
-            user.room = room
-            user.set_level(room.id, 10)
-            self.log.info("Player %s enter in room %s" % (user.name, room.name))
+        room_resource.enter(room)
 
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()

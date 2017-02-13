@@ -1,5 +1,9 @@
 """ Module to test room model """
 
+import hashlib
+
+from smserver import models
+
 from test.factories.user_factory import UserFactory, user_with_room_privilege
 from test.factories.room_factory import RoomFactory
 from test import utils
@@ -20,7 +24,6 @@ class RoomTest(utils.DBTest):
 
     def test_online_users(self):
         """ Test getting the online users in the room """
-
 
         room = RoomFactory()
 
@@ -50,3 +53,68 @@ class RoomTest(utils.DBTest):
         self.assertEqual(len(moderators), 2)
         self.assertIn(mod1, moderators)
         self.assertIn(mod2, moderators)
+
+    def test_is_full(self):
+        """ Test checking if the room is full """
+
+        room = RoomFactory(max_users=2)
+        self.assertEqual(room.is_full(), False)
+
+        UserFactory(room=room, online=True)
+        UserFactory(room=room, online=True)
+        self.session.commit()
+        self.assertEqual(room.is_full(), True)
+
+
+    def test_login(self):
+        """ Test login in a room """
+
+        self.assertIsNone(
+            models.Room.login("name", "pass", self.session)
+        )
+
+        room = RoomFactory(name="Room 1")
+
+        self.assertEqual(
+            models.Room.login("Room 1", None, self.session),
+            room
+        )
+
+        password = hashlib.sha256("pass".encode('utf-8')).hexdigest()
+        room = RoomFactory(name="Room 2", password=password)
+
+        self.assertIsNone(
+            models.Room.login("Room 2", "Wrong password", self.session)
+        )
+
+        self.assertEqual(
+            models.Room.login("Room 2", "pass", self.session),
+            room
+        )
+
+    def test_available_rooms(self):
+        """ Test getting the available rooms for a given user """
+
+        self.assertEqual(models.Room.available_rooms(self.session).count(), 0)
+
+        room = RoomFactory(hidden=False, name="Room classic")
+        room_hidden = RoomFactory(hidden=True, name="Room hidden")
+        user = UserFactory(rank=5)
+
+        rooms = list(models.Room.available_rooms(self.session, user))
+
+        self.assertEqual(len(rooms), 2)
+        self.assertIn(room, rooms)
+        self.assertIn(room_hidden, rooms)
+
+        user = UserFactory()
+        rooms = list(models.Room.available_rooms(self.session, user))
+        self.assertEqual(len(rooms), 1)
+        self.assertIn(room, rooms)
+        self.assertNotIn(room_hidden, rooms)
+
+        user2 = user_with_room_privilege(room=room_hidden, level=2)
+        rooms = list(models.Room.available_rooms(self.session, user2))
+        self.assertEqual(len(rooms), 2)
+        self.assertIn(room, rooms)
+        self.assertIn(room_hidden, rooms)

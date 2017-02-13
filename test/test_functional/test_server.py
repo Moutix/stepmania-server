@@ -65,7 +65,6 @@ class ServerTest(UserFunctionalTest):
         ).json)
 
         self.assertIsNone(self.json_connection.room)
-
     def test_json_fail_enter_room_wrong_password(self):
         """ Json client try to enter in a room with the wrong password """
         self.test_client_bin_room_creation()

@@ -204,11 +204,13 @@ class Room(schema.Base):
 
         return (session
                 .query(cls)
-                .join(privilege.Privilege)
+                .outerjoin(privilege.Privilege)
                 .filter(or_(
-                    cls.hidden == False,
                     and_(
-                        cls.hidden == True,
+                        cls.hidden == False, #pylint: disable=singleton-comparison
+                    ),
+                    and_(
+                        cls.hidden == True, #pylint: disable=singleton-comparison
                         or_(*query_privileges)
                     )
                 )))

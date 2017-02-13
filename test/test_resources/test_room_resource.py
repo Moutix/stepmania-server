@@ -5,6 +5,7 @@ import hashlib
 import mock
 
 from smserver import exceptions
+from smserver import models
 from smserver.resources.room_resource import RoomResource
 
 from test.factories.user_factory import UserFactory, user_with_room_privilege
@@ -56,6 +57,45 @@ class RoomResourceTest(base.ResourceTest):
         self.assertEqual(room.password, password)
         self.assertEqual(room.name, "Room 1")
 
+    def test_delete(self):
+        """ Test delete a room """
+
+        room = RoomFactory()
+
+        with self.assertRaises(exceptions.Forbidden):
+            self.resource.delete(room.id)
+
+        user_with_room_privilege(
+            room=room,
+            level=10,
+            online=True,
+            connection=self.connection
+        )
+
+        self.assertEqual(self.session.query(models.Room).get(room.id), room)
+        self.assertTrue(self.resource.delete(room.id))
+        self.assertIsNone(self.session.query(models.Room).get(room.id))
+
+    @mock.patch("smserver.models.room.Room.available_rooms")
+    def test_list(self, available_rooms):
+        """ Test listing the rooms """
+
+        self.assertEqual(list(self.resource.list()), [])
+        available_rooms.assert_not_called()
+
+        room = RoomFactory()
+        user = UserFactory(connection=self.connection, online=True)
+
+        available_rooms.return_value = [room]
+
+        rooms = self.resource.list()
+        self.assertEqual(rooms, [room])
+
+        available_rooms.assert_called_with(
+            session=self.session,
+            users=[user]
+        )
+
     def test_get_room(self):
         """ Test getting a room given his ID """
 
@@ -64,6 +104,33 @@ class RoomResourceTest(base.ResourceTest):
 
         room = RoomFactory()
         self.assertEqual(room, self.resource.get(room.id))
+
+    @mock.patch("smserver.resources.room_resource.RoomResource.enter")
+    def test_login(self, enter_room):
+        """ Test login in a room """
+
+        with self.assertRaises(exceptions.Forbidden):
+            self.resource.login("name", "pass")
+
+        enter_room.assert_not_called()
+
+        room = RoomFactory(name="Room 1")
+        enter_room.return_value = room
+
+        self.assertEqual(self.resource.login("Room 1"), room)
+        enter_room.assert_called_with(room)
+
+        enter_room.reset_mock()
+
+        password = hashlib.sha256("pass".encode('utf-8')).hexdigest()
+        room = RoomFactory(name="Room 2", password=password)
+        enter_room.return_value = room
+
+        with self.assertRaises(exceptions.Forbidden):
+            self.resource.login("Room 2", password="Wrong password")
+
+        self.assertEqual(self.resource.login("Room 2", password="pass"), room)
+        enter_room.assert_called_with(room)
 
     @mock.patch("smserver.server.StepmaniaServer.add_to_room")
     @mock.patch("smserver.server.StepmaniaServer.del_from_room")

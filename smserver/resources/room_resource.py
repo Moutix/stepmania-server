@@ -43,13 +43,25 @@ class RoomResource(base.BaseResource):
 
         return room
 
-    def delete(self):
+    def delete(self, room_id):
         """ Delete the room """
-        pass
+
+        if not self.connection.can(ability.Permissions.delete_room, room_id):
+            raise exceptions.Forbidden(self.token, "Delete room %s" % room_id)
+
+        res = self.session.query(models.Room).filter_by(id=room_id).delete()
+        return res > 0
 
     def list(self):
-        """ List all the room """
-        pass
+        """ List all the room available """
+
+        if not self.connection.active_users:
+            return []
+
+        return models.Room.available_rooms(
+            session=self.session,
+            users=self.connection.active_users
+        )
 
     def get(self, room_id):
         """ Get the details of a room """
@@ -59,6 +71,15 @@ class RoomResource(base.BaseResource):
             raise exceptions.NotFound(self.token, "Room %s don't exist" % room_id)
 
         return room
+
+    def login(self, name, password=None):
+        """ Login into a room with name and password """
+
+        room = models.Room.login(name, password, self.session)
+        if not room:
+            raise exceptions.Forbidden(self.token, "Invalid name/password couple")
+
+        return self.enter(room)
 
     def enter(self, room):
         """ Enter in a room """
@@ -74,6 +95,7 @@ class RoomResource(base.BaseResource):
             self.serv.del_from_room(self.token, old_room.id)
             self.log.info("%s leave the room %s", self.token, old_room.id)
 
+
         self.connection.room = room
         self.connection.song = None
 
@@ -88,6 +110,8 @@ class RoomResource(base.BaseResource):
         self.log.info("%s enter in room %s", self.token, room.id)
 
         self.serv.add_to_room(self.token, room.id)
+
+        return room
 
     def leave(self):
         """ Leave a room """

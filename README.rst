@@ -9,7 +9,7 @@ Stepmania Server
     * - docs
       - |docs|
     * - tests
-      - | |travis| |appveyor|
+      - | |travis| |appveyor| |coverall|
     * - package
       - |version| |supported-versions| |license|
 
@@ -36,6 +36,10 @@ Stepmania Server
 .. |license| image:: https://img.shields.io/pypi/l/smserver.svg?style=flat
     :alt: License
     :target: https://pypi.python.org/pypi/smserver
+
+.. |coverall| image:: https://coveralls.io/repos/github/ningirsu/stepmania-server/badge.svg?branch=master
+    :alt: Coverage
+    :target: https://coveralls.io/github/ningirsu/stepmania-server?branch=master
 
 .. end-badges
 

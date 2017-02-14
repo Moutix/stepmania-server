@@ -2,8 +2,6 @@
 
 import hashlib
 
-import mock
-
 from smserver import exceptions
 from smserver import models
 from smserver.resources.user_resource import UserResource

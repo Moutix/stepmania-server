@@ -80,4 +80,3 @@ class GameOverController(StepmaniaController):
         self.session.commit()
 
         return songstat
-

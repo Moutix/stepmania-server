@@ -236,8 +236,13 @@ class ServerTest(UserFunctionalTest):
 
         self.client_bin.on_data(packet.binary)
 
+        songstats = self.client_bin.songstats
+
         self.assertTrue(self.client_bin.wait_start)
         self.assertFalse(self.client_bin.ingame)
+
+        self.assertEqual(songstats[0]["difficulty"], 3)
+        self.assertEqual(songstats[1]["difficulty"], 4)
 
     def test_client_json_game_start_request(self):
         """
@@ -259,3 +264,52 @@ class ServerTest(UserFunctionalTest):
         self.assertFalse(self.client_json.wait_start)
         self.assertTrue(self.client_bin.ingame)
         self.assertTrue(self.client_json.ingame)
+
+
+    def test_client_bin_game_status_update(self):
+        """ Client-bin send a game status update package """
+
+        self.test_client_json_game_start_request()
+        packet = smpacket.SMPacketClientNSCGSU(
+            player_id=0,
+            step_id=4,
+            grade=3,
+            score=50000,
+            combo=1,
+            health=50,
+            offset=20000,
+        )
+
+        self.client_bin.on_data(packet.binary)
+
+        songstats = self.client_bin.songstats
+
+        self.assertEqual(len(songstats[0]["data"]), 1)
+        self.assertEqual(songstats[0]["data"][0]["stepid"], 4)
+        self.assertEqual(songstats[0]["data"][0]["grade"], 3)
+        self.assertEqual(songstats[0]["data"][0]["score"], 50000)
+        self.assertEqual(songstats[0]["data"][0]["combo"], 1)
+        self.assertEqual(songstats[0]["data"][0]["health"], 50)
+
+        self.client_bin.on_data(packet.binary)
+        self.assertEqual(len(songstats[0]["data"]), 2)
+
+    def test_client_bin_game_over(self):
+        """ Test seding a game over packet for client bin """
+
+        self.test_client_bin_game_status_update()
+
+        packet = smpacket.SMPacketClientNSCGON()
+        self.client_bin.on_data(packet.binary)
+
+        self.assertFalse(self.client_bin.ingame)
+        self.assertEqual(self.client_bin.songstats[0]["data"], [])
+        self.assertEqual(self.client_bin.songstats[1]["data"], [])
+        self.assertIsNone(self.client_bin.song)
+
+        songstats = list(self.session.query(models.SongStat).filter_by(user=self.user_bin1))
+        self.assertEqual(len(songstats), 1)
+
+        self.assertEqual(songstats[0].score, 50000)
+        self.assertEqual(songstats[0].grade, 3)
+        self.assertEqual(songstats[0].max_combo, 1)

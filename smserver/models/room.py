@@ -235,7 +235,7 @@ class Room(schema.Base):
                     cls.password.isnot(None),
                     cls.password == password
                 )))
-            .first()
+            .one_or_none()
             )
 
     @classmethod

@@ -42,7 +42,7 @@ class User(schema.Base):
 
     id                = Column(Integer, primary_key=True)
     pos               = Column(Integer)
-    name              = Column(String(255))
+    name              = Column(String(255), unique=True, index=True)
     password          = Column(String(255))
     email             = Column(String(255))
     rank              = Column(Integer, default=1)

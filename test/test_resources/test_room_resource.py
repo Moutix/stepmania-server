@@ -149,6 +149,7 @@ class RoomResourceTest(base.ResourceTest):
 
         add_to_room.reset_mock()
 
+        # Change of room
         room2 = RoomFactory()
         self.resource.enter(room2)
 
@@ -157,11 +158,18 @@ class RoomResourceTest(base.ResourceTest):
         del_from_room.assert_called_with(self.token, room.id)
         add_to_room.assert_called_with(self.token, room2.id)
 
+        # User reenter in the same room
+        self.resource.enter(room2)
+
+        self.assertEqual(self.connection.room, room2)
+        self.assertEqual(user.room, room2)
+        del_from_room.assert_called_with(self.token, room2.id)
+        add_to_room.assert_called_with(self.token, room2.id)
+
     @mock.patch("smserver.server.StepmaniaServer.add_to_room")
     @mock.patch("smserver.server.StepmaniaServer.del_from_room")
     def test_enter_room_unauthorized(self, del_from_room, add_to_room):
         """ Test enter in a room """
-
 
         room = RoomFactory()
         # No user unauthorized

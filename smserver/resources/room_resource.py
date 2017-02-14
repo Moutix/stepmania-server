@@ -77,7 +77,7 @@ class RoomResource(base.BaseResource):
 
         room = models.Room.login(name, password, self.session)
         if not room:
-            raise exceptions.Forbidden(self.token, "Invalid name/password couple")
+            raise exceptions.Forbidden(self.token, "Invalid name or password")
 
         return self.enter(room)
 

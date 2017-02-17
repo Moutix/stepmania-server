@@ -231,11 +231,8 @@ class Room(schema.Base):
             .filter_by(name=name)
             .filter(or_(
                 cls.password.is_(None),
-                and_(
-                    cls.password.isnot(None),
-                    cls.password == password
-                )))
-            .one_or_none()
+                cls.password == password
+            )).one_or_none()
             )
 
     @classmethod

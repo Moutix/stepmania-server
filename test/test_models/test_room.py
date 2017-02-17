@@ -73,13 +73,19 @@ class RoomTest(utils.DBTest):
             models.Room.login("name", "pass", self.session)
         )
 
+        # Room without password
         room = RoomFactory(name="Room 1")
 
         self.assertEqual(
             models.Room.login("Room 1", None, self.session),
             room
         )
+        self.assertEqual(
+            models.Room.login("Room 1", "password", self.session),
+            room
+        )
 
+        # Room with password
         password = hashlib.sha256("pass".encode('utf-8')).hexdigest()
         room = RoomFactory(name="Room 2", password=password)
 

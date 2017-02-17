@@ -29,7 +29,6 @@ class StepmaniaConn(object):
 
         self.token = uuid.uuid4().hex
 
-        self.users = []
         self.room = None
 
         self.songs = {}
@@ -43,8 +42,8 @@ class StepmaniaConn(object):
         self.chat_timestamp = False
 
         self.last_ping = datetime.datetime.now()
-        self.stepmania_version = None
-        self.stepmania_name = None
+        self.client_version = None
+        self.client_name = None
 
     def run(self):
         """ Start to listen for incomming data """

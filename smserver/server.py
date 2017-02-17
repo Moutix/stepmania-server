@@ -249,30 +249,32 @@ class StepmaniaServer(smthread.StepmaniaServer):
             :type serv: smserver.smutils.smconn.StepmaniaConn
         """
 
-        room_id = conn.room
+        connection = models.Connection.by_token(conn.token, session)
+
+        room = connection.room
         smthread.StepmaniaServer.on_disconnect(self, conn)
 
-        models.Connection.remove(conn.token, session)
 
         self.send_sd_running_status()
 
-        users = models.User.online_from_ids(conn.users, session)
+        users = connection.active_users
         if not users:
             self.log.info("Player %s disconnected", conn.ip)
-            return
 
         for user in users:
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected", user.name)
 
-        if room_id:
-            room = session.query(models.Room).get(room_id)
+        if room:
             self.send_message(
-                "%s disconnected" % models.User.colored_users_repr(users, room_id),
+                "%s disconnected" % models.User.colored_users_repr(users, room.id),
                 room=room
             )
 
             self.send_user_list(room)
+
+        models.Connection.remove(conn.token, session)
+
 
     def send_user_list(self, room):
         """

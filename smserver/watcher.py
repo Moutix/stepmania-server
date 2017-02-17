@@ -148,8 +148,9 @@ class StepmaniaWatcher(Thread):
     def send_scoreboard(self, room, session):
         scores = []
         for conn in self.server.ingame_connections(room.id):
-            with conn.mutex:
-                for user in models.User.online_from_ids(conn.users, session):
+            connection = models.Connection.by_token(conn.token, session)
+            for user in connection.active_users:
+                with conn.mutex:
                     if user.pos not in conn.songstats:
                         continue
 

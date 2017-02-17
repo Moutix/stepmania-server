@@ -15,7 +15,8 @@ class UserFactory(base.BaseFactory):
     name = factory.Sequence(lambda n: "User %s" % (n+1))
     rank = 1
 
-    stepmania_version = "123"
+    client_version = "123"
+    client_name = "Socka"
 
     @classmethod
     def _after_postgeneration(cls, obj, _create, _results):

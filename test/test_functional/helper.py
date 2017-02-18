@@ -135,21 +135,21 @@ class UserFunctionalTest(ConnectedFunctionalTest):
         self.client_bin.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientbin-user1",
-                password="test",
+                password="testtest",
                 player_number=0
             )
         ).binary)
         self.client_bin.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientbin-user2",
-                password="test",
+                password="testtest",
                 player_number=1
             )
         ).binary)
         self.client_json.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientjson-user1",
-                password="test",
+                password="testtest",
                 player_number=0
             )
         ).json)

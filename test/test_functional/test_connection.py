@@ -29,8 +29,8 @@ class ConnectionTest(FunctionalTest):
             smpacket.SMPacketClientNSCHello(name="stepmania-binary", version=40).binary
         )
 
-        self.assertEqual(self.client_bin.stepmania_name, "stepmania-binary")
-        self.assertEqual(self.client_bin.stepmania_version, 40)
+        self.assertEqual(self.client_bin.client_name, "stepmania-binary")
+        self.assertEqual(self.client_bin.client_version, 40)
 
         self.assertBinSend(smpacket.SMPacketServerNSCHello)
 
@@ -41,7 +41,7 @@ class ConnectionTest(FunctionalTest):
             smpacket.SMPacketClientNSCHello(name="stepmania-json", version=41).json
         )
 
-        self.assertEqual(self.client_json.stepmania_name, "stepmania-json")
-        self.assertEqual(self.client_json.stepmania_version, 41)
+        self.assertEqual(self.client_json.client_name, "stepmania-json")
+        self.assertEqual(self.client_json.client_version, 41)
 
         self.assertJSONSend(smpacket.SMPacketServerNSCHello)

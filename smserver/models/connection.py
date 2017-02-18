@@ -17,23 +17,26 @@ class Connection(schema.Base):
 
     __tablename__ = 'connections'
 
-    id          = Column(Integer, primary_key=True)
-    token       = Column(String(255), index=True, unique=True, nullable=False)
+    id             = Column(Integer, primary_key=True)
+    token          = Column(String(255), index=True, unique=True, nullable=False)
 
-    ip          = Column(String(255))
-    port        = Column(Integer)
+    ip             = Column(String(255))
+    port           = Column(Integer)
 
-    users       = relationship("User", back_populates="connection")
+    client_name    = Column(String(255))
+    client_version = Column(String(255))
 
-    room_id     = Column(Integer, ForeignKey('rooms.id'))
-    room        = relationship("Room", back_populates="connections")
+    users          = relationship("User", back_populates="connection")
 
-    song_id     = Column(Integer, ForeignKey('songs.id'))
-    song        = relationship("Song")
+    room_id        = Column(Integer, ForeignKey('rooms.id'))
+    room           = relationship("Room", back_populates="connections")
 
-    created_at  = Column(DateTime, default=datetime.datetime.now)
-    updated_at  = Column(DateTime, onupdate=datetime.datetime.now)
-    close_at    = Column(DateTime)
+    song_id        = Column(Integer, ForeignKey('songs.id'))
+    song           = relationship("Song")
+
+    created_at     = Column(DateTime, default=datetime.datetime.now)
+    updated_at     = Column(DateTime, onupdate=datetime.datetime.now)
+    close_at       = Column(DateTime)
 
     def __repr__(self):
         return "<Connection #%s (ip='%s', port='%s')>" % (
@@ -42,7 +45,7 @@ class Connection(schema.Base):
     @property
     def alive(self):
         """ Return true if the connection is still active """
-        return bool(self.close_at)
+        return not bool(self.close_at)
 
     @classmethod
     def remove(cls, token, session):

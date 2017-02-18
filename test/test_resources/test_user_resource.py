@@ -63,6 +63,11 @@ class UserResourceTest(base.ResourceTest):
 
         self.assertEqual(user, self.resource.login("User 1", "Password"))
 
+        models.Ban.ban(session=self.session, user_id=user.id)
+        # User Ban
+        with self.assertRaises(exceptions.Forbidden):
+            self.resource.login("User 1", "Password")
+
     def test_login_or_create(self):
         """ Test login or create an User"""
 
@@ -89,3 +94,53 @@ class UserResourceTest(base.ResourceTest):
         self.assertEqual(user2, self.session.query(models.User).filter_by(name="User 2").first())
         self.assertEqual(user2.password, password)
         self.assertEqual(user2.rank, 1)
+
+    def test_connection(self):
+        """ Test user connection """
+
+        user = UserFactory(online=True)
+        with self.assertRaises(exceptions.Unauthorized):
+            self.resource.connect(user, pos=0)
+
+        user = UserFactory()
+        self.server.config.server["max_users"] = -1
+
+        self.assertEqual(self.resource.connect(user, pos=1), user)
+        self.assertEqual(user.pos, 1)
+        self.assertTrue(user.online)
+        self.assertEqual(user.connection, self.connection)
+        self.assertIsNone(user.room)
+
+        self.resource.connect(user, pos=0)
+        self.assertEqual(user.pos, 0)
+        self.assertTrue(user.online)
+        self.assertEqual(user.connection, self.connection)
+        self.assertIsNone(user.room)
+
+
+        user2 = UserFactory()
+
+        self.server.config.server["max_users"] = 1
+        with self.assertRaises(exceptions.Unauthorized):
+            self.resource.connect(user, pos=1)
+
+        self.server.config.server["max_users"] = -1
+
+        # User2 connect in a new position
+        self.resource.connect(user2, pos=1)
+        self.assertEqual(user2.pos, 1)
+        self.assertTrue(user2.online)
+        self.assertEqual(user2.connection, self.connection)
+        self.assertIsNone(user2.room)
+        self.assertEqual(len(self.connection.active_users), 2)
+
+        # User2 connect at the user1 position
+        self.resource.connect(user2, pos=0)
+        self.assertEqual(user2.pos, 0)
+        self.assertTrue(user2.online)
+        self.assertFalse(user.online)
+        self.assertEqual(user2.connection, self.connection)
+        self.assertIsNone(user2.room)
+
+        self.assertEqual(len(self.connection.users), 2)
+        self.assertEqual(len(self.connection.active_users), 1)

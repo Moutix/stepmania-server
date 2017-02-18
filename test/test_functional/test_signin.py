@@ -13,7 +13,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.client_bin.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientbin-user1",
-                password="test",
+                password="testtest",
                 player_number=0
             )
         ).binary)
@@ -25,8 +25,8 @@ class SigninTest(ConnectedFunctionalTest):
         self.assertEqual(user.last_ip, self.client_bin.ip)
         self.assertIsNone(user.room)
         self.assertEqual(user.pos, 0)
+        self.assertIn(user, self.bin_connection.users)
 
-        self.assertIn(user.id, self.client_bin.users)
     def test_client_bin_sign_in_wrong_password(self):
         """ Login with a wrong password """
 
@@ -48,7 +48,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.assertIsNone(user.room)
         self.assertEqual(user.pos, 0)
 
-        self.assertIn(user.id, self.client_bin.users)
+        self.assertIn(user, self.bin_connection.users)
 
     def test_client_bin_sign_in_second_user(self):
         """ First time login for clientbin-user2, the user is created """
@@ -58,7 +58,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.client_bin.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientbin-user2",
-                password="test",
+                password="testtest",
                 player_number=1
             )
         ).binary)
@@ -70,7 +70,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.assertIsNone(user.room)
         self.assertEqual(user.pos, 1)
 
-        self.assertIn(user.id, self.client_bin.users)
+        self.assertIn(user, self.bin_connection.users)
 
     def test_client_bin_logout_user(self):
         """ Player select only one profile, we disconnect the player 1"""
@@ -117,7 +117,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.client_json.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientjson-user1",
-                password="test",
+                password="testtest",
                 player_number=0
             )
         ).json)
@@ -130,7 +130,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.assertIsNone(user.room)
         self.assertEqual(user.pos, 0)
 
-        self.assertIn(user.id, self.client_json.users)
+        self.assertIn(user, self.json_connection.users)
 
 
     def test_json_sign_in_with_same_user(self):
@@ -141,7 +141,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.client_json.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientjson-user1",
-                password="test",
+                password="testtest",
                 player_number=1
             )
         ).json)
@@ -153,8 +153,8 @@ class SigninTest(ConnectedFunctionalTest):
         self.assertIsNone(user.room)
         self.assertEqual(user.pos, 1)
 
-        self.assertIn(user.id, self.client_json.users)
-        self.assertEqual(len(self.client_json.users), 1)
+        self.assertIn(user, self.json_connection.users)
+        self.assertEqual(len(self.json_connection.users), 1)
 
     def test_json_sign_in_second_user(self):
         """ A second user sign in the free pos"""
@@ -164,7 +164,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.client_json.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientjson-user2",
-                password="test",
+                password="testtest",
                 player_number=0
             )
         ).json)
@@ -176,9 +176,9 @@ class SigninTest(ConnectedFunctionalTest):
         self.assertIsNone(user.room)
         self.assertEqual(user.pos, 0)
 
-        self.assertIn(user.id, self.client_json.users)
+        self.assertIn(user, self.json_connection.users)
 
-        self.assertEqual(len(self.client_json.users), 2)
+        self.assertEqual(len(self.json_connection.users), 2)
 
     def test_json_sign_in_third_user(self):
         """ A third user connect in a pos already taken """
@@ -189,7 +189,7 @@ class SigninTest(ConnectedFunctionalTest):
         self.client_json.on_data(smpacket.SMPacketClientNSSMONL(
             packet=smpacket.SMOPacketClientLogin(
                 username="clientjson-user3",
-                password="test",
+                password="testtest",
                 player_number=1
             )
         ).json)
@@ -202,8 +202,9 @@ class SigninTest(ConnectedFunctionalTest):
         self.assertIsNone(user3.room)
         self.assertEqual(user3.pos, 1)
 
-        self.assertIn(user3.id, self.client_json.users)
+        self.assertIn(user3, self.json_connection.users)
 
-        self.assertEqual(len(self.client_json.users), 3)
+        self.assertEqual(len(self.json_connection.users), 3)
+        self.assertEqual(len(self.json_connection.active_users), 2)
 
         self.assertFalse(user1.online)

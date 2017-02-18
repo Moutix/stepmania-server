@@ -40,32 +40,32 @@ class User(schema.Base):
         10: "~"
     }
 
-    id                = Column(Integer, primary_key=True)
-    pos               = Column(Integer)
-    name              = Column(String(255), unique=True, index=True)
-    password          = Column(String(255))
-    email             = Column(String(255))
-    rank              = Column(Integer, default=1)
-    xp                = Column(Integer, default=0)
-    last_ip           = Column(String(255))
-    stepmania_version = Column(Integer)
-    stepmania_name    = Column(String(255))
-    online            = Column(Boolean)
-    status            = Column(Integer, default=1)
-    chat_timestamp    = Column(Boolean, default=False)
+    id               = Column(Integer, primary_key=True)
+    pos              = Column(Integer)
+    name             = Column(String(255), unique=True, index=True)
+    password         = Column(String(255))
+    email            = Column(String(255))
+    rank             = Column(Integer, default=1)
+    xp               = Column(Integer, default=0)
+    last_ip          = Column(String(255))
+    client_version   = Column(Integer)
+    client_name      = Column(String(255))
+    online           = Column(Boolean)
+    status           = Column(Integer, default=1)
+    chat_timestamp   = Column(Boolean, default=False)
 
-    room_id           = Column(Integer, ForeignKey('rooms.id'))
-    room              = relationship("Room", back_populates="users")
+    room_id          = Column(Integer, ForeignKey('rooms.id'))
+    room             = relationship("Room", back_populates="users")
 
-    connection_token  = Column(Integer, ForeignKey('connections.token'))
-    connection        = relationship("Connection", back_populates="users")
+    connection_token = Column(Integer, ForeignKey('connections.token'))
+    connection       = relationship("Connection", back_populates="users")
 
-    song_stats        = relationship("SongStat", back_populates="user")
-    privileges        = relationship("Privilege", back_populates="user")
-    bans              = relationship("Ban", back_populates="user")
+    song_stats       = relationship("SongStat", back_populates="user")
+    privileges       = relationship("Privilege", back_populates="user")
+    bans             = relationship("Ban", back_populates="user")
 
-    created_at        = Column(DateTime, default=datetime.datetime.now)
-    updated_at        = Column(DateTime, onupdate=datetime.datetime.now)
+    created_at       = Column(DateTime, default=datetime.datetime.now)
+    updated_at       = Column(DateTime, onupdate=datetime.datetime.now)
 
     @reconstructor
     def _init_on_load(self):
@@ -197,24 +197,6 @@ class User(schema.Base):
             cls.id.in_(ids),
             cls.pos == pos
         ).first()
-
-    @classmethod
-    def connect(cls, name, pos, session):
-        user = session.query(cls).filter_by(name=name).first()
-        if not user:
-            user = cls(name=name)
-            session.add(user)
-
-        if user.online:
-            raise AlreadyConnectError(user)
-
-        user.online = True
-        user.pos = pos
-
-        session.commit()
-
-        return user
-
 
     @classmethod
     def nb_onlines(cls, session):

@@ -15,7 +15,6 @@ from smserver import sdnotify
 from smserver import profiling
 
 from smserver.pluginmanager import PluginManager
-from smserver.authplugin import AuthPlugin
 from smserver.watcher import StepmaniaWatcher
 from smserver.chathelper import with_color
 from smserver.smutils import smthread
@@ -79,12 +78,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.log.debug("Load plugins...")
         self.sd_notify.status("Load plugins...")
-
-        self.auth = PluginManager.get_plugin(
-            'smserver.auth.%s' % config.auth["plugin"],
-            "AuthPlugin",
-            default=AuthPlugin)(self, config.auth["autocreate"])
-
 
         self.plugins = self._init_plugins()
         self.controllers = self._init_controllers()
@@ -163,10 +156,13 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.send_sd_running_status()
         self.sd_notify.ready()
 
-    def send_sd_running_status(self):
+    def send_sd_running_status(self, session=None):
         """ Send running status to systemd """
 
-        with self.db.session_scope() as session:
+        if not session:
+            with self.db.session_scope() as session:
+                nb_onlines = models.User.nb_onlines(session)
+        else:
             nb_onlines = models.User.nb_onlines(session)
 
         max_users = self.config.server.get("max_users", -1)
@@ -249,30 +245,32 @@ class StepmaniaServer(smthread.StepmaniaServer):
             :type serv: smserver.smutils.smconn.StepmaniaConn
         """
 
-        room_id = conn.room
+        connection = models.Connection.by_token(conn.token, session)
+
+        room = connection.room
         smthread.StepmaniaServer.on_disconnect(self, conn)
 
-        models.Connection.remove(conn.token, session)
 
         self.send_sd_running_status()
 
-        users = models.User.online_from_ids(conn.users, session)
+        users = connection.active_users
         if not users:
             self.log.info("Player %s disconnected", conn.ip)
-            return
 
         for user in users:
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected", user.name)
 
-        if room_id:
-            room = session.query(models.Room).get(room_id)
+        if room:
             self.send_message(
-                "%s disconnected" % models.User.colored_users_repr(users, room_id),
+                "%s disconnected" % models.User.colored_users_repr(users, room.id),
                 room=room
             )
 
             self.send_user_list(room)
+
+        models.Connection.remove(conn.token, session)
+
 
     def send_user_list(self, room):
         """

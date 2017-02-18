@@ -1,5 +1,7 @@
 """ Module to test connection model """
 
+import datetime
+
 import sqlalchemy
 
 from smserver import ability
@@ -11,6 +13,15 @@ from test import utils
 
 class ConnectionTest(utils.DBTest):
     """ test User model"""
+
+    def test_alive(self):
+        """ Test if a connectio is alive """
+
+        connection = ConnectionFactory()
+        self.assertTrue(connection.alive)
+
+        connection.close_at = datetime.datetime.utcnow()
+        self.assertFalse(connection.alive)
 
     def test_remove(self):
         """ Test remove connection """

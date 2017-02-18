@@ -1,3 +1,4 @@
+""" Ban model """
 
 import datetime
 
@@ -39,7 +40,11 @@ class Ban(schema.Base):
             ban = cls(user_id=user_id, room_id=room_id, ip=ip)
             session.add(ban)
 
-        ban.end_at = datetime.datetime.now() + duration if duration else None
+        if duration:
+            ban.end_at = datetime.datetime.utcnow() + datetime.timedelta(seconds=duration)
+        else:
+            ban.end_at = None
+
         if fixed:
             ban.fixed = fixed
 
@@ -60,7 +65,10 @@ class Ban(schema.Base):
         else:
             ban = session.query(cls).filter_by(user_id=user_id, room_id=room_id)
 
-        return ban.filter(or_(cls.end_at.is_(None), cls.end_at > datetime.datetime.now())).first()
+        return ban.filter(
+            or_(cls.end_at.is_(None),
+                cls.end_at > datetime.datetime.utcnow())
+            ).first()
 
     @classmethod
     def unban(cls, session, ip=None, user_id=None, room_id=None):
@@ -79,4 +87,3 @@ class Ban(schema.Base):
         """ Delete all the ban for the given room """
 
         return session.query(cls).filter_by(room_id=room_id, fixed=fixed).delete()
-

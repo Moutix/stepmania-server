@@ -45,7 +45,7 @@ class Connection(schema.Base):
     @property
     def alive(self):
         """ Return true if the connection is still active """
-        return bool(self.close_at)
+        return not bool(self.close_at)
 
     @classmethod
     def remove(cls, token, session):

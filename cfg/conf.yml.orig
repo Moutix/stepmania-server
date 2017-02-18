@@ -69,7 +69,6 @@ rooms:
 #          - user2
 
 auth:
-    plugin: "database"
     autocreate: True
 
 plugins:

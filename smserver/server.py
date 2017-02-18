@@ -15,7 +15,6 @@ from smserver import sdnotify
 from smserver import profiling
 
 from smserver.pluginmanager import PluginManager
-from smserver.authplugin import AuthPlugin
 from smserver.watcher import StepmaniaWatcher
 from smserver.chathelper import with_color
 from smserver.smutils import smthread
@@ -79,12 +78,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.log.debug("Load plugins...")
         self.sd_notify.status("Load plugins...")
-
-        self.auth = PluginManager.get_plugin(
-            'smserver.auth.%s' % config.auth["plugin"],
-            "AuthPlugin",
-            default=AuthPlugin)(self, config.auth["autocreate"])
-
 
         self.plugins = self._init_plugins()
         self.controllers = self._init_controllers()

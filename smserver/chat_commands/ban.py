@@ -90,4 +90,3 @@ class ChatUnBan(ChatPlugin):
 
         models.Ban.unban(serv.session, user_id=user.id, room_id=serv.conn.room)
         serv.send_message("User %s has been unban from this room" % user.fullname_colored(serv.conn.room))
-

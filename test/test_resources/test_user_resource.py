@@ -63,6 +63,11 @@ class UserResourceTest(base.ResourceTest):
 
         self.assertEqual(user, self.resource.login("User 1", "Password"))
 
+        models.Ban.ban(session=self.session, user_id=user.id)
+        # User Ban
+        with self.assertRaises(exceptions.Forbidden):
+            self.resource.login("User 1", "Password")
+
     def test_login_or_create(self):
         """ Test login or create an User"""
 

@@ -14,6 +14,14 @@ from test import utils
 class BanTest(utils.DBTest):
     """ test Ban model"""
 
+
+    def test_ban_repr(self):
+        """ Test Display Ban """
+
+        ban = BanFactory(ip="8.8.8.8")
+
+        self.assertEqual(str(ban), "<Ban #1 (ip='8.8.8.8', user_id='None', room_id='None'>")
+
     def test_find_ban(self):
         """ Test to find a ban """
 

@@ -22,7 +22,7 @@ def get_profile_path(path):
     else:
         new_path = os.path.dirname(path)
 
-    if os.access(path, os.W_OK):
+    if os.access(new_path, os.W_OK):
         return new_path
 
     new_path = tempfile.gettempdir()

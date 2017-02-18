@@ -163,10 +163,13 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.send_sd_running_status()
         self.sd_notify.ready()
 
-    def send_sd_running_status(self):
+    def send_sd_running_status(self, session=None):
         """ Send running status to systemd """
 
-        with self.db.session_scope() as session:
+        if not session:
+            with self.db.session_scope() as session:
+                nb_onlines = models.User.nb_onlines(session)
+        else:
             nb_onlines = models.User.nb_onlines(session)
 
         max_users = self.config.server.get("max_users", -1)

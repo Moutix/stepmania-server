@@ -112,6 +112,6 @@ class UserResource(base.BaseResource):
         user.client_name = self.connection.client_name
         user.client_version = self.connection.client_version
 
-        self.serv.send_sd_running_status()
+        self.serv.send_sd_running_status(session=self.session)
 
         return user

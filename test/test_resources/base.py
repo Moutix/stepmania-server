@@ -1,7 +1,6 @@
 """ Base test for stepmania resources """
 
 from smserver import server
-from smserver import conf
 
 from test import utils
 from test.factories.connection_factory import ConnectionFactory
@@ -14,7 +13,7 @@ class ResourceTest(utils.DBTest):
     def setUp(self):
         super().setUp()
 
-        self.server = server.StepmaniaServer(conf.Conf())
+        self.server = server.StepmaniaServer()
 
         self.connection = ConnectionFactory()
         self.token = self.connection.token

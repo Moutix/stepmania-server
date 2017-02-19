@@ -6,7 +6,7 @@ from smserver.smutils.smpacket import smcommand
 from smserver.chathelper import with_color
 
 from smserver.stepmania_controller import StepmaniaController
-from smserver.controllers import enter_room
+from smserver.controllers.legacy import enter_room
 from smserver.resources.room_resource import RoomResource
 from smserver import exceptions
 

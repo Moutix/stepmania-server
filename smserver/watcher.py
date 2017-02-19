@@ -12,7 +12,7 @@ import socket
 from smserver import models
 from smserver.smutils.smpacket import smpacket
 from smserver.chathelper import with_color
-from smserver.controllers.game_start_request import StartGameRequestController
+from smserver.controllers.legacy.game_start_request import StartGameRequestController
 
 class PeriodicMethods(object):
     """ Decorator to indicate the periodicity of a methods """

@@ -10,13 +10,7 @@ from smserver.chathelper import with_color, nick_color
 from smserver.models.privilege import Privilege
 from smserver import ability
 
-__all__ = ['UserStatus', 'User', 'AlreadyConnectError']
-
-
-class AlreadyConnectError(Exception):
-    def __init__(self, user):
-        self.user = user
-        super().__init__()
+__all__ = ['UserStatus', 'User']
 
 
 class UserStatus(enum.Enum):

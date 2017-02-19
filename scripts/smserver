@@ -11,7 +11,7 @@ from smserver import start_up
 def main():
     start_up.start_up(*sys.argv[1:])
 
-    serv = server.StepmaniaServer(conf.config)
+    serv = server.StepmaniaServer()
 
     try:
         signal.signal(signal.SIGTERM, lambda *_: sys.exit())

@@ -1,6 +1,6 @@
 """ Add the available models here. To have a nice interface """
 
-from smserver.models.user import User, UserStatus, AlreadyConnectError
+from smserver.models.user import User, UserStatus
 from smserver.models.room import Room
 from smserver.models.song import Song
 from smserver.models.song_stat import SongStat

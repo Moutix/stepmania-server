@@ -65,12 +65,16 @@ class DataBase(object):
         return self._session
 
     @contextmanager
-    def session_scope(self):
+    def session_scope(self, session=None):
         """
             Provide a transactional scope around a series of operations.
         """
 
-        session = self.session() #pylint: disable=not-callable
+        close_connection = False
+        if not session:
+            close_connection = True
+            session = self.session() #pylint: disable=not-callable
+
         try:
             yield session
             session.commit()
@@ -78,7 +82,8 @@ class DataBase(object):
             session.rollback()
             raise
         finally:
-            session.close()
+            if close_connection:
+                session.close()
 
     @property
     def _database_url(self):

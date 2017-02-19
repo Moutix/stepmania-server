@@ -31,6 +31,22 @@ class ServerTest(UserFunctionalTest):
         self.assertEqual(self.user_bin1.level(room.id), 10)
         self.assertEqual(self.user_bin2.level(room.id), 10)
 
+    def test_client_bin_user_screen(self):
+        """ Test client bin go to room_selection """
+
+        self.client_bin.on_data(smpacket.SMPacketClientNSSCSMS(
+            action=7
+        ).binary)
+
+        packet = self.get_smpacket_in(smpacket.SMPacketServerNSSMONL, self.client_bin.packet_send)
+        self.assertIsNotNone(packet)
+        self.assertIsInstance(packet["packet"], smpacket.SMOPacketServerRoomUpdate)
+
+        self.assertEqual(self.user_bin1.status, models.UserStatus.room_selection.value)
+        self.assertEqual(self.user_bin2.status, models.UserStatus.room_selection.value)
+
+
+
     def test_json_room_info(self):
         """ Display room information in room selection """
         self.test_client_bin_room_creation()

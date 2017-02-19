@@ -10,6 +10,7 @@ from smserver import database
 from smserver import conf
 from smserver import logger
 from smserver import models
+from smserver import router
 from smserver import sdnotify
 from smserver import profiling
 
@@ -75,8 +76,8 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.log.debug("Load plugins...")
         self.sd_notify.status("Load plugins...")
 
+        self.router = router.get_router()
         self.plugins = self._init_plugins()
-        self.controllers = self._init_controllers()
         self.chat_commands = self._init_chat_commands()
         self.log.debug("Plugins loaded")
 
@@ -144,7 +145,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.log.info("Reload plugins")
         self.plugins = self._init_plugins(True)
-        self.controllers = self._init_controllers(True)
         self.chat_commands = self._init_chat_commands(True)
 
         self.log.info("Plugins reloaded")
@@ -203,19 +203,12 @@ class StepmaniaServer(smthread.StepmaniaServer):
             and try to run every plugins.
         """
 
-        for controller in self.controllers.get(packet.command, []):
-            app = controller(self, serv, packet, session)
-
-            if app.require_login and not app.active_users:
-                self.log.info("Action forbidden %s for user %s", packet.command, serv.ip)
-                continue
-
-            try:
-                app.handle()
-            except Exception as err: #pylint: disable=broad-except
-                self.log.exception("Message %s %s %s",
-                                   type(controller).__name__, controller.__module__, err)
-            session.commit()
+        self.router.route(
+            server=self,
+            connection=serv,
+            packet=packet,
+            session=session
+        )
 
         for app in self.plugins:
             func = getattr(app, "on_%s" % packet.command.name.lower(), None)
@@ -398,31 +391,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
                 for ip in self.config.get("ban_ips", []):
                     models.Ban.ban(session, ip, fixed=True)
 
-
-    def _init_controllers(self, force_reload=False):
-        controllers = {}
-
-        controller_classes = PluginManager(
-            plugin_class="StepmaniaController",
-            directory="smserver.controllers",
-            force_reload=force_reload
-        )
-
-        controller_classes.extend(
-            self._get_plugins("StepmaniaController", force_reload)
-        )
-
-        for controller in controller_classes:
-            if not controller.command:
-                continue
-
-            if controller.command not in controllers:
-                controllers[controller.command] = []
-
-            controllers[controller.command].append(controller)
-            self.log.debug("Controller loaded for command %s: %s", controller.command, controller)
-
-        return controllers
 
     def _init_chat_commands(self, force_reload=False):
         chat_commands = {}

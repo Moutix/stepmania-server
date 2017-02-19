@@ -8,6 +8,7 @@
 
 import random
 
+from smserver import router
 from smserver import pluginmanager
 from smserver import chatplugin
 from smserver import stepmania_controller
@@ -160,3 +161,8 @@ class HardcoreStartControllerPlugin(stepmania_controller.StepmaniaController):
         with self.conn.mutex:
             self.conn.songstats[0]["attack_metter"] = 0
             self.conn.songstats[1]["attack_metter"] = 0
+
+router.add_route(
+    smcommand.SMClientCommand.NSCGSR,
+    HardcoreStartControllerPlugin
+)

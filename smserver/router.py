@@ -3,6 +3,9 @@
 import collections
 
 from smserver import logger
+from smserver.controllers import routes
+
+__all__ = ['Router', 'add_route', 'get_router']
 
 
 class Router(object):
@@ -65,3 +68,14 @@ class Router(object):
                                        type(controller).__name__, controller.__module__, err)
 
 _ROUTER = Router()
+_ROUTER.load_routes_dict(routes.ROUTES)
+
+def add_route(command, controller):
+    """ Add a route to th global router """
+
+    _ROUTER.add_route(command, controller)
+
+def get_router():
+    """ Get the global router """
+
+    return _ROUTER

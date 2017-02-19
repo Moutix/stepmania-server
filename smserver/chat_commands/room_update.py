@@ -1,7 +1,7 @@
 
 from smserver import ability
 from smserver.chatplugin import ChatPlugin
-from smserver.controllers.enter_room import EnterRoomController
+from smserver.controllers.legacy.enter_room import EnterRoomController
 
 class ChatMaxUsers(ChatPlugin):
     command = "maxusers"

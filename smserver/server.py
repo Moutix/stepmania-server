@@ -51,7 +51,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             server.StepmaniaServer(config).start()
     """
 
-    def __init__(self, config=None):
+    def __init__(self):
         """
             Take a configuration and initialize the server:
             * Load the plugins
@@ -64,10 +64,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.sd_notify = sdnotify.get_notifier()
 
-        if not config:
-            config = conf.Conf()
-
-        self.config = config
+        self.config = conf.config
 
         self.log = logger.get_logger()
         self.log.debug("Configuration loaded")
@@ -87,16 +84,16 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.log.info("Init server listenner...")
         self.sd_notify.status("Start server listenner...")
 
-        if config.server.get("type") not in self.SERVER_TYPE:
+        if self.config.server.get("type") not in self.SERVER_TYPE:
             server_type = "async"
         else:
-            server_type = config.server["type"]
+            server_type = self.config.server["type"]
 
         servers = [
-            (config.server["ip"], config.server["port"], server_type),
+            (self.config.server["ip"], self.config.server["port"], server_type),
         ]
 
-        for server in config.additional_servers:
+        for server in self.config.additional_servers:
             servers.append((server["ip"], server["port"], server.get("type")))
 
         smthread.StepmaniaServer.__init__(self, servers)
@@ -467,12 +464,3 @@ class StepmaniaServer(smthread.StepmaniaServer):
             plugin_file="plugin",
             force_reload=force_reload
         )
-
-
-def main():
-    config = conf.Conf(*sys.argv[1:])
-
-    StepmaniaServer(config).start()
-
-if __name__ == "__main__":
-    main()

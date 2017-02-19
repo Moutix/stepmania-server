@@ -14,7 +14,7 @@ class ResourceTest(utils.DBTest):
     def setUp(self):
         super().setUp()
 
-        self.server = server.StepmaniaServer(conf.Conf())
+        self.server = server.StepmaniaServer()
 
         self.connection = ConnectionFactory()
         self.token = self.connection.token

@@ -29,15 +29,17 @@ class EnterRoomController(StepmaniaController):
         except exceptions.Forbidden:
             self.send_message(
                 "Unauthorized to enter in the room {name}".format(
-                    name=with_color(self.packet["name"])
+                    name=with_color(self.packet["room"])
                 )
             )
+            return
         except exceptions.Unauthorized:
             self.send_message(
                 "The room {name} is full".format(
-                    name=with_color(self.packet["name"])
+                    name=with_color(self.packet["room"])
                 )
             )
+            return
 
         self.send(smpacket.SMPacketServerNSSMONL(
             packet=room.to_packet()

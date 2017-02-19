@@ -140,6 +140,7 @@ class Room(schema.Base):
             )
 
         packet["nb_players"] = len(packet["players"])
+        return packet
 
     @staticmethod
     def list_to_smopacket(rooms):

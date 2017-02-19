@@ -9,6 +9,6 @@ install:
   - pip install -r test_requirements.txt
   - pip install coveralls
 script:
-  - py.test --pylint --doctest-modules --pylint-error-types=WEF --cov=smserver smserver test
+  - py.test --old-summary --pylint --doctest-modules --pylint-error-types=WEF --cov=smserver smserver test
 after_success:
   - coveralls

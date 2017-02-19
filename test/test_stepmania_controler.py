@@ -3,7 +3,6 @@
 from smserver.stepmania_controller import StepmaniaController
 from smserver.smutils import smconn
 from smserver import server
-from smserver import conf
 
 from test import utils
 from test.factories.connection_factory import ConnectionFactory

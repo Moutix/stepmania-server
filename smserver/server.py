@@ -1,6 +1,5 @@
 """ Server module """
 
-import sys
 import datetime
 from functools import wraps
 

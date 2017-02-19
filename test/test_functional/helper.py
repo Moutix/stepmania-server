@@ -75,6 +75,7 @@ class FunctionalTest(utils.DBTest):
         self.client_json = ClientTestJSON(self.server)
 
     def tearDown(self):
+        self.assertNotLog("ERROR")
         super().tearDown()
         self.client_bin.packet_send = []
         self.client_json.packet_send = []

@@ -4,6 +4,8 @@ python:
   - "3.4"
   - "3.5"
 #  - "3.6" Waiting for pylint to support python 3.6: https://github.com/postlund/pyatv/issues/18
+services:
+  - redis-server
 install:
   - pip install .
   - pip install -r test_requirements.txt

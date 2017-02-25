@@ -1,5 +1,7 @@
 """ Base test class for all the functional test"""
 
+import mock
+
 from smserver import server
 from smserver import models
 from smserver.smutils.smconnections import websocket
@@ -14,6 +16,7 @@ class ClientTestBinary(smtcpsocket.SocketConn):
     def __init__(self, serv, ip="1.1.1.1", port=4444):
         smtcpsocket.SocketConn.__init__(self, serv, ip, port, None)
         self.packet_send = []
+        self._conn = mock.MagicMock()
 
     def connect_to_serv(self):
         """ Send hello message and add the connection """
@@ -36,6 +39,7 @@ class ClientTestJSON(websocket.WebSocketClient):
     def __init__(self, serv, ip="2.2.2.2", port=4444):
         websocket.WebSocketClient.__init__(self, serv, ip, port, None, None, None)
         self.packet_send = []
+        self._conn = mock.MagicMock()
 
     def connect_to_serv(self):
         """ Send hello message and add the connection """

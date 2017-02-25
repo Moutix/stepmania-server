@@ -239,8 +239,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         room = connection.room
         smthread.StepmaniaServer.on_disconnect(self, conn)
 
-
-        self.send_sd_running_status()
+        self.send_sd_running_status(session)
 
         users = connection.active_users
         if not users:

@@ -5,32 +5,10 @@ import threading
 import time
 
 from smserver import messaging
+from smserver import redis_database
 
 class MessageTest(unittest.TestCase):
     """ Test messaging module """
-
-    def test_python_handler(self):
-        """ test adding an element to the queue """
-
-        messager = messaging.PythonHandler()
-
-        messager.send("Message")
-
-        messages = []
-
-        def receive_msg():
-            """ Worker thread which add message to messages """
-
-            for msg in messager.listen():
-                messages.append(msg)
-
-        thread = threading.Thread(target=receive_msg)
-        thread.start()
-
-        messager.stop()
-        time.sleep(0.1)
-        self.assertFalse(thread.is_alive())
-        self.assertEqual(messages, ["Message"])
 
     def test_message_without_handler(self):
         """ Test to send message without handler configured """
@@ -47,14 +25,11 @@ class MessageTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             messager.stop()
 
-    def test_message_with_handler(self):
-        """ Test messager send """
+    def test_message_with_python_handler(self):
+        """ Test messaging with python handler """
 
         messager = messaging.Messaging()
         messager.set_handler(messaging.PythonHandler())
-
-        messager.send("Message 1")
-        messager.send("Message 2")
 
         messages = []
 
@@ -66,6 +41,39 @@ class MessageTest(unittest.TestCase):
 
         thread = threading.Thread(target=receive_msg)
         thread.start()
+        time.sleep(0.1)
+
+        messager.send("Message 1")
+        messager.send("Message 2")
+
+        messager.stop()
+        time.sleep(0.1)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(messages, ["Message 1", "Message 2"])
+
+    def test_message_with_redis_handler(self):
+        """ Test messaging with redis """
+
+        if not redis_database.is_available():
+            self.skipTest("Redis is not configured")
+
+        messager = messaging.Messaging()
+        messager.set_handler(messaging.RedisHandler())
+
+        messages = []
+
+        def receive_msg():
+            """ Worker thread which add message to messages """
+
+            for msg in messager.listen():
+                messages.append(msg)
+
+        thread = threading.Thread(target=receive_msg)
+        thread.start()
+        time.sleep(0.1)
+
+        messager.send("Message 1")
+        messager.send("Message 2")
 
         messager.stop()
         time.sleep(0.1)

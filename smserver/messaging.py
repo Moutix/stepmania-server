@@ -6,6 +6,8 @@ Us to send messages between process and thread
 import abc
 import queue
 
+from smserver import redis_database
+
 class Messaging(object):
     """ Message class """
 
@@ -41,7 +43,7 @@ class Messaging(object):
         self._handler.stop()
 
 
-class Handler(metaclass=abc.ABCMeta):
+class MessageHandler(metaclass=abc.ABCMeta):
     """ Abstract class for creating new handler """
 
     @abc.abstractmethod
@@ -52,8 +54,11 @@ class Handler(metaclass=abc.ABCMeta):
     def listen(self):
         """ How the handler listen for incomming message """
 
+    @abc.abstractmethod
+    def stop(self):
+        """ Stop the listener """
 
-class PythonHandler(Handler):
+class PythonHandler(MessageHandler):
     """ Python handler use when using the server in only one process """
 
     def __init__(self):
@@ -79,6 +84,46 @@ class PythonHandler(Handler):
         """ Stop the listener by adding a None element to the queue """
 
         self._queue.put(None)
+
+
+class RedisHandler(MessageHandler):
+    """ Redis Handler. Use pub/sub mechanism """
+
+    def __init__(self, channel="socka"):
+        self.connection = redis_database.new_connection()
+        self.pubsub = self.connection.pubsub(
+            ignore_subscribe_messages=True
+        )
+
+        self.channel = channel
+
+        self._continue = False
+
+    def send(self, message):
+        """ Send a message through a redis chanel"""
+
+        self.connection.publish(self.channel, message)
+
+    def listen(self):
+        """ Listen for message comming through redis """
+
+        self._continue = True
+        self.pubsub.subscribe(self.channel)
+
+        while self._continue:
+            message = self.pubsub.get_message(timeout=0.01)
+            if not message or message["type"] != "message":
+                continue
+
+            yield message["data"]
+
+        self.pubsub.unsubscribe(self.channel)
+        self.pubsub.close()
+
+    def stop(self):
+        """ Stop the listener by adding a None element to the queue """
+
+        self._continue = False
 
 
 _MESSAGING = Messaging()

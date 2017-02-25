@@ -75,6 +75,7 @@ class MessageTest(unittest.TestCase):
         messager.send("Message 1")
         messager.send("Message 2")
 
+        time.sleep(0.1)
         messager.stop()
         time.sleep(0.1)
         self.assertFalse(thread.is_alive())

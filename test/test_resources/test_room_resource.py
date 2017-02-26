@@ -71,10 +71,12 @@ class RoomResourceTest(base.ResourceTest):
             online=True,
             connection=self.connection
         )
+        self.connection.room = room
 
         self.assertEqual(self.session.query(models.Room).get(room.id), room)
         self.assertTrue(self.resource.delete(room.id))
         self.assertIsNone(self.session.query(models.Room).get(room.id))
+        self.assertIsNone(self.connection.room)
 
     @mock.patch("smserver.models.room.Room.available_rooms")
     def test_list(self, available_rooms):

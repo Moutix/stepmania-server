@@ -11,6 +11,7 @@ class UserProfilController(StepmaniaController):
         if not self.users:
             return
 
+
         for user in self.users:
             if self.packet["nb_players"] == 1 and self.packet["player_id"] != user.pos:
                 self.disconnect_user(user)
@@ -28,8 +29,7 @@ class UserProfilController(StepmaniaController):
             return
 
         user.online = True
-        self.session.commit()
-        self.server.enter_room(self.room, self.conn.token)
+        user.room_id = self.room
         self.log.info("User %s connected" % user.name)
 
     def disconnect_user(self, user):

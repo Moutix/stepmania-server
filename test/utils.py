@@ -24,10 +24,25 @@ class SMServerTest(unittest.TestCase):
 
         raise AssertionError("No log % as been captured" % level)
 
+    def get_logs(self, level):
+        """ Get a log that match the given level """
+
+        logs = []
+        for record in self._log_capture.records:
+            if record.levelname == level:
+                logs.append(record)
+
+        return logs
+
     def assertNotLog(self, level, message=None): #pylint: disable=invalid-name
         """ Assert no message of this type has been record """
         with self.assertRaises(AssertionError, msg="Log %s found" % level):
             self.assertLog(level, message)
+
+    def reset_log(self):
+        """ Reset the log capture """
+        self._log_capture.uninstall_all()
+        self._log_capture = testfixtures.LogCapture()
 
     def tearDown(self):
         self._log_capture.uninstall_all()

@@ -185,7 +185,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             port=conn.port,
             token=conn.token,
         )
-        smthread.StepmaniaServer.add_connection(self, conn)
+        super().add_connection(conn)
         self.send_sd_running_status()
 
     @with_session

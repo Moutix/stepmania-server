@@ -37,16 +37,19 @@ class Listener(Thread):
                 continue
 
             if evt.kind not in self.dispatch:
-                self.server.log.error("Unkown event kind %s", evt.kind)
+                self.server.log.error("Unknown event kind %s", evt.kind)
                 continue
 
             worker = self.dispatch[evt.kind]
 
-            if worker.need_session:
-                with self.server.db.session_scope as session:
-                    worker(evt.data, token=evt.token, session=session)
-            else:
-                worker(evt.data, token=evt.token)
+            try:
+                if worker.need_session:
+                    with self.server.db.session_scope() as session:
+                        worker.handle(evt.data, token=evt.token, session=session)
+                else:
+                    worker.handle(evt.data, token=evt.token)
+            except Exception: #pylint: disable=broad-except
+                self.server.log.exception('Error while handling %s', evt)
 
     def stop(self):
         """ Stop the thread """

@@ -54,6 +54,7 @@ class UserTest(utils.DBTest):
 
         user.rank = 9
         self.assertEqual(user.level(), 9)
+        self.assertEqual(user.level(room.id), 5)
 
         user2 = user_factory.UserFactory(rank=4)
         self.assertEqual(user2.level(room.id), 1)

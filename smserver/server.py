@@ -3,8 +3,6 @@
 import datetime
 from functools import wraps
 
-from sqlalchemy.orm import object_session
-
 from smserver import __version__
 from smserver import database
 from smserver import conf
@@ -295,79 +293,6 @@ class StepmaniaServer(smthread.StepmaniaServer):
             func = self.sendroom
 
         func(room.id, packet)
-
-    def enter_room(self, room, token=None):
-        """
-            Make a user enter in a given room
-
-            :param room: Room where the user have to enter
-            :param int user_id: User id which enter the room
-            :param conn: Connection which enter the room
-            :type room: smserver.models.room.Room
-            :type conn: smserver.smutils.smconn.StepmaniaConnection
-        """
-
-        if not token or not room:
-            return
-
-        session = object_session(room)
-
-        connection = models.Connection.by_token(token, session)
-        connection.room = room
-
-        for user in connection.users:
-            if user.room == room:
-                continue
-
-            user.room = room
-            if not user.room_privilege(room.id):
-                user.set_level(room.id, 1)
-
-            self.log.info("Player %s enter in room %s", user.name, room.name)
-            self.send_message("%s joined the room" % (
-                user.fullname_colored(room.id)
-            ), room=room)
-
-        self.add_to_room(token, room.id)
-
-        self.send_user_list(room)
-
-    def leave_room(self, room, token=None):
-        """
-            Make a user leave a given room
-
-            :param room: Room where the user have to leave
-            :param int user_id: User id which leave the room
-            :param conn: Connection which leave the room
-            :type room: smserver.models.room.Room
-            :type conn: smserver.smutils.smconn.StepmaniaConnection
-        """
-
-        if not token or not room:
-            return
-
-        session = object_session(room)
-
-        connection = models.Connection.by_token(token, session)
-
-        users = connection.users
-
-        self.send_message(
-            "%s leave the room" % models.User.colored_users_repr(users, room.id),
-            room=room
-        )
-
-        self.del_from_room(token, room.id)
-        connection.song = None
-        connection.room = None
-
-        for user in users:
-            user.room = None
-
-        self.log.info("%s leave the room %s", models.User.users_repr(users, room.id), room.name)
-        self.send_user_list(room)
-
-        return True
 
     def disconnect_user(self, user_id):
         """ Disconnect the given user """

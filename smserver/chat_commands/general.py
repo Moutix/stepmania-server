@@ -36,6 +36,7 @@ class ChatUserListing(ChatPlugin):
                     user.enum_status.name),
                 to="me")
 
+
 class ChatTimestamp(ChatPlugin):
     command = "timestamp"
     helper = "Show timestamp"
@@ -50,4 +51,3 @@ class ChatTimestamp(ChatPlugin):
 
         for user in serv.active_users:
             user.chat_timestamp = serv.conn.chat_timestamp
-

@@ -49,8 +49,14 @@ class RoomResource(base.BaseResource):
         if not self.connection.can(ability.Permissions.delete_room, room_id):
             raise exceptions.Forbidden(self.token, "Delete room %s" % room_id)
 
-        res = self.session.query(models.Room).filter_by(id=room_id).delete()
-        return res > 0
+        room = self.session.query(models.Room).get(room_id)
+
+        for connection in room.connections:
+            self.leave(connection)
+
+        self.session.delete(room)
+        self.session.commit()
+        return True
 
     def list(self):
         """ List all the room available """
@@ -113,18 +119,21 @@ class RoomResource(base.BaseResource):
 
         return room
 
-    def leave(self):
+    def leave(self, connection=None):
         """ Leave a room """
 
-        room = self.connection.room
+        if not connection:
+            connection = self.connection
+
+        room = connection.room
         if not room:
             return
 
-        self.serv.del_from_room(self.token, room.id)
-        self.connection.song = None
-        self.connection.room = None
+        self.serv.del_from_room(connection.token, room.id)
+        connection.song = None
+        connection.room = None
 
-        for user in self.connection.active_users:
+        for user in connection.active_users:
             user.room = None
 
         self.log.info("%s leave the room %s", self.token, room.id)

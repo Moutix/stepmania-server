@@ -311,7 +311,7 @@ class ServerTest(UserFunctionalTest):
         self.assertEqual(len(songstats[0]["data"]), 2)
 
     def test_client_bin_game_over(self):
-        """ Test seding a game over packet for client bin """
+        """ Test sending a game over packet for client bin """
 
         self.test_client_bin_game_status_update()
 
@@ -329,3 +329,16 @@ class ServerTest(UserFunctionalTest):
         self.assertEqual(songstats[0].score, 50000)
         self.assertEqual(songstats[0].grade, 3)
         self.assertEqual(songstats[0].max_combo, 1)
+
+    def test_client_bin_disconnect(self):
+        """ Test client bin disconnection """
+
+        self.test_client_bin_game_over()
+
+        self.client_bin.close()
+
+        self.assertEqual(self.user_bin1.online, False)
+        self.assertIsNone(self.user_bin1.room)
+        self.assertEqual(self.user_bin2.online, False)
+        self.assertIsNone(self.user_bin2.room)
+        self.assertEqual(self.user_json1.online, True)

@@ -5,12 +5,10 @@ This module handle the orchestration between all the servers and connections.
 
 
 import sys
-import datetime
 from threading import Lock
 from collections import defaultdict
 
 from smserver import logger
-from smserver.smutils.smpacket import smpacket
 from smserver.smutils.smconnections import smtcpsocket, udpsocket
 if sys.version_info[1] > 2:
     from smserver.smutils.smconnections import asynctcpserver, websocket
@@ -200,94 +198,3 @@ class StepmaniaServer(object):
 
     def on_packet(self, serv, packet):
         """ Action to perform on each new packet """
-        PacketHandler(self, serv, packet).handle()
-
-
-class PacketHandler(object):
-    def __init__(self, server, conn, packet):
-        self.server = server
-        self.packet = packet
-        self.conn = conn
-
-    def handle(self):
-        func = getattr(self, "on_%s" % self.packet.command.name.lower(), None)
-        if not func:
-            return None
-
-        func()
-
-    def on_nscping(self):
-        self.conn.send(smpacket.SMPacketServerNSCPingR())
-
-    def on_nscpingr(self):
-        with self.conn.mutex:
-            self.conn.last_ping = datetime.datetime.now()
-
-    def on_nschello(self):
-        self.conn.send(smpacket.SMPacketServerNSCHello(version=128, name="Stepmania-Server"))
-
-    def on_nscgsr(self):
-        pass
-
-    def on_nscgon(self):
-        pass
-
-    def on_nscgsu(self):
-        pass
-
-    def on_nscsu(self):
-        pass
-
-    def on_nsccm(self):
-        pass
-
-    def on_nscrsg(self):
-        pass
-
-    def on_nsccuul(self):
-        pass
-
-    def on_nsscsms(self):
-        pass
-
-    def on_nscuopts(self):
-        pass
-
-    def on_nssmonl(self):
-        PacketHandler(self.server, self.conn, self.packet["packet"]).handle()
-
-    def on_nscformatted(self):
-        pass
-
-    def on_nscattack(self):
-        pass
-
-    def on_xmlpacket(self):
-        pass
-
-    def on_login(self):
-        response = smpacket.SMPacketServerNSCUOpts(
-            packet=smpacket.SMOPacketServerLogin(
-                approval=1,
-                text="Succesfully Login"
-            )
-        )
-        self.conn.send(response)
-
-    def on_enterroom(self):
-        pass
-
-    def on_createroom(self):
-        pass
-
-    def on_roominfo(self):
-        pass
-
-    def send(self, packet):
-        self.conn.send(packet)
-
-    def sendall(self, packet):
-        self.server.sendall(packet)
-
-    def sendroom(self, room, packet):
-        self.server.sendroom(room, packet)

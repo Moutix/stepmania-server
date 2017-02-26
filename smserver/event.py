@@ -27,6 +27,12 @@ class Event(object):
             self.uuid = uuid.uuid4().hex
 
     def __repr__(self):
+        """ Event representation
+
+            >>> print(Event(EventKind.chat_message, uuid_="45"))
+            <Event #45 (EventKind.chat_message)>
+        """
+
         return "<Event #{uuid} ({kind})>".format(
             uuid=self.uuid,
             kind=self.kind

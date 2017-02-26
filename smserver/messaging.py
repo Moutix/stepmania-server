@@ -58,6 +58,7 @@ class MessageHandler(metaclass=abc.ABCMeta):
         if not isinstance(message, event.Event):
             raise ValueError("Messaging only support Event object")
 
+
     @abc.abstractmethod
     def listen(self):
         """ How the handler listen for incomming message """
@@ -149,6 +150,16 @@ def send(message):
     """ Send a message with the global message class """
 
     _MESSAGING.send(message)
+
+def send_event(kind, data=None, token=None, room_id=None):
+    """ Send an event with the global message class """
+
+    _MESSAGING.send(event.Event(
+        kind=kind,
+        data=data,
+        token=token,
+        room_id=room_id
+    ))
 
 def listen():
     """ Listen for message with the global message class """

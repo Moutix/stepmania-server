@@ -7,6 +7,8 @@ from smserver import conf
 from smserver import sdnotify
 from smserver import logger
 from smserver import database
+from smserver import messaging
+from smserver import redis_database
 
 
 def start_up(*args):
@@ -36,3 +38,19 @@ def start_up(*args):
         db.recreate_tables()
     else:
         db.create_tables()
+
+    redis_url = config.get("redis", {}).get("url")
+    if redis_url:
+        try:
+            redis_database.setup_db(redis_url)
+        except ConnectionError:
+            pass
+
+    if redis_database.is_available():
+        messaging.set_handler(
+            messaging.RedisHandler()
+        )
+    else:
+        messaging.set_handler(
+            messaging.PythonHandler()
+        )

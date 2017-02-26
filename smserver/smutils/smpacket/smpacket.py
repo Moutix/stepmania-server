@@ -45,8 +45,8 @@ class _SMPacketMetaclass(type):
     def __init__(cls, name, bases, attrs, **kw):
         super().__init__(name, bases, attrs, **kw)
         parent_class = super(cls, cls)
-        if hasattr(parent_class, '__init_subclass__'):
-            parent_class.__init_subclass__(cls, **kw)
+        if hasattr(parent_class, '__init_subclass_custom__'):
+            parent_class.__init_subclass_custom__(cls, **kw)
 
 
 class SMPacket(metaclass=_SMPacketMetaclass):
@@ -65,7 +65,7 @@ class SMPacket(metaclass=_SMPacketMetaclass):
 
         self.opts = kwargs
 
-    def __init_subclass__(cls, **_kwargs): #pylint: disable=no-self-argument
+    def __init_subclass_custom__(cls, **_kwargs): #pylint: disable=no-self-argument
         command = cls.command
 
         if not command:

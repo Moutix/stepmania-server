@@ -4,10 +4,11 @@ import unittest
 import threading
 import time
 
+from smserver import event
 from smserver import messaging
 from smserver import redis_database
 
-class MessageTest(unittest.TestCase):
+class MessagingTest(unittest.TestCase):
     """ Test messaging module """
 
     def test_message_without_handler(self):
@@ -43,13 +44,23 @@ class MessageTest(unittest.TestCase):
         thread.start()
         time.sleep(0.1)
 
-        messager.send("Message 1")
-        messager.send("Message 2")
+        msg1 = event.Event(event.EventKind.chat_message, data={"bla": "bla"})
+        msg2 = event.Event(event.EventKind.chat_message)
+        msg_invalid = "Bla"
+
+        messager.send(msg1)
+        messager.send(msg2)
+        with self.assertRaises(ValueError):
+            messager.send(msg_invalid)
 
         messager.stop()
         time.sleep(0.1)
         self.assertFalse(thread.is_alive())
-        self.assertEqual(messages, ["Message 1", "Message 2"])
+        self.assertEqual(messages, [msg1, msg2])
+        self.assertEqual(messages[0].data, msg1.data)
+        self.assertEqual(messages[0].kind, msg1.kind)
+        self.assertEqual(messages[1].data, msg2.data)
+        self.assertEqual(messages[1].kind, msg2.kind)
 
     def test_message_with_redis_handler(self):
         """ Test messaging with redis """
@@ -72,11 +83,24 @@ class MessageTest(unittest.TestCase):
         thread.start()
         time.sleep(0.1)
 
-        messager.send("Message 1")
-        messager.send("Message 2")
+        msg1 = event.Event(event.EventKind.chat_message, data={"bla": "bla"})
+        msg2 = event.Event(event.EventKind.chat_message)
+
+        msg_invalid = "Bla"
+
+        messager.send(msg1)
+        messager.send(msg2)
+        with self.assertRaises(ValueError):
+            messager.send(msg_invalid)
 
         time.sleep(0.1)
+
         messager.stop()
         time.sleep(0.1)
         self.assertFalse(thread.is_alive())
-        self.assertEqual(messages, ["Message 1", "Message 2"])
+
+        self.assertEqual(messages, [msg1, msg2])
+        self.assertEqual(messages[0].data, msg1.data)
+        self.assertEqual(messages[0].kind, msg1.kind)
+        self.assertEqual(messages[1].data, msg2.data)
+        self.assertEqual(messages[1].kind, msg2.kind)

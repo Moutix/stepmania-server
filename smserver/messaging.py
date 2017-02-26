@@ -7,6 +7,8 @@ import abc
 import queue
 
 from smserver import redis_database
+from smserver import event
+
 
 class Messaging(object):
     """ Message class """
@@ -47,8 +49,14 @@ class MessageHandler(metaclass=abc.ABCMeta):
     """ Abstract class for creating new handler """
 
     @abc.abstractmethod
-    def send(self, _message):
-        """ How the handler handle the message delivery """
+    def send(self, message):
+        """ How the handler handle the message delivery
+
+            :param smserver.event.Event message: Message to send
+        """
+
+        if not isinstance(message, event.Event):
+            raise ValueError("Messaging only support Event object")
 
     @abc.abstractmethod
     def listen(self):
@@ -66,6 +74,8 @@ class PythonHandler(MessageHandler):
 
     def send(self, message):
         """ Send the message to the queue """
+
+        super().send(message)
 
         self._queue.put(message)
 
@@ -100,9 +110,11 @@ class RedisHandler(MessageHandler):
         self._continue = False
 
     def send(self, message):
-        """ Send a message through a redis chanel"""
+        """ Send a message through a redis chanel """
 
-        self.connection.publish(self.channel, message)
+        super().send(message)
+
+        self.connection.publish(self.channel, message.encode())
 
     def listen(self):
         """ Listen for message comming through redis """
@@ -115,7 +127,7 @@ class RedisHandler(MessageHandler):
             if not message or message["type"] != "message":
                 continue
 
-            yield message["data"]
+            yield event.Event.decode(message["data"])
 
         self.pubsub.unsubscribe(self.channel)
         self.pubsub.close()

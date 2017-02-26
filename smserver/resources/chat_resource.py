@@ -48,6 +48,9 @@ class ChatResource(base.BaseResource):
             >>> ChatResource.parse_command("/test bla")
             ('test', 'bla')
 
+            >>> ChatResource.parse_command("/test")
+            ('test', None)
+
             >>> ChatResource.parse_command("/test    ")
             ('test', None)
 

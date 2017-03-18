@@ -25,23 +25,32 @@ class ConnectionTest(FunctionalTest):
 
     def test_hello_binary(self):
         """ Test sending hello data to BIN client """
+
+        self.server.add_connection(self.client_bin)
+        self.assertIn(self.client_bin, self.server.connections)
+        self.assertIsNotNone(self.bin_connection)
+
         self.client_bin.on_data(
             smpacket.SMPacketClientNSCHello(name="stepmania-binary", version=40).binary
         )
 
-        self.assertEqual(self.client_bin.client_name, "stepmania-binary")
-        self.assertEqual(self.client_bin.client_version, 40)
+        self.assertEqual(self.bin_connection.client_name, "stepmania-binary")
+        self.assertEqual(self.bin_connection.client_version, "40")
 
         self.assertBinSend(smpacket.SMPacketServerNSCHello)
 
     def test_hello_json(self):
         """ Test sending hello data to JSON client"""
 
+        self.server.add_connection(self.client_json)
+        self.assertIn(self.client_json, self.server.connections)
+        self.assertIsNotNone(self.json_connection)
+
         self.client_json.on_data(
             smpacket.SMPacketClientNSCHello(name="stepmania-json", version=41).json
         )
 
-        self.assertEqual(self.client_json.client_name, "stepmania-json")
-        self.assertEqual(self.client_json.client_version, 41)
+        self.assertEqual(self.json_connection.client_name, "stepmania-json")
+        self.assertEqual(self.json_connection.client_version, "41")
 
         self.assertJSONSend(smpacket.SMPacketServerNSCHello)

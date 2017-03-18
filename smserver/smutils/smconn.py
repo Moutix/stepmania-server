@@ -42,8 +42,6 @@ class StepmaniaConn(object):
         self.chat_timestamp = False
 
         self.last_ping = datetime.datetime.now()
-        self.client_version = None
-        self.client_name = None
 
     def run(self):
         """ Start to listen for incomming data """

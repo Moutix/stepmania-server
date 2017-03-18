@@ -42,7 +42,7 @@ class User(schema.Base):
     rank             = Column(Integer, default=1)
     xp               = Column(Integer, default=0)
     last_ip          = Column(String(255))
-    client_version   = Column(Integer)
+    client_version   = Column(String(255))
     client_name      = Column(String(255))
     online           = Column(Boolean)
     status           = Column(Integer, default=1)

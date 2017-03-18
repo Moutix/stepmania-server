@@ -19,7 +19,7 @@ class Listener(Thread):
         self.server = server
 
         self.dispatch = {
-            event.EventKind.chat_message: chat.ChatWorker(),
+            event.EventKind.chat_message: chat.ChatWorker(server),
         }
 
     def run(self):

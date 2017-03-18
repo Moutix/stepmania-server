@@ -68,13 +68,14 @@ class ChatPlugin(object):
 
         return True
 
-    def __call__(self, connection, message):
+    def __call__(self, resource, message):
         """
             Action to perform when using the command
 
-            :param serv: The StepmaniaController instance
+            :param resource: The chat resource that send this command
             :param message: The text after the command. (Eg. /command text)
-            :type serv: StepmaniaController
+            :type resource: smserve.resources.chat_resources.ChatResource
             :type message: str
-            :return: Nothing
+            :return: Response fo the command
+            :rtype: list
         """

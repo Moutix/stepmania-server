@@ -20,8 +20,7 @@ class ChatResource(base.BaseResource):
 
         command, param = self.parse_command(message)
         if command:
-            self.command(command, param)
-            return
+            return self.command(command, param)
 
         if not target and self.connection.room:
             target = "~{name}".format(name=self.connection.room.name)
@@ -87,4 +86,4 @@ class ChatResource(base.BaseResource):
         if not self.serv.chat_commands[command].can(self.connection):
             raise exceptions.Unauthorized(self.token, "Unauthorized command %s" % command)
 
-        self.serv.chat_commands[command](self.connection, param)
+        return self.serv.chat_commands[command](self, param)

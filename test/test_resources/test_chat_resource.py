@@ -18,6 +18,18 @@ class ChatResourceTest(base.ResourceTest):
 
         self.resource = ChatResource(self.server, self.token, self.session)
 
+    @mock.patch("smserver.resources.chat_resource.ChatResource.command")
+    def test_send_message_command(self, command):
+        """ Test sending a command """
+
+        UserFactory(online=True, connection=self.connection)
+
+        self.resource.send("/coucou bla")
+        command.assert_called_with("coucou", "bla")
+
+        self.resource.send("/command ")
+        command.assert_called_with("command", None)
+
     @mock.patch("smserver.messaging.Messaging.send")
     def test_send_message(self, send_message):
         """ Test sending a message """
@@ -87,4 +99,4 @@ class ChatResourceTest(base.ResourceTest):
 
         self.resource.command("key_authorized", "param")
         mock2.can.assert_called_with(self.connection)
-        mock2.assert_called_once_with(self.connection, "param")
+        mock2.assert_called_once_with(self.resource, "param")

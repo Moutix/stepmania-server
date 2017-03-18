@@ -60,11 +60,15 @@ class ServerTest(server.StepmaniaServer):
     """ Server use for all the functional test """
 
     def add_bin_connection(self, ip="1.1.1.1", port=4444):
+        """ Connect the BIN client to the server """
+
         client = ClientTestBinary(self, ip, port)
         client.connect_to_serv()
         return client
 
     def add_json_connection(self, ip="2.2.2.2", port=4444):
+        """ Connect the JSON client to the server """
+
         client = ClientTestJSON(self, ip, port)
         client.connect_to_serv()
         return client

@@ -14,6 +14,7 @@ from smserver import profiling
 
 from smserver.pluginmanager import PluginManager
 from smserver.watcher import StepmaniaWatcher
+from smserver.listener.app import Listener
 from smserver.chathelper import with_color
 from smserver.smutils import smthread
 from smserver.smutils.smpacket import smpacket
@@ -99,12 +100,14 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self.log.info("Server %s listening on %s:%s", server_type, ip, port)
 
         self.watcher = StepmaniaWatcher(self)
+        self.listener = Listener(self)
 
         self.started_at = datetime.datetime.now()
 
     def start(self):
         """ Start all the threads """
 
+        self.listener.start()
         self.watcher.start()
         self.sd_notify.ready()
         self.send_sd_running_status()
@@ -124,9 +127,11 @@ class StepmaniaServer(smthread.StepmaniaServer):
         self.log.info("Closing all the threads...")
 
         self.watcher.stop()
+        self.listener.stop()
         for server in self._servers:
             server.stop()
 
+        self.listener.join()
         self.watcher.join()
         for server in self._servers:
             server.join()

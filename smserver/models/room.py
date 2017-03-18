@@ -166,6 +166,12 @@ class Room(schema.Base):
         return smpacket.SMPacketServerNSSMONL(packet=packet)
 
     @classmethod
+    def by_name(cls, session, name):
+        """ Get the room with the given name """
+
+        return session.query(cls).filter_by(name=name).first()
+
+    @classmethod
     def smo_list(cls, session, users=None, min_level=2):
         """
             Return the list of rooms already formatted in a SMO packet

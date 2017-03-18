@@ -1,4 +1,4 @@
-""" Module to test the login of client """
+""" Module to test the server global flow """
 
 from smserver import models
 from smserver import stepmania_controller
@@ -7,7 +7,7 @@ from smserver.smutils.smpacket import smpacket
 from test.test_functional.helper import UserFunctionalTest
 
 class ServerTest(UserFunctionalTest):
-    """ Test the client login """
+    """ Test the global flow of the server """
 
     def test_client_bin_room_creation(self):
         """ First room creation """
@@ -46,7 +46,6 @@ class ServerTest(UserFunctionalTest):
         self.assertEqual(self.user_bin2.status, models.UserStatus.room_selection.value)
 
 
-
     def test_json_room_info(self):
         """ Display room information in room selection """
         self.test_client_bin_room_creation()
@@ -81,6 +80,7 @@ class ServerTest(UserFunctionalTest):
         ).json)
 
         self.assertIsNone(self.json_connection.room)
+
     def test_json_fail_enter_room_wrong_password(self):
         """ Json client try to enter in a room with the wrong password """
         self.test_client_bin_room_creation()

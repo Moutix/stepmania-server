@@ -57,7 +57,6 @@ class DBTest(SMServerTest):
 
     def tearDown(self):
         super().tearDown()
-        common.db.session.rollback()
         # Remove it, so that the next test gets a new Session()
         common.db.session.remove()
         # Rollback the session => no changes to the database

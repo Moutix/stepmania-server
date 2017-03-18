@@ -80,3 +80,11 @@ class ChatResource(base.BaseResource):
 
     def command(self, command, param):
         """ Send a command """
+
+        if command not in self.serv.chat_commands:
+            raise exceptions.NotFound(self.token, "Unknown command %s" % command)
+
+        if not self.serv.chat_commands[command].can(self.connection):
+            raise exceptions.Unauthorized(self.token, "Unauthorized command %s" % command)
+
+        self.serv.chat_commands[command](self.connection, param)

@@ -329,7 +329,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             self._get_plugins("ChatPlugin", force_reload)
         )
 
-        chat_classes.init()
+        chat_classes.init(self)
 
         for chat_class in chat_classes:
             if not chat_class.command:

@@ -60,3 +60,31 @@ class ChatResourceTest(base.ResourceTest):
 
         self.assertEqual(msg.data["message"], "bla")
         self.assertEqual(msg.data["target"], "~machin")
+
+    def test_command(self):
+        """ Test chat command dispather """
+
+        mock1 = mock.MagicMock()
+        mock2 = mock.MagicMock()
+
+        self.server.chat_commands = {
+            "key_unauthorized": mock1,
+            "key_authorized": mock2,
+        }
+
+        mock1.can.return_value = False
+        mock2.can.return_value = True
+
+        with self.assertRaises(exceptions.NotFound):
+            self.resource.command("invalid", "params")
+
+        with self.assertRaises(exceptions.Unauthorized):
+            self.resource.command("key_unauthorized", "param")
+        mock1.can.assert_called_with(self.connection)
+        mock2.can.assert_not_called()
+        mock1.assert_not_called()
+        mock2.assert_not_called()
+
+        self.resource.command("key_authorized", "param")
+        mock2.can.assert_called_with(self.connection)
+        mock2.assert_called_once_with(self.connection, "param")

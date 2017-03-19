@@ -44,6 +44,13 @@ class Messaging(object):
 
         self._handler.stop()
 
+    def clear(self):
+        """ Clear all the message in the listener """
+
+        if not self._handler:
+            raise ValueError("No handler configured")
+
+        self._handler.clear()
 
 class MessageHandler(metaclass=abc.ABCMeta):
     """ Abstract class for creating new handler """
@@ -66,6 +73,9 @@ class MessageHandler(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def stop(self):
         """ Stop the listener """
+
+    def clear(self):
+        """ Clear the element (if needed) """
 
 class PythonHandler(MessageHandler):
     """ Python handler use when using the server in only one process """
@@ -95,6 +105,12 @@ class PythonHandler(MessageHandler):
         """ Stop the listener by adding a None element to the queue """
 
         self._queue.put(None)
+
+    def clear(self):
+        """ Clear all the element in the queue (use in test) """
+
+        with self._queue.mutex:
+            self._queue.queue.clear()
 
 
 class RedisHandler(MessageHandler):
@@ -138,7 +154,6 @@ class RedisHandler(MessageHandler):
 
         self._continue = False
 
-
 _MESSAGING = Messaging()
 
 def set_handler(handler):
@@ -171,3 +186,8 @@ def stop():
     """ Stop to listen """
 
     _MESSAGING.stop()
+
+def clear():
+    """ Clear all the messages"""
+
+    _MESSAGING.clear()

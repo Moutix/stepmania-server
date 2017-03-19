@@ -56,6 +56,14 @@ class MessagingTest(unittest.TestCase):
         messaging.stop()
         stop.assert_called_once_with()
 
+    @staticmethod
+    @mock.patch("smserver.messaging.Messaging.clear")
+    def test_clear(clear):
+        """ Test clear listenning with the global helper """
+
+        messaging.clear()
+        clear.assert_called_once_with()
+
     def test_message_without_handler(self):
         """ Test to send message without handler configured """
 
@@ -70,6 +78,9 @@ class MessagingTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             messager.stop()
+
+        with self.assertRaises(ValueError):
+            messager.clear()
 
     def test_message_with_python_handler(self):
         """ Test messaging with python handler """

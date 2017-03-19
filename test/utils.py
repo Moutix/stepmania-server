@@ -3,6 +3,8 @@
 import unittest
 import testfixtures
 
+from smserver import messaging
+
 from test import common
 
 class SMServerTest(unittest.TestCase):
@@ -45,6 +47,7 @@ class SMServerTest(unittest.TestCase):
         self._log_capture = testfixtures.LogCapture()
 
     def tearDown(self):
+        messaging.clear()
         self._log_capture.uninstall_all()
 
 class DBTest(SMServerTest):

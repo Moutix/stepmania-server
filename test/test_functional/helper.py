@@ -121,12 +121,24 @@ class FunctionalTest(utils.DBTest):
 
     @staticmethod
     def get_smpacket_in(packet_class, list_packet):
+        """ Get the last packet in the list of packets with this class """
         pack = None
         for packet in list_packet:
             if isinstance(packet, packet_class):
                 pack = packet
 
         return pack
+
+    @staticmethod
+    def get_smpackets_in(packet_class, list_packet):
+        """ Get all the packet with the given class """
+        packets = []
+        for packet in list_packet:
+            if isinstance(packet, packet_class):
+                packets.append(packet)
+
+        return packets
+
 
 class ConnectedFunctionalTest(FunctionalTest):
     """ Functional test with a server and 2 connected client """
@@ -165,15 +177,15 @@ class UserFunctionalTest(ConnectedFunctionalTest):
 
     @property
     def user_bin1(self):
-        """ Return the user 1 attache to the client bin"""
+        """ Return the user 1 attach to the client bin"""
         return self.session.query(models.User).filter_by(name="clientbin-user1").first()
 
     @property
     def user_bin2(self):
-        """ Return the user 1 attache to the client bin"""
+        """ Return the user 1 attach to the client bin"""
         return self.session.query(models.User).filter_by(name="clientbin-user2").first()
 
     @property
     def user_json1(self):
-        """ Return the user 1 attache to the client bin"""
+        """ Return the user 1 attach to the client bin"""
         return self.session.query(models.User).filter_by(name="clientjson-user1").first()

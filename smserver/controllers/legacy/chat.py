@@ -25,8 +25,10 @@ class ChatController(StepmaniaController):
             responses = chat_resource.send(message=self.packet["message"])
         except exceptions.Unauthorized:
             self.send_message("Unauthorized action.", to="me")
+            return
         except exceptions.NotFound:
             self.send_message("Unknown command. /help for available commands", to="me")
+            return
 
         if not responses:
             return

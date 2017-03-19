@@ -30,7 +30,7 @@ class ChatBan(ChatPlugin):
         resource.send(
             "%s ban user %s" % (
                 models.User.colored_users_repr(connection.active_users),
-                connection.room_id
+                user.fullname_colored(connection.room_id),
             )
         )
 
@@ -57,7 +57,7 @@ class ChatKick(ChatPlugin):
         resource.send(
             "%s kick user %s" % (
                 models.User.colored_users_repr(connection.active_users),
-                connection.room_id
+                user.fullname_colored(connection.room_id),
             )
         )
 

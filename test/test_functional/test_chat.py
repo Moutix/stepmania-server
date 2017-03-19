@@ -53,7 +53,7 @@ class ChatTest(UserFunctionalTest):
             message="coucou",
         ).binary)
 
-        time.sleep(0.2)
+        time.sleep(0.02)
         self.assertBinSend(smpacket.SMPacketServerNSCCM)
         self.assertJSONSend(smpacket.SMPacketServerNSCCM)
 
@@ -64,6 +64,87 @@ class ChatTest(UserFunctionalTest):
             message="coucou",
         ).json)
 
-        time.sleep(0.2)
+        time.sleep(0.02)
         self.assertBinSend(smpacket.SMPacketServerNSCCM)
         self.assertJSONSend(smpacket.SMPacketServerNSCCM)
+
+    def test_json_invalid_command(self):
+        """ Json client send an invalid command """
+
+        self.client_json.on_data(smpacket.SMPacketClientNSCCM(
+            message="/invalid_command bla",
+        ).json)
+        self.assertJSONSend(smpacket.SMPacketServerNSCCM)
+        packet = self.get_smpacket_in(smpacket.SMPacketServerNSCCM, self.client_json.packet_send)
+
+        self.assertRegex(packet["message"], "Unknown command")
+
+    def test_json_ban_user(self):
+        """ Json client try to ban the bin client (unauthorized) """
+
+        self.client_json.on_data(smpacket.SMPacketClientNSCCM(
+            message="/ban client_bin",
+        ).json)
+        self.assertJSONSend(smpacket.SMPacketServerNSCCM)
+        packet = self.get_smpacket_in(smpacket.SMPacketServerNSCCM, self.client_json.packet_send)
+
+        self.assertRegex(packet["message"], "Unauthorized")
+
+    def test_bin_ban_invalid_name_from_room(self):
+        """ Bin client ban an invalid user from his room """
+
+        self.client_bin.on_data(smpacket.SMPacketClientNSCCM(
+            message="/ban invalid_user",
+        ).binary)
+        self.assertBinSend(smpacket.SMPacketServerNSCCM)
+        packet = self.get_smpacket_in(smpacket.SMPacketServerNSCCM, self.client_bin.packet_send)
+
+        self.assertRegex(packet["message"], "Unknown user")
+
+    def test_bin_ban_json_from_room(self):
+        """ Bin client ban the JSON client from his room """
+
+        self.client_bin.on_data(smpacket.SMPacketClientNSCCM(
+            message="/ban %s" % self.user_json1.name,
+        ).binary)
+        time.sleep(0.02)
+        self.assertBinSend(smpacket.SMPacketServerNSCCM)
+        packet = self.get_smpacket_in(smpacket.SMPacketServerNSCCM, self.client_bin.packet_send)
+
+        json_user = self.user_json1
+
+        self.assertRegex(packet["message"], "ban.+%s" % json_user.name)
+
+        self.assertIsNone(json_user.room)
+
+        self.assertTrue(
+            models.Ban.is_ban(
+                self.session,
+                user_id=json_user.id,
+                room_id=self.room.id
+            )
+        )
+
+    def test_bin_kick_json_from_room(self):
+        """ Bin client ban the JSON client from his room """
+
+        self.client_bin.on_data(smpacket.SMPacketClientNSCCM(
+            message="/kick %s" % self.user_json1.name,
+        ).binary)
+        time.sleep(0.02)
+        self.assertBinSend(smpacket.SMPacketServerNSCCM)
+        packet = self.get_smpacket_in(smpacket.SMPacketServerNSCCM, self.client_bin.packet_send)
+
+        json_user = self.user_json1
+
+        self.assertRegex(packet["message"], "kick.+%s" % json_user.name)
+
+        self.assertIsNone(json_user.room)
+
+        self.assertFalse(
+            models.Ban.is_ban(
+                self.session,
+                user_id=json_user.id,
+                room_id=self.room.id
+            )
+        )

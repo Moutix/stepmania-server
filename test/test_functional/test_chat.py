@@ -79,6 +79,21 @@ class ChatTest(UserFunctionalTest):
 
         self.assertRegex(packet["message"], "Unknown command")
 
+    def test_json_list_users(self):
+        """ Json client send an command to list the users """
+
+        self.client_json.on_data(smpacket.SMPacketClientNSCCM(
+            message="/users",
+        ).json)
+        self.assertJSONSend(smpacket.SMPacketServerNSCCM)
+
+        packets = self.get_smpackets_in(smpacket.SMPacketServerNSCCM, self.client_json.packet_send)
+        print(packets)
+        self.assertEqual(len(packets), 4)
+        self.assertRegex(packets[1]["message"], "clientbin-user1")
+        self.assertRegex(packets[2]["message"], "clientbin-user2")
+        self.assertRegex(packets[3]["message"], "clientjson-user1")
+
     def test_json_ban_user(self):
         """ Json client try to ban the bin client (unauthorized) """
 

@@ -30,32 +30,42 @@ class ChatHelp(ChatPlugin):
         return response
 
 class ChatUserListing(ChatPlugin):
+    """ List the users connected """
+
     command = "users"
     helper = "List users"
 
-    def __call__(self, serv, message):
-        users = serv.session.query(models.User).filter_by(online=True)
-        max_users = serv.server.config.server.get("max_users")
-        if serv.room:
-            users = users.filter_by(room_id=serv.room.id)
-            max_users = serv.room.max_users
+    def __call__(self, resource, message, *, limit=20):
+        response = []
 
-        users = users.all()
-        serv.send_message("%s/%s players online" % (len(users), max_users), to="me")
+        connection = resource.connection
 
-        for user in users:
-            serv.send_message(
+        users = resource.session.query(models.User).filter_by(online=True)
+        max_users = self.server.config.server.get("max_users")
+        if connection.room:
+            users = users.filter_by(room_id=connection.room_id)
+            max_users = connection.room.max_users
+
+        response.append("%s/%s players online" % (users.count(), max_users))
+
+        for user in users.order_by("name").limit(limit):
+            response.append(
                 "%s (in %s)" % (
-                    user.fullname_colored(serv.conn.room),
-                    user.enum_status.name),
-                to="me")
-
+                    user.fullname_colored(connection.room_id),
+                    user.enum_status.name
+                )
+            )
+        return response
 
 class ChatTimestamp(ChatPlugin):
+    """ Add the timestamp in the chat messages """
+
     command = "timestamp"
     helper = "Show timestamp"
 
     def __call__(self, serv, message):
+        #FIXME need to be store elsewhere (don't work for the moment)
+
         if serv.conn.chat_timestamp:
             serv.conn.chat_timestamp = False
             serv.send_message("Chat timestamp disabled", to="me")

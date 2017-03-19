@@ -31,6 +31,10 @@ class ChatCommandTest(utils.DBTest):
     def test_can_without_room(self):
         """ Test can function without room """
 
+        if not self.chat_command.permission:
+            self.assertEqual(self.chat_command.can(self.connection), not self.chat_command.room)
+            return
+
         self.assertFalse(self.chat_command.can(self.connection))
 
         user = UserFactory(connection=self.connection, online=True)
@@ -44,6 +48,10 @@ class ChatCommandTest(utils.DBTest):
 
     def test_can_with_room(self):
         """ Test can function with room """
+
+        if not self.chat_command.permission:
+            self.assertTrue(self.chat_command.can(self.connection))
+            return
 
         self.assertFalse(self.chat_command.can(self.connection))
 

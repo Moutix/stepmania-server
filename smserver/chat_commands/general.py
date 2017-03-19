@@ -5,15 +5,29 @@ from smserver.chatplugin import ChatPlugin
 
 
 class ChatHelp(ChatPlugin):
+    """ Display the list of all the commands """
+
     command = "help"
     helper = "Show help"
 
-    def __call__(self, serv, message):
-        for command, action in sorted(serv.server.chat_commands.items()):
-            if not action.can(serv):
+    def __call__(self, resource, message):
+        response = []
+
+        commands = self.server.chat_commands
+
+        if message:
+            if message not in commands or not commands[message].can(resource.connection):
+                return ["Unknown command %s" % message]
+
+            return ["/%s: %s" % (message, commands[message].helper)]
+
+        for command, action in sorted(commands.items()):
+            if not action.can(resource.connection):
                 continue
 
-            serv.send_message("/%s: %s" % (command, action.helper), to="me")
+            response.append("/%s: %s" % (command, action.helper))
+
+        return response
 
 class ChatUserListing(ChatPlugin):
     command = "users"

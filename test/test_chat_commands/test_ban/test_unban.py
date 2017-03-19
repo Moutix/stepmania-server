@@ -15,7 +15,7 @@ class ChatUnBanTest(base.ChatCommandTest):
     def chat_command(self):
         return ban.ChatUnBan(self.server)
 
-    def test_ban_without_room(self):
+    def test_unban_without_room(self):
         """ Test banning a user without room """
 
         res = self.chat_command(self.resource, "User")
@@ -34,7 +34,7 @@ class ChatUnBanTest(base.ChatCommandTest):
         self.assertFalse(models.Ban.is_ban(self.session, user_id=target_user.id))
         self.assertIsNone(res)
 
-    def test_ban_with_room(self):
+    def test_unban_with_room(self):
         """ Test banning a user from a room """
 
         room = RoomFactory()

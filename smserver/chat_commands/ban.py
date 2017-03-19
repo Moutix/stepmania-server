@@ -8,58 +8,57 @@ from smserver.chatplugin import ChatPlugin
 
 
 class ChatBan(ChatPlugin):
+    """ Command to ban a user """
+
     command = "ban"
     helper = "Ban a user. /ban user"
     permission = ability.Permissions.ban_user
 
-    def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(name=message).first()
+    def __call__(self, resource, message):
+        user = resource.session.query(models.User).filter_by(name=message).first()
+        connection = resource.connection
+
         if not user:
-            serv.send_message("Unknown user %s" % with_color(message), to="me")
-            return
+            return ["Unknown user %s" % with_color(message)]
 
-        if user.level(serv.conn.room) > serv.level(serv.conn.room):
-            serv.send_message("Not authorize to ban %s" % user.fullname_colored(serv.conn.room), to="me")
-            return
+        if user.level(connection.room_id) >= connection.level(connection.room_id):
+            return ["Not authorize to ban %s" % user.fullname_colored(connection.room_id)]
 
-        models.Ban.ban(serv.session, user_id=user.id, room_id=serv.conn.room)
-        ChatKick.kick_user(serv.server, user, serv.room)
+        models.Ban.ban(resource.session, user_id=user.id, room_id=connection.room_id)
+        ChatKick.kick_user(self.server, user, connection.room)
 
-        serv.server.send_message(
+        resource.send(
             "%s ban user %s" % (
-                serv.colored_user_repr(serv.room),
-                user.fullname_colored(serv.room)
-            ),
-            room=serv.room
+                models.User.colored_users_repr(connection.active_users),
+                connection.room_id
+            )
         )
 
 
 class ChatKick(ChatPlugin):
+    """ Command to kick a user """
+
     command = "kick"
     helper = "kick a user. /kick user"
     permission = ability.Permissions.kick_user
 
-    def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(name=message).first()
+    def __call__(self, resource, message):
+        user = resource.session.query(models.User).filter_by(name=message).first()
+        connection = resource.connection
+
         if not user:
-            serv.send_message("Unknown user %s" % with_color(message), to="me")
-            return
+            return ["Unknown user %s" % with_color(message)]
 
-        if user.level(serv.conn.room) > serv.level(serv.conn.room):
-            serv.send_message("Not authorize to kick %s" % user.fullname_colored(serv.conn.room), to="me")
-            return
+        if user.level(connection.room_id) >= connection.level(connection.room_id):
+            return ["Not authorize to kick %s" % user.fullname_colored(connection.room_id)]
 
-        ret = self.kick_user(serv.server, user, serv.room)
-        if not ret:
-            serv.send_message("Cannot kick user %s" % user.fullname_colored(serv.conn.room))
-            return
+        ChatKick.kick_user(self.server, user, connection.room)
 
-        serv.server.send_message(
+        resource.send(
             "%s kick user %s" % (
-                serv.colored_user_repr(serv.room),
-                user.fullname_colored(serv.room)
-            ),
-            room=serv.room
+                models.User.colored_users_repr(connection.active_users),
+                connection.room_id
+            )
         )
 
     @staticmethod
@@ -79,18 +78,25 @@ class ChatKick(ChatPlugin):
         if user.room != room:
             return
 
-        room_resource.RoomResource(server, user.connection).leave()
+        room_resource.RoomResource(server, connection=user.connection).leave()
 
 class ChatUnBan(ChatPlugin):
+    """ Chat command to unban a user """
+
     command = "unban"
     helper = "UnBan a user. /unban user"
     permission = ability.Permissions.unban_user
 
-    def __call__(self, serv, message):
-        user = serv.session.query(models.User).filter_by(name=message).first()
+    def __call__(self, resource, message):
+        user = resource.session.query(models.User).filter_by(name=message).first()
         if not user:
-            serv.send_message("Unknown user %s" % with_color(message), to="me")
-            return
+            return ["Unknown user %s" % with_color(message)]
 
-        models.Ban.unban(serv.session, user_id=user.id, room_id=serv.conn.room)
-        serv.send_message("User %s has been unban from this room" % user.fullname_colored(serv.conn.room))
+        connection = resource.connection
+
+        models.Ban.unban(resource.session, user_id=user.id, room_id=connection.room_id)
+        resource.send(
+            "User {user} has been unban from this room".format(
+                user=user.fullname_colored(resource.connection.room_id)
+            )
+        )

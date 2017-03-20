@@ -49,6 +49,10 @@ class ChatCommandTest(utils.DBTest):
     def test_can_with_room(self):
         """ Test can function with room """
 
+        if not self.chat_command.permission and not self.chat_command.room:
+            self.assertTrue(self.chat_command.can(self.connection))
+            return
+
         self.assertFalse(self.chat_command.can(self.connection))
 
         user = user_with_room_privilege(

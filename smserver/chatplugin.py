@@ -1,4 +1,3 @@
-
 """
     This module add the class needed for creating custom chat command
 
@@ -48,32 +47,35 @@ class ChatPlugin(object):
         :rtype: str
     """
 
-    def can(self, serv):
+    def __init__(self, server):
+        self.server = server
+
+    def can(self, connection):
         """
             Method call each time somenone try to run this command
 
-            :param serv: The StepmaniaController instance
-            :type serv: StepmaniaController
+            :param connection: The connection which perform this command
+            :type connection: smserver.models.connection.Connection
             :return: True if authorize False if not
             :rtype: bool
         """
 
-        if self.room and not serv.room:
+        if self.room and not connection.room:
             return False
 
-        if self.permission and serv.cannot(self.permission, serv.conn.room):
+        if self.permission and not connection.can(self.permission, connection.room_id):
             return False
 
         return True
 
-    def __call__(self, serv, message):
+    def __call__(self, resource, message):
         """
             Action to perform when using the command
 
-            :param serv: The StepmaniaController instance
+            :param resource: The chat resource that send this command
             :param message: The text after the command. (Eg. /command text)
-            :type serv: StepmaniaController
+            :type resource: smserve.resources.chat_resources.ChatResource
             :type message: str
-            :return: Nothing
+            :return: Response fo the command
+            :rtype: list
         """
-

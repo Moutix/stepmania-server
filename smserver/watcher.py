@@ -3,7 +3,7 @@
 This module is responsible of executing regular task
 """
 
-from threading import Thread, Lock
+from threading import Thread
 import time
 import datetime
 import itertools
@@ -44,7 +44,6 @@ class StepmaniaWatcher(Thread):
 
         self.server = server
         self.fps = self.server.config.server.get("fps", 1)
-        self.mutex = Lock()
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)

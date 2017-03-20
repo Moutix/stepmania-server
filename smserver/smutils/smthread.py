@@ -54,6 +54,12 @@ class StepmaniaServer(object):
         for server in self._servers:
             server.join()
 
+    def has_room(self, room_id):
+        """ Return if the given room_id have connection """
+
+        with self.mutex:
+            return bool(self._room_connections.get(room_id))
+
     @property
     def connections(self):
         """ List al the connections of this server """

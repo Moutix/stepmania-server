@@ -1,96 +1,104 @@
 """ Chat command for room update """
 
 from smserver import ability
+from smserver import models
 from smserver.resources import room_resource
 from smserver.chatplugin import ChatPlugin
 from smserver.controllers.legacy.enter_room import EnterRoomController
 
 class ChatMaxUsers(ChatPlugin):
-    command = "maxusers"
+    """ /mas_users command. Change the nb max of users in a room """
+
+    command = "max_users"
     helper = "Set nb_max of users (0 to 255)."
     room = True
     permission = ability.Permissions.change_room_settings
 
-    def __call__(self, serv, message):
+    def __call__(self, resource, message):
         try:
             value = int(message)
         except ValueError:
             value = None
 
         if not value or value < 0 or value > 255:
-            serv.send_message("Please enter a correct value (0:255)", to="me")
-            return
+            return ["Invalid number: Please enter a correct value (0:255)"]
 
-        serv.room.max_users = value
-        serv.session.commit()
-        serv.send_message("Room max_users set to: %s" % message)
+        resource.connection.room.max_users = value
+        resource.send("Room max_users set to: %s" % message)
 
 
 class ChatMOTD(ChatPlugin):
+    """ /motd command. Change the motd in a room """
+
     command = "motd"
     helper = "Update room MOTD"
     room = True
     permission = ability.Permissions.change_room_settings
 
-    def __call__(self, serv, message):
-        serv.room.motd = message
-        serv.session.commit()
-        serv.send_message("Room MOTD set to: %s" % message)
+    def __call__(self, resource, message):
+        resource.connection.room.motd = message
+        resource.send("Room MOTD set to: %s" % message)
 
 
 class ChatDescription(ChatPlugin):
+    """ /description command. Change the description in a room """
+
     command = "description"
     helper = "Update room description"
     room = True
     permission = ability.Permissions.change_room_settings
 
-    def __call__(self, serv, message):
-        serv.room.description = message
-        serv.session.commit()
-        serv.send_message("Room description set to: %s" % message)
+    def __call__(self, resource, message):
+        resource.connection.room.description = message
+        resource.send("Room description set to: %s" % message)
 
 
 class ChatRoomHidden(ChatPlugin):
+    """ /hide command. Change the display of a room """
+
     command = "hide"
     helper = "Show/Hide the room"
     room = True
     permission = ability.Permissions.change_room_settings
 
-    def __call__(self, serv, message):
-        if serv.room.hidden:
-            serv.room.hidden = False
-            msg = "The room is no more hidden"
-        else:
-            serv.room.hidden = True
-            msg = "The room is no more visible"
+    def __call__(self, resource, message):
+        room = resource.connection.room
 
-        serv.session.commit()
-        serv.send_message(msg)
+        room.hidden = not room.hidden
+
+        resource.send({
+            True: "The room is no more visible",
+            False: "The room is no more hidden"
+        }[room.hidden])
 
 
 class ChatRoomFree(ChatPlugin):
+    """ /free command. Change the liberty of a room """
+
     command = "free"
     helper = "Free/Unfree the room"
     room = True
     permission = ability.Permissions.change_room_settings
 
-    def __call__(self, serv, message):
-        if serv.room.free:
-            serv.room.free = False
-            msg = "The room is no more free"
-        else:
-            serv.room.free = True
-            msg = "The room is free"
+    def __call__(self, resource, message):
+        room = resource.connection.room
 
-        serv.session.commit()
-        serv.send_message(msg)
+        room.free = not room.free
+
+        resource.send({
+            True: "The room is free",
+            False: "The room is no more free"
+        }[room.free])
 
 
 class ChatSpectate(ChatPlugin):
+    """ /spectate command. Change the liberty of a room"""
+
     command = "spectate"
     helper = "Spectator mode"
     room = True
 
+    # FIXME: We don't have to change the connection object here
     def __call__(self, serv, message):
         if serv.conn.spectate:
             msg = "You are no more in spectator mode"
@@ -113,38 +121,43 @@ class ChatRoomInfo(ChatPlugin):
     helper = "Room resume"
     room = True
 
+    # FIXME: We don't have to call any controller here
     def __call__(self, serv, message):
         EnterRoomController.send_room_resume(serv.server, serv.conn, serv.room)
 
 
 class ChatDeleteRoom(ChatPlugin):
+    """ /delete command. Delete the current room """
+
     command = "delete"
     helper = "Delete the current room"
     room = True
     permission = ability.Permissions.delete_room
 
-    def __call__(self, serv, message):
-        serv.send_message("!! %s delete this room !!" % serv.colored_user_repr(serv.conn.room))
+    def __call__(self, resource, message):
+        connection = resource.connection
 
-        resource = room_resource.RoomResource(
-            serv.server,
-            serv.token,
-            session=serv.session
-        )
+        resource.send("!! %s delete this room !!" % (
+            models.User.colored_users_repr(connection.active_users)
+        ))
 
-        resource.delete(serv.room)
+        room_resource.RoomResource(
+            self.server,
+            connection=connection
+        ).delete(connection.room_id)
 
 
 class ChatLeaveRoom(ChatPlugin):
+    """ /leave command. Leave the current room """
+
     command = "leave"
     helper = "Leave the current room"
     room = True
 
-    def __call__(self, serv, message):
-        resource = room_resource.RoomResource(
-            serv.server,
-            serv.token,
-            session=serv.session
-        )
+    def __call__(self, resource, message):
+        connection = resource.connection
 
-        resource.leave()
+        room_resource.RoomResource(
+            self.server,
+            connection=connection
+        ).leave()

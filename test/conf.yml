@@ -17,7 +17,7 @@ database:
     type: "sqlite"
     user:
     password:
-    database: "stepmania.db"
+    database: "stepmania_test.db"
     host:
     port:
     driver:
@@ -79,3 +79,4 @@ plugins:
         notif_on_attack: False
         max_metter: 100
         attack_duration: 3000
+

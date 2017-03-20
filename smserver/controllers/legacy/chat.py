@@ -1,42 +1,37 @@
 """ Chat controller main class """
 
-import re
-
+from smserver import exceptions
 from smserver.smutils.smpacket import smcommand
 from smserver.stepmania_controller import StepmaniaController
+from smserver.resources.chat_resource import ChatResource
 
 
 class ChatController(StepmaniaController):
+    """ Legacy chat controller """
+
     command = smcommand.SMClientCommand.NSCCM
     require_login = True
 
     def handle(self):
-        message = self.packet["message"]
+        """ Handle a new NSCCM command """
 
-        key, value = self._parse_message(message)
+        chat_resource = ChatResource(
+            self.server,
+            self.conn.token,
+            self.session
+        )
 
-        if not key:
-            self.send_user_message(message)
+        try:
+            responses = chat_resource.send(message=self.packet["message"])
+        except exceptions.Unauthorized:
+            self.send_message("Unauthorized action.", to="me")
+            return
+        except exceptions.NotFound:
+            self.send_message("Unknown command. /help for available commands", to="me")
             return
 
-        if key not in self.server.chat_commands:
-            self.send_message("%s: Unknown command. /help for available commands" % key, to="me")
+        if not responses:
             return
 
-        if not self.server.chat_commands[key].can(self):
-            self.send_message("%s: Unauthorized action." % key, to="me")
-            return
-
-        self.server.chat_commands[key](self, value)
-
-    @staticmethod
-    def _parse_message(message, sufix=r"/"):
-        m = re.search(r'^' + sufix + r'(\S+)\s*(.*)$', message)
-        if m:
-            key = m.group(1).lower()
-            value = m.group(2)
-        else:
-            key = None
-            value = None
-
-        return key, value
+        for message in responses:
+            self.send_message(message, to="me")

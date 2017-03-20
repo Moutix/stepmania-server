@@ -122,7 +122,7 @@ class DataBase(object):
             password=self._password,
             host=self._host,
             database=self._database,
-            port=self._port
+            port=self._port,
         )
 
     def create_tables(self):

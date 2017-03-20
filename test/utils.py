@@ -3,6 +3,8 @@
 import unittest
 import testfixtures
 
+from smserver import messaging
+
 from test import common
 
 class SMServerTest(unittest.TestCase):
@@ -24,12 +26,28 @@ class SMServerTest(unittest.TestCase):
 
         raise AssertionError("No log % as been captured" % level)
 
+    def get_logs(self, level):
+        """ Get a log that match the given level """
+
+        logs = []
+        for record in self._log_capture.records:
+            if record.levelname == level:
+                logs.append(record)
+
+        return logs
+
     def assertNotLog(self, level, message=None): #pylint: disable=invalid-name
         """ Assert no message of this type has been record """
         with self.assertRaises(AssertionError, msg="Log %s found" % level):
             self.assertLog(level, message)
 
+    def reset_log(self):
+        """ Reset the log capture """
+        self._log_capture.uninstall_all()
+        self._log_capture = testfixtures.LogCapture()
+
     def tearDown(self):
+        messaging.clear()
         self._log_capture.uninstall_all()
 
 class DBTest(SMServerTest):
@@ -42,7 +60,7 @@ class DBTest(SMServerTest):
 
     def tearDown(self):
         super().tearDown()
-        # Rollback the session => no changes to the database
-        common.db.recreate_tables()
         # Remove it, so that the next test gets a new Session()
         common.db.session.remove()
+        # Rollback the session => no changes to the database
+        common.db.recreate_tables()

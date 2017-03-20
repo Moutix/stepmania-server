@@ -34,6 +34,15 @@ class BaseStepmaniaServerTest(unittest.TestCase):
         is_alive.return_value = False
         self.assertEqual(self.smthread.is_alive(), False)
 
+    def test_has_room(self):
+        """ Test if the room is used on this server"""
+
+        self.assertFalse(self.server.has_room(5))
+        self.server.add_connection(self.conn1)
+        self.assertFalse(self.server.has_room(5))
+        self.server.add_to_room(self.conn1.token, 5)
+        self.assertTrue(self.server.has_room(5))
+
     def test_connections(self):
         """ test listing the connections """
 

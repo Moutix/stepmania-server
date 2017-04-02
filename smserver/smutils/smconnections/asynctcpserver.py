@@ -117,7 +117,10 @@ class AsyncSocketServer(smconn.SMThread):
 
         if self._serv.sockets:
             for sock in self._serv.sockets:
-                sock.shutdown(socket.SHUT_RDWR)
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
 
         self._serv.close()
         self.loop.run_until_complete(

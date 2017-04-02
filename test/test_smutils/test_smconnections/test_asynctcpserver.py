@@ -58,6 +58,9 @@ class AsyncSocketServerTest(unittest.TestCase):
 
         self.server.stop_server()
 
+    def run_loop_once(self):
+        self.loop.call_soon(self.loop.stop)
+        self.loop.run_forever()
 
     def test_server_close_while_client_connected(self):
         """ Try stopping the server during client connection """
@@ -78,6 +81,7 @@ class AsyncSocketServerTest(unittest.TestCase):
         self.loop.run_until_complete(self.writer.drain())
 
         on_data.assert_called_with(b"\x00\x00\x00\x01\x54")
+        self.run_loop_once()
 
         self.stop_server()
 
@@ -94,6 +98,7 @@ class AsyncSocketServerTest(unittest.TestCase):
         self.assertEqual(on_data.call_count, 2)
         self.assertEqual(on_data.call_args_list[0][0][0], b"\x00\x00\x00\x01\x54")
         self.assertEqual(on_data.call_args_list[1][0][0], b"\x00\x00\x00\x01\x55")
+        self.run_loop_once()
 
         self.stop_server()
 
@@ -107,6 +112,7 @@ class AsyncSocketServerTest(unittest.TestCase):
         self.writer.write(b"\x00\x00\x43")
         self.writer.write(b"\x00\x00\x00\x45")
         self.loop.run_until_complete(self.writer.drain())
+        self.run_loop_once()
 
         on_data.assert_not_called()
 

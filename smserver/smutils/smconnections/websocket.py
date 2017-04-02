@@ -84,7 +84,10 @@ class WebSocketServer(smconn.SMThread):
         sockets = self._serv.server.sockets
         if sockets:
             for sock in sockets:
-                sock.shutdown(socket.SHUT_RDWR)
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
 
         self._serv.close()
         self.loop.run_until_complete(

@@ -55,7 +55,7 @@ class SocketConn(smconn.StepmaniaConn, Thread):
             full_data = b""
             size = None
 
-    def _send_data(self, data):
+    def send_data(self, data):
         with self.mutex:
             try:
                 self._conn.sendall(data)

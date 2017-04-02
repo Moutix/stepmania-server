@@ -14,11 +14,11 @@ from smserver.smutils.smpacket import smcommand
 
 
 class StepmaniaConn(object):
+    """ A stepmania connection is represented by a token in the database """
+
     log = logger.get_logger()
     ENCODING = "binary"
     ALLOWED_PACKET = []
-
-    """ A stepmania connection is represented by a token in the database """
 
     def __init__(self, serv, ip, port):
         self.mutex = Lock()
@@ -85,10 +85,10 @@ class StepmaniaConn(object):
             )
 
         self.log.debug("packet send to %s: %s", self.ip, packet)
-        self._send_data(packet.to_(self.ENCODING))
+        self.send_data(packet.to_(self.ENCODING))
 
-    def _send_data(self, data):
-        pass
+    def send_data(self, data):
+        """ Send biary data to the client """
 
     def close(self):
         """ Close the connection """

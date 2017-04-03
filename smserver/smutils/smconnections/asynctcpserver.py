@@ -28,7 +28,10 @@ class AsyncSocketClient(smconn.StepmaniaConn):
                 data = data_left
                 data_left = b""
             else:
-                data = (yield from self.reader.read(8192))
+                try:
+                    data = yield from self.reader.read(8192)
+                except asyncio.CancelledError:
+                    break
 
             if data == b'':
                 break
@@ -57,7 +60,7 @@ class AsyncSocketClient(smconn.StepmaniaConn):
 
         self.close()
 
-    def _send_data(self, data):
+    def send_data(self, data):
         self.writer.write(data)
         self.loop.create_task(self.writer.drain())
 
@@ -67,10 +70,10 @@ class AsyncSocketClient(smconn.StepmaniaConn):
 
 
 class AsyncSocketServer(smconn.SMThread):
-    def __init__(self, server, ip, port):
+    def __init__(self, server, ip, port, loop=None):
         smconn.SMThread.__init__(self, server, ip, port)
 
-        self.loop = asyncio.new_event_loop()
+        self.loop = loop or asyncio.new_event_loop()
         self._serv = None
         self.clients = {}
 
@@ -91,23 +94,45 @@ class AsyncSocketServer(smconn.SMThread):
         client.task.add_done_callback(client_done)
 
     def run(self):
-        self._serv = self.loop.run_until_complete(
-            asyncio.streams.start_server(self._accept_client,
-                                         self.ip, self.port,
-                                         loop=self.loop))
+        self.start_server()
         self.loop.run_forever()
         self.loop.close()
         smconn.SMThread.run(self)
 
-    def stop(self):
-        smconn.SMThread.stop(self)
+    def start_server(self):
+        """ Start the server in the given loop """
+
+        self._serv = self.loop.run_until_complete(asyncio.start_server(
+            self._accept_client,
+            host=self.ip,
+            port=self.port,
+            loop=self.loop,
+        ))
+        return self._serv
+
+    def stop_server(self):
+        """ Stop the server in the given loop """
 
         if self._serv is None:
             return
 
         if self._serv.sockets:
             for sock in self._serv.sockets:
-                sock.shutdown(socket.SHUT_RDWR)
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
 
-        self.loop.stop()
         self._serv.close()
+        self.loop.run_until_complete(
+            asyncio.wait_for(self._serv.wait_closed(), timeout=1, loop=self.loop)
+        )
+        for task in self.clients:
+            task.cancel()
+
+        self.loop.run_until_complete(asyncio.gather(*self.clients))
+
+    def stop(self):
+        smconn.SMThread.stop(self)
+        self.stop_server()
+        self.loop.stop()

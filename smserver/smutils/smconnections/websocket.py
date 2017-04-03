@@ -22,12 +22,11 @@ class WebSocketClient(smconn.StepmaniaConn):
                 data = yield from self.websocket.recv()
             except websockets.ConnectionClosed:
                 break
-
             self._on_data(data)
 
         self.close()
 
-    def _send_data(self, data):
+    def send_data(self, data):
         self.loop.create_task(self.websocket.send(data))
 
     def close(self):
@@ -35,17 +34,16 @@ class WebSocketClient(smconn.StepmaniaConn):
         self.websocket.close()
 
 class WebSocketServer(smconn.SMThread):
-    def __init__(self, server, ip, port):
+    def __init__(self, server, ip, port, loop=None):
         smconn.SMThread.__init__(self, server, ip, port)
 
-        self.loop = asyncio.new_event_loop()
+        self.loop = loop or asyncio.new_event_loop()
 
         self._serv = None
         self.server = server
         self.daemon = True
         self.ip = ip
         self.port = port
-        self.clients = {}
 
     @asyncio.coroutine
     def _accept_client(self, websocket, path=""):
@@ -60,14 +58,25 @@ class WebSocketServer(smconn.SMThread):
             raise
 
     def run(self):
-        self._serv = self.loop.run_until_complete(
-            websockets.serve(self._accept_client, self.ip, self.port, loop=self.loop))
-
+        self.start_server()
         self.loop.run_forever()
         smconn.SMThread.run(self)
 
-    def stop(self):
-        smconn.SMThread.stop(self)
+    def start_server(self):
+        """ Start the websocket server """
+
+        self._serv = self.loop.run_until_complete(
+            websockets.serve(
+                self._accept_client,
+                host=self.ip,
+                port=self.port,
+                loop=self.loop,
+            )
+        )
+        return self._serv
+
+    def stop_server(self):
+        """ Stop the server in the given loop """
 
         if self._serv is None:
             return
@@ -75,7 +84,17 @@ class WebSocketServer(smconn.SMThread):
         sockets = self._serv.server.sockets
         if sockets:
             for sock in sockets:
-                sock.shutdown(socket.SHUT_RDWR)
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
 
-        self.loop.stop()
         self._serv.close()
+        self.loop.run_until_complete(
+            asyncio.wait_for(self._serv.wait_closed(), timeout=1)
+        )
+
+    def stop(self):
+        smconn.SMThread.stop(self)
+        self.stop_server()
+        self.loop.stop()

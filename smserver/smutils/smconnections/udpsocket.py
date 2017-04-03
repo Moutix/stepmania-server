@@ -18,7 +18,7 @@ class SocketConn(smconn.StepmaniaConn, Thread):
     def received_data(self):
         yield self._data
 
-    def _send_data(self, data):
+    def send_data(self, data):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.sendto(data, (self.ip, self.port))
 

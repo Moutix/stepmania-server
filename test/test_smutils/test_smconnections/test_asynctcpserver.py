@@ -77,9 +77,14 @@ class AsyncSocketServerTest(unittest.TestCase):
         self.start_server()
         self.start_client()
         self.mock_server.add_connection.assert_called_once()
-        self.writer.write(b"\x00\x00\x00\x01\x54")
-        self.loop.run_until_complete(self.writer.drain())
+        connection = self.mock_server.add_connection.call_args[0][0]
 
+        self.writer.write(b"\x00\x00\x00\x01\x54")
+        on_data.side_effect = connection.send_data
+
+        data = self.loop.run_until_complete(self.reader.read(4096))
+
+        self.assertEqual(data, b"\x00\x00\x00\x01\x54")
         on_data.assert_called_with(b"\x00\x00\x00\x01\x54")
         self.run_loop_once()
 
@@ -92,8 +97,14 @@ class AsyncSocketServerTest(unittest.TestCase):
         self.start_server()
         self.start_client()
         self.mock_server.add_connection.assert_called_once()
+        connection = self.mock_server.add_connection.call_args[0][0]
+
         self.writer.write(b"\x00\x00\x00\x01\x54\x00\x00\x00\x01\x55")
-        self.loop.run_until_complete(self.writer.drain())
+
+        on_data.side_effect = connection.send_data
+
+        data = self.loop.run_until_complete(self.reader.read(4096))
+        self.assertEqual(data, b"\x00\x00\x00\x01\x54\x00\x00\x00\x01\x55")
 
         self.assertEqual(on_data.call_count, 2)
         self.assertEqual(on_data.call_args_list[0][0][0], b"\x00\x00\x00\x01\x54")

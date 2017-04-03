@@ -32,6 +32,7 @@ class AsyncSocketClient(smconn.StepmaniaConn):
                     data = yield from self.reader.read(8192)
                 except asyncio.CancelledError:
                     break
+
             if data == b'':
                 break
 

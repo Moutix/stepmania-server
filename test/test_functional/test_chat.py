@@ -122,7 +122,7 @@ class ChatTest(UserFunctionalTest):
         self.client_bin.on_data(smpacket.SMPacketClientNSCCM(
             message="/ban %s" % self.user_json1.name,
         ).binary)
-        time.sleep(0.02)
+        time.sleep(0.05)
         self.assertBinSend(smpacket.SMPacketServerNSCCM)
         packet = self.get_smpacket_in(smpacket.SMPacketServerNSCCM, self.client_bin.packet_send)
 
@@ -146,7 +146,7 @@ class ChatTest(UserFunctionalTest):
         self.client_bin.on_data(smpacket.SMPacketClientNSCCM(
             message="/kick %s" % self.user_json1.name,
         ).binary)
-        time.sleep(0.02)
+        time.sleep(0.05)
         self.assertBinSend(smpacket.SMPacketServerNSCCM)
         packet = self.get_smpacket_in(smpacket.SMPacketServerNSCCM, self.client_bin.packet_send)
 

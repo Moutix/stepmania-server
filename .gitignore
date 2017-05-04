@@ -63,4 +63,4 @@ log/
 *.db
 
 # Temprorary file
-.swp
+*.swp

@@ -13,9 +13,13 @@ class ChatWorker(base.BaseWorker):
     def handle(self, data, token=None, *, session=None):
         """ Handle a new incomming chat message """
 
-        target = data.get("target", "")
+        target = data.get("target", {})
         message = data.get("message", "")
         source = data.get("source")
+
+        if not target or target.get("type") not in ("room", "token"):
+            self.server.log("Unknown message target for event" % data)
+            return
 
         connection = models.Connection.by_token(source, session) if source else None
         if connection:
@@ -27,17 +31,15 @@ class ChatWorker(base.BaseWorker):
                 message
             )
 
-        if target.startswith("~"):
-            self.send_message_room(
-                message=message,
-                room=models.Room.by_name(
-                    session=session,
-                    name=target.split("~", 1)[1],
-                )
-            )
+        if target["type"] == "token":
+            self.send_message_token(message, target["value"])
             return
 
-        self.send_message_token(message, target)
+        self.send_message_room(
+            message=message,
+            room=models.Room.by_id(target["value"], session),
+        )
+
 
     def send_message_token(self, message, token):
         """ Send a message to a token

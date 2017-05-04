@@ -126,10 +126,19 @@ class RoomTest(utils.DBTest):
         self.assertIn(room_hidden, rooms)
 
     def test_by_name(self):
-        """ Test getting a session by it's name"""
+        """ Test getting a room by it's name"""
 
         room = RoomFactory()
 
-        self.assertEqual(models.Room.by_name(self.session, room.name), room)
+        self.assertEqual(models.Room.by_name(room.name, self.session), room)
 
-        self.assertIsNone(models.Room.by_name(self.session, "invalid room"))
+        self.assertIsNone(models.Room.by_name("invalid room", self.session))
+
+    def test_by_id(self):
+        """ Test getting a room by it's id"""
+
+        room = RoomFactory()
+
+        self.assertEqual(models.Room.by_id(room.id, self.session), room)
+
+        self.assertIsNone(models.Room.by_id("invalid id", self.session))

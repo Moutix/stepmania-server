@@ -166,7 +166,13 @@ class Room(schema.Base):
         return smpacket.SMPacketServerNSSMONL(packet=packet)
 
     @classmethod
-    def by_name(cls, session, name):
+    def by_id(cls, room_id, session):
+        """ Get the room with the given id """
+
+        return session.query(cls).filter_by(id=room_id).first()
+
+    @classmethod
+    def by_name(cls, name, session):
         """ Get the room with the given name """
 
         return session.query(cls).filter_by(name=name).first()

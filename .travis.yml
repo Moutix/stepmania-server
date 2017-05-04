@@ -6,16 +6,13 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
 services:
   - redis-server
 install:
   - pip install .
   - pip install -r test_requirements.txt
   - pip install coveralls
-matrix:
-  include:
-    - python: "3.6"
-      env: NO_LINT=1
 script:
   - ./test_me.sh
 after_success:

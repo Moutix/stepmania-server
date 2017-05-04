@@ -1,9 +1,8 @@
 """ Chat resource """
 
 from smserver import ability
-from smserver import event
 from smserver import exceptions
-from smserver import messaging
+from smserver import services
 from smserver.resources import base
 
 class ChatResource(base.BaseResource):
@@ -22,23 +21,21 @@ class ChatResource(base.BaseResource):
         if command:
             return self.command(command, param)
 
-        if not target and self.connection.room:
-            target = "~{name}".format(name=self.connection.room.name)
+        if not target and not self.connection.room:
+            return
 
-        msg = event.Event(
-            kind=event.EventKind.chat_message,
-            data={
-                "source": self.token,
-                "message": message,
-                "target": target,
-                "type": "chat"
-            },
-            token=self.token,
-        )
-        if self.connection.room:
-            msg.room_id = self.connection.room.id
-
-        messaging.send(msg)
+        if target:
+            services.chat.send_message_token(
+                token=target,
+                message=message,
+                source=self.token
+            )
+        else:
+            services.chat.send_message_room(
+                room_id=self.connection.room_id,
+                message=message,
+                source=self.token
+            )
 
     @staticmethod
     def parse_command(message, prefix="/"):

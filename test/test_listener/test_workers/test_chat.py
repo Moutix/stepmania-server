@@ -31,7 +31,11 @@ class ChatWorkerTest(utils.DBTest):
         user = UserFactory(connection=connection, online=True, room=room)
 
         self.worker.handle(
-            {"target": "~room_name", "message": "message", "source": connection.token},
+            {
+                "target": {"type": "room", "value": room.id},
+                "message": "message",
+                "source": connection.token
+            },
             token=connection.token,
             session=self.session,
         )
@@ -57,7 +61,11 @@ class ChatWorkerTest(utils.DBTest):
         connection_target = ConnectionFactory()
 
         self.worker.handle(
-            {"target": connection_target.token, "message": "message", "source": connection.token},
+            {
+                "target": {"type": "token", "value": connection_target.token},
+                "message": "message",
+                "source": connection.token
+            },
             token=connection.token,
             session=self.session,
         )

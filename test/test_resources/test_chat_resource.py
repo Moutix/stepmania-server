@@ -35,13 +35,13 @@ class ChatResourceTest(base.ResourceTest):
         """ Test sending a message """
 
         with self.assertRaises(exceptions.Unauthorized):
-            self.resource.send("bla")
+            self.resource.send("bla", target="target")
 
         send_message.assert_not_called()
 
         UserFactory(online=True, connection=self.connection)
 
-        self.resource.send("bla")
+        self.resource.send("bla", target="target")
         send_message.assert_called_once()
 
         msg = send_message.call_args[0][0]
@@ -51,7 +51,8 @@ class ChatResourceTest(base.ResourceTest):
         self.assertIsNone(msg.room_id)
 
         self.assertEqual(msg.data["message"], "bla")
-        self.assertIsNone(msg.data["target"])
+        self.assertEqual(msg.data["target"]["value"], "target")
+        self.assertEqual(msg.data["target"]["type"], "token")
 
     @mock.patch("smserver.messaging.Messaging.send")
     def test_send_room_message(self, send_message):
@@ -71,7 +72,17 @@ class ChatResourceTest(base.ResourceTest):
         self.assertEqual(msg.room_id, room.id)
 
         self.assertEqual(msg.data["message"], "bla")
-        self.assertEqual(msg.data["target"], "~machin")
+        self.assertEqual(msg.data["target"]["value"], room.id)
+        self.assertEqual(msg.data["target"]["type"], "room")
+
+    @mock.patch("smserver.messaging.Messaging.send")
+    def test_send_message_without_target(self, send_message):
+        """ Test sending a message without target """
+
+        UserFactory(online=True, connection=self.connection)
+
+        self.resource.send("bla")
+        send_message.assert_not_called()
 
     def test_command(self):
         """ Test chat command dispather """

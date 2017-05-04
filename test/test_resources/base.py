@@ -17,6 +17,3 @@ class ResourceTest(utils.DBTest):
 
         self.connection = ConnectionFactory()
         self.token = self.connection.token
-
-    def tearDown(self):
-        super().tearDown()

@@ -23,9 +23,6 @@ class StepmaniaControllerTest(utils.DBTest):
 
         self.controller = StepmaniaController(self.server, self.conn, None, self.session)
 
-    def tearDown(self):
-        super().tearDown()
-
     def test_connection(self):
         """ test getting the connection associated with the conn object"""
 

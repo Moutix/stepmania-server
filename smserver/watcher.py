@@ -100,7 +100,10 @@ class StepmaniaWatcher(Thread):
             nb_players=models.User.nb_onlines(session)
         )
 
-        self._sock.sendto(packet.binary, (self.UDP_IP, self.UDP_PORT))
+        try:
+            self._sock.sendto(packet.binary, (self.UDP_IP, self.UDP_PORT))
+        except OSError: # Network unreachable
+            return
 
     @periodicmethod(1)
     def send_ping(self, _session):

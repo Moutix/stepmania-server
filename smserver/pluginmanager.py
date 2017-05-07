@@ -136,12 +136,12 @@ class PluginManager(list):
 
         apps = []
         for cls in inspect.getmembers(module, inspect.isclass):
-            app = getattr(module, cls[0])
+            app = getattr(module, cls[0], None)
             if not app:
                 continue
 
             for plugin_class in plugin_classes:
-                if plugin_class in [x.__name__ for x in app.__bases__]:
+                if plugin_class in (x.__name__ for x in inspect.getmro(app)):
                     apps.append(app)
 
         return apps
@@ -156,7 +156,6 @@ class PluginManager(list):
 
 
 if __name__ == "__main__":
-    print(PluginManager.get_plugin("auth.database", ["AuthPlugin"]))
     plugins = PluginManager("StepmaniaPlugin", ["example"], "plugins", "plugin")
     plugins.load()
     print(plugins)

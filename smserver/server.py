@@ -239,10 +239,11 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         connection = models.Connection.by_token(conn.token, session)
 
-        room = connection.room
         smthread.StepmaniaServer.on_disconnect(self, conn)
 
         self.send_sd_running_status(session)
+        if not connection:
+            return
 
         users = connection.active_users
         if not users:
@@ -252,6 +253,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected", user.name)
 
+        room = connection.room
         if room:
             self.send_message(
                 "%s disconnected" % models.User.colored_users_repr(users, room.id),

@@ -64,7 +64,7 @@ class StepmaniaServer(object):
     def connections(self):
         """ List al the connections of this server """
         with self.mutex:
-            return self._connections.values()
+            yield from self._connections.values()
 
     def add_connection(self, conn):
         """ Add a new connection to the server """

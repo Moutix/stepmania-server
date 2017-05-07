@@ -2,17 +2,42 @@
 
 from smserver import ability
 from smserver import models
+from smserver import services
 from smserver.resources import room_resource
 from smserver.chatplugin import ChatPlugin
 from smserver.controllers.legacy.enter_room import EnterRoomController
 
-class ChatMaxUsers(ChatPlugin):
+class ChatRoomUpdate(ChatPlugin):
+    """ Generic room update command """
+
+    room = True
+    permission = ability.Permissions.change_room_settings
+
+    field = None
+
+    def __call__(self, resource, message):
+        connection = resource.connection
+        setattr(connection.room, self.field, message)
+
+        services.chat.send_message_room(
+            room_id=connection.room_id,
+            message="Room %s set to '%s' by %s" % (
+                self.field,
+                message,
+                models.User.colored_users_repr(
+                    connection.active_users,
+                    connection.room_id
+                ),
+            )
+        )
+
+class ChatMaxUsers(ChatRoomUpdate):
     """ /mas_users command. Change the nb max of users in a room """
 
     command = "max_users"
     helper = "Set nb_max of users (0 to 255)."
-    room = True
-    permission = ability.Permissions.change_room_settings
+
+    field = "max_users"
 
     def __call__(self, resource, message):
         try:
@@ -23,73 +48,47 @@ class ChatMaxUsers(ChatPlugin):
         if not value or value < 0 or value > 255:
             return ["Invalid number: Please enter a correct value (0:255)"]
 
-        resource.connection.room.max_users = value
-        resource.send("Room max_users set to: %s" % message)
+        super().__call__(resource, value)
 
-
-class ChatMOTD(ChatPlugin):
+class ChatMOTD(ChatRoomUpdate):
     """ /motd command. Change the motd in a room """
 
     command = "motd"
     helper = "Update room MOTD"
-    room = True
-    permission = ability.Permissions.change_room_settings
 
-    def __call__(self, resource, message):
-        resource.connection.room.motd = message
-        resource.send("Room MOTD set to: %s" % message)
+    field = "motd"
 
 
-class ChatDescription(ChatPlugin):
+class ChatDescription(ChatRoomUpdate):
     """ /description command. Change the description in a room """
 
     command = "description"
     helper = "Update room description"
-    room = True
-    permission = ability.Permissions.change_room_settings
 
-    def __call__(self, resource, message):
-        resource.connection.room.description = message
-        resource.send("Room description set to: %s" % message)
+    field = "description"
 
 
-class ChatRoomHidden(ChatPlugin):
+class ChatRoomHidden(ChatRoomUpdate):
     """ /hide command. Change the display of a room """
 
     command = "hide"
     helper = "Show/Hide the room"
-    room = True
-    permission = ability.Permissions.change_room_settings
+
+    field = "hidden"
 
     def __call__(self, resource, message):
-        room = resource.connection.room
+        super().__call__(resource, not resource.connection.room.hidden)
 
-        room.hidden = not room.hidden
-
-        resource.send({
-            True: "The room is no more visible",
-            False: "The room is no more hidden"
-        }[room.hidden])
-
-
-class ChatRoomFree(ChatPlugin):
+class ChatRoomFree(ChatRoomUpdate):
     """ /free command. Change the liberty of a room """
 
     command = "free"
     helper = "Free/Unfree the room"
-    room = True
-    permission = ability.Permissions.change_room_settings
+
+    field = "free"
 
     def __call__(self, resource, message):
-        room = resource.connection.room
-
-        room.free = not room.free
-
-        resource.send({
-            True: "The room is free",
-            False: "The room is no more free"
-        }[room.free])
-
+        super().__call__(resource, not resource.connection.room.free)
 
 class ChatSpectate(ChatPlugin):
     """ /spectate command. Change the liberty of a room"""

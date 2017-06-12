@@ -511,6 +511,10 @@ class SMPacketClientNSCGSR(SMPacket):
         (smencoder.SMPayloadType.NT, "song_options", None),
         (smencoder.SMPayloadType.NT, "first_player_options", None),
         (smencoder.SMPayloadType.NT, "second_player_options", None),
+        (SMPayloadType.NT, "first_player_chartkey", None),
+        (SMPayloadType.NT, "second_player_chartkey", None),
+        (SMPayloadType.INT, "rate", 0),
+        (SMPayloadType.NT, "filehash", None)
     ]
 
 
@@ -551,7 +555,7 @@ class SMPacketClientNSCGSU(SMPacket):
         (smencoder.SMPayloadType.MSN, "player_id", None),
         (smencoder.SMPayloadType.LSN, "step_id", None),
         (smencoder.SMPayloadType.MSN, "grade", None),
-        (smencoder.SMPayloadType.LSN, "reserved", None),
+        (SMPayloadType.LSN, "note_size", None),
         (smencoder.SMPayloadType.INT, "score", 4),
         (smencoder.SMPayloadType.INT, "combo", 2),
         (smencoder.SMPayloadType.INT, "health", 2),
@@ -640,6 +644,7 @@ class SMPacketClientNSCRSG(SMPacket):
         (smencoder.SMPayloadType.NT, "song_title", None),
         (smencoder.SMPayloadType.NT, "song_artist", None),
         (smencoder.SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_hash", None)
     ]
 
 
@@ -744,6 +749,16 @@ class SMPacketClientXMLPacket(SMPacket):
     command = smcommand.SMClientCommand.XMLPacket
     _payload = [
         (smencoder.SMPayloadType.NT, "xml", None),
+    ]
+
+class SMPacketClientFLU(SMPacket):
+    """
+        Client command 16 (FLU)
+        RESERVED
+    """
+
+    command = SMClientCommand.FLU
+    _payload = [
     ]
 
 class SMPacketServerNSCPing(SMPacket):
@@ -978,6 +993,7 @@ class SMPacketServerNSCRSG(SMPacket):
         (smencoder.SMPayloadType.NT, "song_title", None),
         (smencoder.SMPayloadType.NT, "song_artist", None),
         (smencoder.SMPayloadType.NT, "song_subtitle", None),
+        (SMPayloadType.NT, "song_hash", None)
     ]
 
 
@@ -1119,4 +1135,22 @@ class SMPacketServerXMLPacket(SMPacket):
     command = smcommand.SMServerCommand.XMLPacket
     _payload = [
         (smencoder.SMPayloadType.NT, "xml", None),
+    ]
+
+class SMPacketServerFLU(SMPacket):
+    """
+        Server command 144 (FLU)
+        This packet contains friendlist data.
+        :param str usernames : usernames
+        :param str userstates : usertates
+    """
+
+    command = SMServerCommand.FLU
+    _payload = [
+        (SMPayloadType.INT, "nb_players", 1),
+        (SMPayloadType.LIST, "players", ("nb_players", [
+            (SMPayloadType.INT, "status", 1),
+            (SMPayloadType.NT, "name", None),
+            ])
+        )
     ]

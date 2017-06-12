@@ -52,3 +52,9 @@ class CreateRoomController(StepmaniaController):
         self.send_message(
             "Welcome to your new room! Type /help for options", to="me"
         )
+
+        roomspacket = models.Room.smo_list(self.session, self.active_users)
+        for conn in self.server.connections:
+            if conn.room == None:
+                conn.send(roomspacket)
+                self.server.send_user_list_lobby(conn, self.session)

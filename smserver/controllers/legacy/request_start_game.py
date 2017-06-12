@@ -84,6 +84,31 @@ class RequestStartGameController(StepmaniaController):
             )
             return
 
+        canstart = True
+        isplaying = False
+        busy = []
+        for user in self.room.online_users:
+            if user.status == 2:
+                canstart = False
+                isplaying = True
+            if user.status == 3 or user.status == 3:
+                busy.append(user)
+                canstart = False
+
+        if canstart == False:
+            if len(busy) > 0:
+                for user in busy:
+                    self.send_message("User %s is busy." % with_color(user.name),to="me")
+            if isplaying == True:
+                self.send_message(
+                    "Room %s is already playing %s." % (
+                        with_color(self.room.name),
+                        with_color(self.room.active_song.fullname)
+                        ),
+                    to="me"
+                )
+            return
+
         game = models.Game(room_id=self.room.id, song_id=song.id)
 
         self.session.add(game)

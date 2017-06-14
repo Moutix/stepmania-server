@@ -298,7 +298,7 @@ class SongStat(schema.Base):
         elif (offset < sgood) and (offset > (sgood * -1.0)):
             return 5
         else:
-        return 4
+            return 4
 
 class BinaryStats(SMPacket):
     _payload = [

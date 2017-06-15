@@ -41,6 +41,7 @@ class StartGameRequestController(StepmaniaController):
                     "toasties": 0,
                     "perfect_combo": 0,
                     "dp": 0,
+                    "taps": 0,
                     "best_score": song.best_score_value(self.packet["first_player_feet"])
                    },
                 1: {"data": [],
@@ -50,6 +51,7 @@ class StartGameRequestController(StepmaniaController):
                     "toasties": 0,
                     "perfect_combo": 0,
                     "dp": 0,
+                    "taps": 0,
                     "best_score": song.best_score_value(self.packet["second_player_feet"])
                    },
                 "start_at": datetime.datetime.now(),

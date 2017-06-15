@@ -42,6 +42,7 @@ class GameStatusUpdateController(StepmaniaController):
             notesize = self.notesize_from_combo(stats["combo"], self.conn.songstats[pid]["data"])
             offset = float(stats["offset"]) / 2000.0 - 16.384
             if stats["stepid"] > 3 and stats["stepid"] < 9:
+                self.conn.songstats[pid]["taps"] += 1
                 stats["stepid"] = models.SongStat.get_stepid(offset)
                 if stats["stepid"] == 7 or stats["stepid"] == 8:
                     self.conn.songstats[pid]["perfect_combo"] += notesize

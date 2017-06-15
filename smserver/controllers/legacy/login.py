@@ -60,6 +60,25 @@ class LoginController(StepmaniaController):
         ))
 
         self.send(models.Room.smo_list(self.session, self.active_users))
+        friends = self.session.query(models.Relationship).filter_by(state = 1).filter((models.Relationship.user1_id == user.id) | (models.Relationship.user2_id == user.id)).all()
+        for friend in friends:
+            if friend.user1_id == user.id:
+                friendid = friend.user2_id
+            else:
+                friendid = friend.user1_id
+            friendconn = self.server.find_connection(friendid)
+            self.server.send_friend_list(friendid, friendconn)
+            frienduser = self.session.query(models.User).filter_by(id = friendid).first()
+            if frienduser.online == True:
+                if frienduser.friend_notifications == True and friendconn:
+                    self.send_message(
+                        "Your friend %s connected" % user.name,
+                        friendconn)
+                if user.friend_notifications:
+                    self.send_message(
+                        "Your friend %s is online" % frienduser.name, 
+                        to="me")
+        self.server.send_friend_list(user.id, self.conn)        
 
     def _send_server_resume(self, nb_onlines, max_users):
         self.send_message(self.server.config.server.get("motd", ""), to="me")

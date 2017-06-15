@@ -8,3 +8,4 @@ from smserver.models.privilege import Privilege
 from smserver.models.ban import Ban
 from smserver.models.game import Game
 from smserver.models.connection import Connection
+from smserver.models.relationship import Relationship

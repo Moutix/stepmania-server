@@ -252,7 +252,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
         for user in users:
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected", user.name)
-
+            
             friends = session.query(models.Relationship).filter_by(state = 1).filter((models.Relationship.user1_id == user.id) | (models.Relationship.user2_id == user.id)).all()
             for friend in friends:
                 if friend.user1_id == user.id:
@@ -267,7 +267,7 @@ class StepmaniaServer(smthread.StepmaniaServer):
                         "Your friend %s disconnected" % user.name,
                         conn=friendconn
                     )
-
+        
         room = connection.room
         if room:
             self.send_message(

@@ -69,6 +69,10 @@ class SMPacketTest(unittest.TestCase):
             second_player_feet=8,
             first_player_feet=12,
             song_title="Wouhou whouhouhou",
+            first_player_chartkey="Xff9a2b45ec8506a76e15dc4b6f9b90006abc8854",
+            second_player_chartkey="Xff9a2b45ec8506a76e15dc4b6f9b90006abc8854",
+            filehash="2c9f6276ee12a6ca6a8ccd5986d3eff4d4800b25",
+            rate=100,
             song_subtitle="super sous titer"
         )
 

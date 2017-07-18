@@ -11,6 +11,7 @@ from smserver.resources.room_resource import RoomResource
 from smserver import exceptions
 from smserver import models
 
+from smserver import models
 
 class CreateRoomController(StepmaniaController):
     """ Create Room controller"""

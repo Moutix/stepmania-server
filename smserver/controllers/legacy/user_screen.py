@@ -21,7 +21,7 @@ class UserStatusController(StepmaniaController):
             for user in self.active_users:
                 user.room = None
             for room in self.session.query(models.Room):
-                if not room.online_users:
+                if not room.online_users.count():
                     if not room.static:
                         self.server.log.info("No users deleteing Room: %s" % (room.name))
                         self.session.delete(room)

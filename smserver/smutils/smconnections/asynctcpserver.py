@@ -24,7 +24,7 @@ class AsyncSocketClient(smconn.StepmaniaConn):
         data_left = b''
 
         while True:
-            if len(data_left) > 0:
+            if data_left:
                 data = data_left
                 data_left = b""
             else:

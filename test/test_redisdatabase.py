@@ -1,17 +1,21 @@
 """ Test redis database module """
 
 import unittest
+import mock
 
 from smserver import redis_database
 
 class RedisDatabaseTest(unittest.TestCase):
     """ Test redis database module module """
 
-    def test_connection_fail(self):
+    @mock.patch("redis.ConnectionPool")
+    def test_connection_fail(self, conn):
         """ Test redis connection fail """
 
+        conn.from_url.side_effect = ConnectionError
+
         with self.assertRaises(ConnectionError):
-            redis_database.RedisDataBase(url="redis://bla:6379")
+            redis_database.RedisDataBase(url="invalid url")
 
     def test_new_connection(self):
         """ Test getting new redis connection """

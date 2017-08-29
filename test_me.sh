@@ -16,4 +16,4 @@ if [ "$NO_COVERAGE" = "1" ] ; then
     COVERAGE_COMMAND="";
 fi;
 
-pytest $LINT_COMMAND $DOCTEST_COMMAND $COVERAGE_COMMAND --old-summary smserver test
+py.test $LINT_COMMAND $DOCTEST_COMMAND $COVERAGE_COMMAND --old-summary smserver test

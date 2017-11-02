@@ -13,3 +13,4 @@ WatchdogSec=60
 
 [Install]
 Alias=smserver
+WantedBy=multi-user.target

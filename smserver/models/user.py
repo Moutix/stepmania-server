@@ -51,7 +51,7 @@ class User(schema.Base):
     room_id          = Column(Integer, ForeignKey('rooms.id'))
     room             = relationship("Room", back_populates="users")
 
-    connection_token = Column(Integer, ForeignKey('connections.token'))
+    connection_token = Column(String(255), ForeignKey('connections.token'))
     connection       = relationship("Connection", back_populates="users")
 
     song_stats       = relationship("SongStat", back_populates="user")

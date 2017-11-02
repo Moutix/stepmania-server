@@ -16,5 +16,5 @@ class RoomFactory(base.BaseFactory):
     description = factory.Faker('sentence')
 
     @classmethod
-    def _after_postgeneration(cls, obj, create, results=None):  # pylint: disable=unused-argument
+    def _after_postgeneration(cls, obj, *_args, **_kwargs):
         obj._nb_players = None #pylint: disable=protected-access

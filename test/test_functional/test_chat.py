@@ -53,7 +53,7 @@ class ChatTest(UserFunctionalTest):
             message="coucou",
         ).binary)
 
-        time.sleep(0.02)
+        time.sleep(0.05)
         self.assertBinSend(smpacket.SMPacketServerNSCCM)
         self.assertJSONSend(smpacket.SMPacketServerNSCCM)
 
@@ -64,7 +64,7 @@ class ChatTest(UserFunctionalTest):
             message="coucou",
         ).json)
 
-        time.sleep(0.02)
+        time.sleep(0.05)
         self.assertBinSend(smpacket.SMPacketServerNSCCM)
         self.assertJSONSend(smpacket.SMPacketServerNSCCM)
 

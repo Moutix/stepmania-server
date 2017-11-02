@@ -19,7 +19,7 @@ class UserFactory(base.BaseFactory):
     client_name = "Socka"
 
     @classmethod
-    def _after_postgeneration(cls, obj, create, results=None):  # pylint: disable=unused-argument
+    def _after_postgeneration(cls, obj, *_args, **_kwargs):
         obj._room_level = {} #pylint: disable=protected-access
 
 

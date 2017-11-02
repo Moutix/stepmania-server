@@ -6,6 +6,7 @@ from smserver.controllers import legacy
 
 ROUTES = {
     # Legacy controller for compatibility with Stepmania 5.X
+    smcommand.SMClientCommand.NSCPingR: legacy.ping_response.PINGRController,
     smcommand.SMClientCommand.NSCHello: legacy.hello.HelloController,
     smcommand.SMClientCommand.NSCCM: legacy.chat.ChatController,
     smcommand.SMClientCommand.NSCFormatted: legacy.discovery.DiscoveryController,

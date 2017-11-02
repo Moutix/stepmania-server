@@ -1,5 +1,7 @@
 """ Module to test the connections of client """
 
+import mock
+
 from smserver.smutils.smpacket import smpacket
 
 from test.test_functional.helper import FunctionalTest
@@ -22,6 +24,20 @@ class ConnectionTest(FunctionalTest):
         self.assertIsNotNone(self.json_connection)
         self.assertEqual(self.client_json.ip, self.json_connection.ip)
         self.assertEqual(self.client_json.port, self.json_connection.port)
+
+    @mock.patch("smserver.controllers.legacy.ping_response.PINGRController.handle")
+    def test_ping_response(self, handler):
+        """ Test receiving a responce of a ping """
+
+        self.server.add_connection(self.client_bin)
+        self.assertIn(self.client_bin, self.server.connections)
+        self.assertIsNotNone(self.bin_connection)
+
+        self.client_bin.on_data(
+            smpacket.SMPacketClientNSCPingR().binary
+        )
+
+        handler.assert_called_once()
 
     def test_hello_binary(self):
         """ Test sending hello data to BIN client """

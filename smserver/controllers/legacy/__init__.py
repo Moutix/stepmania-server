@@ -14,3 +14,4 @@ from smserver.controllers.legacy import room_info
 from smserver.controllers.legacy import smo
 from smserver.controllers.legacy import user_profil
 from smserver.controllers.legacy import user_screen
+from smserver.controllers.legacy import ping_response

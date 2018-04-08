@@ -46,7 +46,7 @@ class _SMPacketMetaclass(type):
         super().__init__(name, bases, attrs, **kw)
         parent_class = super(cls, cls)
         if hasattr(parent_class, '__init_subclass_custom__'):
-            parent_class.__init_subclass_custom__(cls, **kw)
+            parent_class.__init_subclass_custom__(cls, **kw) #pylint: disable=no-member
 
 
 class SMPacket(metaclass=_SMPacketMetaclass):

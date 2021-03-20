@@ -50,6 +50,7 @@ class SMClientCommand(SMCommand):
     NSCFormatted = 13
     NSCAttack    = 14
     XMLPacket    = 15
+    FLU          = 16
 
 class SMServerCommand(SMCommand):
     """ List of server commands available """
@@ -70,6 +71,7 @@ class SMServerCommand(SMCommand):
     NSCFormatted = 141
     NSCAttack    = 142
     XMLPacket    = 143
+    FLU          = 144
 
 class SMOCommand(ParentCommand):
     """ Enum which contains all the Stepmania online commands """

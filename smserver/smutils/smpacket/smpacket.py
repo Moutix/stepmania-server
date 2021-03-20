@@ -494,6 +494,10 @@ class SMPacketClientNSCGSR(SMPacket):
         :param str song_options: Song option in string format
         :param str first_player_options: Primary player's option
         :param str second_player_options: Secondary player's option
+        :param str first_player_chartkey: First player's chartkey(a hash made from the notedata that's unique to each difficulty)
+        :param str second_player_chartkey: Second player's chartkey
+        :param str rate: An int representing the rate of the song being played( Multiplied by 100 )
+        :param str filehash: the SHA1 hash of the file(Usually .sm)
     """
 
     command = smcommand.SMClientCommand.NSCGSR
@@ -511,6 +515,10 @@ class SMPacketClientNSCGSR(SMPacket):
         (smencoder.SMPayloadType.NT, "song_options", None),
         (smencoder.SMPayloadType.NT, "first_player_options", None),
         (smencoder.SMPayloadType.NT, "second_player_options", None),
+        (smencoder.SMPayloadType.NT, "first_player_chartkey", None),
+        (smencoder.SMPayloadType.NT, "second_player_chartkey", None),
+        (smencoder.SMPayloadType.INT, "rate", 0),
+        (smencoder.SMPayloadType.NT, "filehash", None)
     ]
 
 
@@ -551,7 +559,7 @@ class SMPacketClientNSCGSU(SMPacket):
         (smencoder.SMPayloadType.MSN, "player_id", None),
         (smencoder.SMPayloadType.LSN, "step_id", None),
         (smencoder.SMPayloadType.MSN, "grade", None),
-        (smencoder.SMPayloadType.LSN, "reserved", None),
+        (smencoder.SMPayloadType.LSN, "note_size", None),
         (smencoder.SMPayloadType.INT, "score", 4),
         (smencoder.SMPayloadType.INT, "combo", 2),
         (smencoder.SMPayloadType.INT, "health", 2),
@@ -631,7 +639,7 @@ class SMPacketClientNSCRSG(SMPacket):
         ...     song_artist="Artist",
         ... )
         >>> print(packet.binary)
-        b'\\x00\\x00\\x00\\x10\\x08\\x02Title\\x00Artist\\x00\\x00'
+        b'\\x00\\x00\\x00\\x11\\x08\\x02Title\\x00Artist\\x00\\x00\\x00'
     """
 
     command = smcommand.SMClientCommand.NSCRSG
@@ -640,6 +648,7 @@ class SMPacketClientNSCRSG(SMPacket):
         (smencoder.SMPayloadType.NT, "song_title", None),
         (smencoder.SMPayloadType.NT, "song_artist", None),
         (smencoder.SMPayloadType.NT, "song_subtitle", None),
+        (smencoder.SMPayloadType.NT, "song_hash", None)
     ]
 
 
@@ -744,6 +753,16 @@ class SMPacketClientXMLPacket(SMPacket):
     command = smcommand.SMClientCommand.XMLPacket
     _payload = [
         (smencoder.SMPayloadType.NT, "xml", None),
+    ]
+
+class SMPacketClientFLU(SMPacket):
+    """
+        Client command 16 (FLU)
+        RESERVED
+    """
+
+    command = smcommand.SMClientCommand.FLU
+    _payload = [
     ]
 
 class SMPacketServerNSCPing(SMPacket):
@@ -969,7 +988,7 @@ class SMPacketServerNSCRSG(SMPacket):
         ...     song_subtitle="subtitle",
         ... )
         >>> print(packet.binary)
-        b'\\x00\\x00\\x00\\x18\\x88\\x00title\\x00artist\\x00subtitle\\x00'
+        b'\\x00\\x00\\x00\\x19\\x88\\x00title\\x00artist\\x00subtitle\\x00\\x00'
     """
 
     command = smcommand.SMServerCommand.NSCRSG
@@ -978,6 +997,7 @@ class SMPacketServerNSCRSG(SMPacket):
         (smencoder.SMPayloadType.NT, "song_title", None),
         (smencoder.SMPayloadType.NT, "song_artist", None),
         (smencoder.SMPayloadType.NT, "song_subtitle", None),
+        (smencoder.SMPayloadType.NT, "song_hash", None)
     ]
 
 
@@ -1119,4 +1139,22 @@ class SMPacketServerXMLPacket(SMPacket):
     command = smcommand.SMServerCommand.XMLPacket
     _payload = [
         (smencoder.SMPayloadType.NT, "xml", None),
+    ]
+
+class SMPacketServerFLU(SMPacket):
+    """
+        Server command 144 (FLU)
+        This packet contains friendlist data.
+        :param str usernames : usernames
+        :param str userstates : usertates
+    """
+
+    command = smcommand.SMServerCommand.FLU
+    _payload = [
+        (smencoder.SMPayloadType.INT, "nb_players", 1),
+        (smencoder.SMPayloadType.LIST, "players", ("nb_players", [
+            (smencoder.SMPayloadType.INT, "status", 1),
+            (smencoder.SMPayloadType.NT, "name", None),
+            ])
+        )
     ]

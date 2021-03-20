@@ -9,7 +9,9 @@ from smserver.stepmania_controller import StepmaniaController
 from smserver.controllers.legacy import enter_room
 from smserver.resources.room_resource import RoomResource
 from smserver import exceptions
+from smserver import models
 
+from smserver import models
 
 class CreateRoomController(StepmaniaController):
     """ Create Room controller"""
@@ -52,3 +54,9 @@ class CreateRoomController(StepmaniaController):
         self.send_message(
             "Welcome to your new room! Type /help for options", to="me"
         )
+
+        roomspacket = models.Room.smo_list(self.session, self.active_users)
+        for conn in self.server.connections:
+            if conn.room == None:
+                conn.send(roomspacket)
+                self.server.send_user_list_lobby(conn, self.session)

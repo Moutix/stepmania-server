@@ -89,8 +89,8 @@ class RequestStartGameController(StepmaniaController):
         self.session.add(game)
         self.session.commit()
 
-        self.send_message("New game started: %s" % with_color(song.fullname))
-
+        self.send_message("%s started the song %s" % (self.colored_user_repr(self.room.id), with_color(song.fullname)) )
+ 
         self.room.status = 2
         self.room.active_song = song
         self.sendplayers(self.room.id, smpacket.SMPacketServerNSCRSG(
@@ -99,4 +99,10 @@ class RequestStartGameController(StepmaniaController):
             song_subtitle=song.subtitle,
             song_artist=song.artist
             ))
+
+        roomspacket = models.Room.smo_list(self.session, self.active_users)
+        for conn in self.server.connections:
+            if conn.room == None:
+                conn.send(roomspacket)
+                self.server.send_user_list_lobby(conn, self.session)
 

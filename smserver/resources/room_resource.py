@@ -135,7 +135,11 @@ class RoomResource(base.BaseResource):
 
         for user in connection.active_users:
             user.room = None
-
+		
         self.log.info("%s leave the room %s", self.token, room.id)
-
+        if not room.online_users.count():
+            if not room.static:
+                self.server.log.info("No users deleteing Room: %s" % (room.name))
+                self.session.delete(room)
+                return None
         return room

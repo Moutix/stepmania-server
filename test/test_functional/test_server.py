@@ -288,12 +288,12 @@ class ServerTest(UserFunctionalTest):
         self.test_client_json_game_start_request()
         packet = smpacket.SMPacketClientNSCGSU(
             player_id=0,
-            step_id=4,
-            grade=3,
+            step_id=8,
+            grade=0,
             score=50000,
             combo=1,
             health=50,
-            offset=20000,
+            offset=32760,
         )
 
         self.client_bin.on_data(packet.binary)
@@ -301,8 +301,8 @@ class ServerTest(UserFunctionalTest):
         songstats = self.client_bin.songstats
 
         self.assertEqual(len(songstats[0]["data"]), 1)
-        self.assertEqual(songstats[0]["data"][0]["stepid"], 4)
-        self.assertEqual(songstats[0]["data"][0]["grade"], 3)
+        self.assertEqual(songstats[0]["data"][0]["stepid"], 8)
+        self.assertEqual(songstats[0]["data"][0]["grade"], 0)
         self.assertEqual(songstats[0]["data"][0]["score"], 50000)
         self.assertEqual(songstats[0]["data"][0]["combo"], 1)
         self.assertEqual(songstats[0]["data"][0]["health"], 50)
@@ -326,8 +326,8 @@ class ServerTest(UserFunctionalTest):
         songstats = list(self.session.query(models.SongStat).filter_by(user=self.user_bin1))
         self.assertEqual(len(songstats), 1)
 
-        self.assertEqual(songstats[0].score, 50000)
-        self.assertEqual(songstats[0].grade, 3)
+        self.assertEqual(songstats[0].score, 4)
+        self.assertEqual(songstats[0].grade, 1)
         self.assertEqual(songstats[0].max_combo, 1)
 
     def test_client_bin_disconnect(self):

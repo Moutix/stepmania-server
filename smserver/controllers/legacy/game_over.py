@@ -56,7 +56,7 @@ class GameOverController(StepmaniaController):
 
         if raw_stats["data"]:
             songstat.grade = raw_stats["data"][-1]["grade"]
-            songstat.score = raw_stats["data"][-1]["score"]
+            songstat.score = raw_stats["dp"]
 
         for stepid in models.SongStat.stepid.values():
             setattr(songstat, stepid, 0)

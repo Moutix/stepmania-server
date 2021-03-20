@@ -200,6 +200,105 @@ class SongStat(schema.Base):
     def nb_notes(self):
         return sum(getattr(self, note, 0) for note in self.stepid.values())
 
+    @staticmethod
+    def calc_grade(score, data):
+        if score >= 100.00:
+            for note in data:
+                if note["stepid"] > 2 and note["stepid"] < 9:
+                    if note != 8:
+                        return 1
+            return 0
+        elif score >= 93.00:
+            return 2
+        elif score >= 80.00:
+            return 3
+        elif score >= 65.00:
+            return 4
+        elif score >= 45.00:
+            return 5
+        return 6
+
+    @staticmethod
+    def calc_dp(stepsid):
+        if stepsid == 8 or stepsid == 7:
+            return 2
+        elif stepsid == 6:
+            return 1
+        elif stepsid == 5:
+            return 0
+        elif stepsid == 4:
+            return -4
+        elif stepsid == 3:
+            return -8
+        elif stepsid == 10:
+            return 0
+        else:
+            return 0
+
+    @staticmethod
+    def calc_migsp(stepsid):
+        if stepsid == 8:
+            return 3
+        elif stepsid == 7:
+            return 2
+        elif stepsid == 6:
+            return 1
+        elif stepsid == 5:
+            return 0
+        elif stepsid == 4:
+            return -4
+        elif stepsid == 3:
+            return -8
+        elif stepsid == 10:
+            return 6
+        else:
+            return 0
+
+    #wife score aproximation
+    @staticmethod
+    def calc_wifep(offset):
+        avedeviation = 95.0
+        maxms = offset*1000.0
+        y = 1.0 - float(pow(2, (-1) * maxms*maxms / 9025.0))
+        y = pow(y, 2)
+        return (2 + 8)*(1 - y) - 8
+
+    @staticmethod
+    def calc_grade_from_ratio(score, data):
+        if score >= 1:
+            for note in data:
+                if note["stepid"] > 2 and note["stepid"] < 9:
+                    if note != 8:
+                        return 1
+            return 0
+        elif score >= 0.93:
+            return 2
+        elif score >= 0.80:
+            return 3
+        elif score >= 0.65:
+            return 4
+        elif score >= 0.45:
+            return 5
+        return 6
+
+    # offset-> stepid
+    @staticmethod
+    def get_stepid(offset):
+        smarv  = 0.02259;
+        sperf  = 0.04509;
+        sgreat = 0.09009;
+        sgood  = 0.13509;
+        sboo   = 0.18909;
+        if (offset < smarv) and (offset > (smarv * -1.0)):
+            return 8
+        elif (offset < sperf) and (offset > (sperf * -1.0)):
+            return 7
+        elif (offset < sgreat) and (offset > (sgreat * -1.0)):
+            return 6
+        elif (offset < sgood) and (offset > (sgood * -1.0)):
+            return 5
+        else:
+            return 4
 
 class BinaryStats(SMPacket):
     _payload = [

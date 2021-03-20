@@ -25,11 +25,37 @@ class GameStatusUpdateController(StepmaniaController):
                  "score": self.packet["score"],
                  "combo": self.packet["combo"],
                  "health": self.packet["health"],
+                #"note_size": self.packet["note_size"], Requires smpacket update
                  "offset": self.packet["offset"]
                 }
 
         with self.conn.mutex:
-            best_score = self.conn.songstats[self.packet["player_id"]]["best_score"]
+            pid = self.packet["player_id"]
+            best_score = self.conn.songstats[pid]["best_score"]
+
+            ''' requires smapcket update
+            if not stats["note_size"] or stats["note_size"] <= 0:
+                notesize = self.notesize_from_combo(stats["combo"], self.conn.songstats[pid]["data"])
+            else:
+                notesize = stats["note_size"]
+            '''
+            notesize = self.notesize_from_combo(stats["combo"], self.conn.songstats[pid]["data"])
+            offset = float(stats["offset"]) / 2000.0 - 16.384
+            if stats["stepid"] > 3 and stats["stepid"] < 9:
+                self.conn.songstats[pid]["taps"] += 1
+                stats["stepid"] = models.SongStat.get_stepid(offset)
+                if stats["stepid"] == 7 or stats["stepid"] == 8:
+                    self.conn.songstats[pid]["perfect_combo"] += notesize
+                elif stats["stepid"] == 4 or stats["stepid"] == 5 or stats["stepid"] == 6:
+                    self.conn.songstats[pid]["perfect_combo"] = 0
+            if stats["stepid"] == 3:
+                    self.conn.songstats[pid]["perfect_combo"] = 0
+            if self.conn.songstats[pid]["perfect_combo"] != 0 and self.conn.songstats[pid]["perfect_combo"] % 250 == 0:
+                self.conn.songstats[pid]["toasties"] += 1
+            self.conn.songstats[pid]["dp"] += models.SongStat.calc_dp(stats["stepid"])
+            stats["grade"] = models.SongStat.calc_grade_from_ratio( \
+                self.conn.songstats[pid]["dp"] / (self.conn.songstats[pid]["taps"]*2), \
+                self.conn.songstats[pid]["data"])
 
         if best_score and stats["score"] > best_score:
             with self.conn.mutex:
@@ -50,3 +76,13 @@ class GameStatusUpdateController(StepmaniaController):
             )
 
         self.sendroom(self.conn.room, smpacket.SMPacketServerNSCSU(message=message))
+
+
+    def notesize_from_combo(self, combo, data):
+        if len(data) > 0:
+            if combo > 0:
+                return combo - data[-1]["combo"]
+            else:
+                return 1
+        else:
+            return 1

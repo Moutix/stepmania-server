@@ -252,7 +252,22 @@ class StepmaniaServer(smthread.StepmaniaServer):
         for user in users:
             models.User.disconnect(user, session)
             self.log.info("Player %s disconnected", user.name)
-
+            
+            friends = session.query(models.Relationship).filter_by(state = 1).filter((models.Relationship.user1_id == user.id) | (models.Relationship.user2_id == user.id)).all()
+            for friend in friends:
+                if friend.user1_id == user.id:
+                    friendid = friend.user2_id
+                else:
+                    friendid = friend.user1_id
+                friendconn = self.find_connection(friendid)
+                self.send_friend_list(friendid, friendconn)
+                frienduser = session.query(models.User).filter_by(id = friendid).first()
+                if frienduser.online == True and frienduser.friend_notifications == True and not friendconn == None:
+                    self.send_message(
+                        "Your friend %s disconnected" % user.name,
+                        conn=friendconn
+                    )
+        
         room = connection.room
         if room:
             self.send_message(
@@ -272,6 +287,40 @@ class StepmaniaServer(smthread.StepmaniaServer):
 
         self.sendroom(room.id, room.nsccuul)
 
+
+    def send_friend_list(self, userid, conn):
+
+        return
+
+    """ 
+    Requires FLU packets added in smpacket
+    def send_friend_list(self, userid, conn):
+        if conn == None:
+            return
+        usernames = []
+        userstates = []
+        with self.db.session_scope() as session:
+            friends = session.query(models.Relationship).filter_by(state = 1).filter((models.Relationship.user1_id == userid) | (models.Relationship.user2_id == userid)).all()
+
+            for friend in friends:
+                if friend.user1_id == userid:
+                    frienduser = session.query(models.User).filter_by(id = friend.user2_id).first()
+                else:
+                    frienduser = session.query(models.User).filter_by(id = friend.user1_id).first()
+                usernames.append(frienduser.name)
+                if frienduser.online == True:
+                    userstates.append(1 + frienduser.status)
+                else:
+                    userstates.append(0)
+
+
+        packet = smpacket.SMPacketServerFLU(
+            nb_players=len(usernames),
+            players=[{"name": name, "status": state}
+                     for name, state in zip(usernames, userstates)]
+            )
+        conn.send(packet)
+    """
     def send_message(self, message, room=None, conn=None, func=None):
         """
             Send a chat message (default to all)

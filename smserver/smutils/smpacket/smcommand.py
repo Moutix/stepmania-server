@@ -27,11 +27,11 @@ class ParentCommand(Enum):
 
         return default
 
-class SMCommand(ParentCommand):
-    """ Enum which contains all the Stepmania commands """
+class SMCommand:
+    """ Base class for Stepmania commands - provides lookup method """
     pass
 
-class SMClientCommand(SMCommand):
+class SMClientCommand(ParentCommand):
     """ List of client commands available """
 
     NSCPing      = 0
@@ -51,7 +51,7 @@ class SMClientCommand(SMCommand):
     NSCAttack    = 14
     XMLPacket    = 15
 
-class SMServerCommand(SMCommand):
+class SMServerCommand(ParentCommand):
     """ List of server commands available """
 
     NSCPing      = 128
@@ -71,11 +71,16 @@ class SMServerCommand(SMCommand):
     NSCAttack    = 142
     XMLPacket    = 143
 
-class SMOCommand(ParentCommand):
-    """ Enum which contains all the Stepmania online commands """
+# Add get method to SMCommand to search in both client and server commands
+SMCommand.get = staticmethod(lambda value, default=None:
+    SMClientCommand.get(value) or SMServerCommand.get(value) or default
+)
+
+class SMOCommand:
+    """ Base class for Stepmania Online commands """
     pass
 
-class SMOClientCommand(SMOCommand):
+class SMOClientCommand(ParentCommand):
     """ List of SMO Client commands available """
 
     LOGIN      = 0
@@ -83,10 +88,15 @@ class SMOClientCommand(SMOCommand):
     CREATEROOM = 2
     ROOMINFO   = 3
 
-class SMOServerCommand(SMOCommand):
+class SMOServerCommand(ParentCommand):
     """ List of SMO Server commands available """
 
     LOGIN       = 0
     ROOMUPDATE  = 1
     GENERALINFO = 2
     ROOMINFO    = 3
+
+# Add get method to SMOCommand to search in both client and server commands
+SMOCommand.get = staticmethod(lambda value, default=None:
+    SMOClientCommand.get(value) or SMOServerCommand.get(value) or default
+)

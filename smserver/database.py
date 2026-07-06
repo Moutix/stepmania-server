@@ -4,8 +4,8 @@ To get the current database use `get_current_db`
 """
 
 from contextlib import contextmanager
+from urllib.parse import quote
 from sqlalchemy import create_engine
-from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 
@@ -116,14 +116,22 @@ class DataBase(object):
             mysql+pymysql://user%40mail.fr:***@localhost/stepmania
         """
 
-        return URL(
-            '%s%s' % (self._type, "+%s" % self._driver if self._driver else ""),
-            username=self._user,
-            password=self._password,
-            host=self._host,
-            database=self._database,
-            port=self._port,
-        )
+        dialect = '%s%s' % (self._type, "+%s" % self._driver if self._driver else "")
+
+        if self._type == "sqlite":
+            return f"sqlite:///{self._database}"
+
+        user_pass = ""
+        if self._user:
+            user_pass = f"{quote(self._user, safe='')}@"
+            if self._password:
+                user_pass = f"{quote(self._user, safe='')}:{quote(self._password, safe='')}@"
+
+        port = ""
+        if self._port:
+            port = f":{self._port}"
+
+        return f"{dialect}://{user_pass}{self._host}{port}/{self._database}"
 
     def create_tables(self):
         """

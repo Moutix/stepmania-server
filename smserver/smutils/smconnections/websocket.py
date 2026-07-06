@@ -5,6 +5,7 @@ import asyncio
 import websockets
 
 from smserver.smutils import smconn
+from types import coroutine
 
 class WebSocketClient(smconn.StepmaniaConn):
     ENCODING = "json"
@@ -15,7 +16,7 @@ class WebSocketClient(smconn.StepmaniaConn):
         self.task = None
         self.loop = loop
 
-    @asyncio.coroutine
+    @coroutine
     def run(self):
         while True:
             try:
@@ -45,7 +46,7 @@ class WebSocketServer(smconn.SMThread):
         self.ip = ip
         self.port = port
 
-    @asyncio.coroutine
+    @coroutine
     def _accept_client(self, websocket, path=""):
         ip, port = websocket.remote_address
         client = WebSocketClient(self.server, ip, port, websocket, path, self.loop)
@@ -70,7 +71,6 @@ class WebSocketServer(smconn.SMThread):
                 self._accept_client,
                 host=self.ip,
                 port=self.port,
-                loop=self.loop,
             )
         )
         return self._serv

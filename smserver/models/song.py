@@ -26,9 +26,10 @@ class Song(schema.Base):
     games        = relationship("Game", back_populates="song")
 
     time_played  = column_property(
-        select([func.count(song_stat.SongStat.id)]).
+        select(func.count(song_stat.SongStat.id)).
         where(song_stat.SongStat.song_id == id).
-        correlate_except(song_stat.SongStat)
+        correlate_except(song_stat.SongStat).
+        scalar_subquery()
     )
 
     created_at   = Column(DateTime, default=datetime.datetime.now)
